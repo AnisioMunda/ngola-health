@@ -1,0 +1,102 @@
+# ============================================================
+# Ngola Health — .gitignore
+# Regra: só entra no repositório o que é fonte. Nada gerado,
+# nada secreto, nada específico da máquina de cada pessoa.
+# ============================================================
+
+# ------------------------------------------------------------
+# Segredos e configuração local
+# (o modelo sem valores, .env.example, é versionado)
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+docker-compose.override.yml
+
+# ------------------------------------------------------------
+# Backend — Java / Maven
+# (o Maven Wrapper em .mvn/ e mvnw é versionado de propósito)
+# ------------------------------------------------------------
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+hs_err_pid*
+replay_pid*
+dependency-reduced-pom.xml
+jacoco.exec
+
+# ------------------------------------------------------------
+# Frontend — Node / Angular
+# ------------------------------------------------------------
+node_modules/
+dist/
+.angular/
+.nx/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+
+# ------------------------------------------------------------
+# Testes e relatórios gerados
+# ------------------------------------------------------------
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ------------------------------------------------------------
+# Dados locais da infraestrutura e cópias de segurança
+# (as migrações .sql são código e NÃO estão ignoradas)
+# ------------------------------------------------------------
+infra/**/data/
+backups/
+*.dump
+*.bak
+
+# ------------------------------------------------------------
+# Logs e temporários
+# ------------------------------------------------------------
+*.log
+logs/
+tmp/
+*.tmp
+*.swp
+*~
+
+# ------------------------------------------------------------
+# Sistema operativo
+# ------------------------------------------------------------
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# Editores e IDEs (só se partilha a lista de extensões)
+# ------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+.factorypath
+
+# ------------------------------------------------------------
+# Material de referência local (notas, exportações, consultas).
+# Nunca é versionado.
+# ------------------------------------------------------------
+reference/
