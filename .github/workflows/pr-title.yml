@@ -1,0 +1,74 @@
+name: Validar título do PR
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  validar-titulo:
+    name: Validar formato do título
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar título
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+
+          title = os.environ["PR_TITLE"]
+          scopes = {
+              "repo", "readme", "github", "ci", "docker", "infra", "bd",
+              "deps", "backend", "frontend", "api", "seguranca", "auth",
+              "utilizadores", "hospitais", "auditoria", "pacientes",
+              "episodios", "triagem", "farmacia", "prescricoes",
+              "laboratorio", "notificacoes", "agendamento", "internamento",
+              "financeiro", "agt", "rh", "equipamentos", "dashboard",
+              "relatorios", "portal", "telemedicina", "layout", "e2e",
+              "release",
+          }
+          acronyms = {
+              "AGT", "AOA", "API", "BD", "CI", "DTO", "FEFO", "HTTP",
+              "JWT", "PDF", "PR", "RFC", "SQL",
+          }
+          match = re.fullmatch(
+              r"(feat|fix|refactor|docs|style|test|chore)"
+              r"\(([a-z0-9-]+)\): (.+)",
+              title,
+          )
+
+          errors = []
+          if len(title) > 72:
+              errors.append(f"tem {len(title)} caracteres; o máximo é 72")
+          if match is None:
+              errors.append("não segue o formato tipo(escopo): descrição")
+          else:
+              commit_type, scope, description = match.groups()
+              if scope not in scopes and commit_type != "docs":
+                  errors.append(f"escopo não permitido: {scope}")
+              words = re.findall(r"[A-Za-zÀ-ÿ0-9]+", description)
+              if any(not (word.islower() or word in acronyms) for word in words):
+                  errors.append(
+                      "a descrição deve estar em minúsculas; usar apenas siglas "
+                      "conhecidas em maiúsculas"
+                  )
+              if description.endswith("."):
+                  errors.append("a descrição não deve terminar com ponto")
+
+          if errors:
+              print("Título de pull request inválido:")
+              for error in errors:
+                  print(f"- {error}")
+              print(
+                  "Formato esperado: feat(auth): adicionar login com JWT "
+                  "de acesso e refresh"
+              )
+              sys.exit(1)
+
+          print("Título do pull request válido.")
+          PY
