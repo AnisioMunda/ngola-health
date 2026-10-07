@@ -126,9 +126,10 @@ server:
     # Ex: /api/pacientes, /api/auth/login
     context-path: /api
   error:
-    # Mostrar mensagens de erro detalhadas (útil em dev)
-    include-message: always
-    include-binding-errors: always
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
 
 
 # ============================================================
@@ -136,64 +137,27 @@ server:
 # ============================================================
 jwt:
   secret: ${JWT_SECRET}
-  # Access token: 15 minutos (em milissegundos)
-  # Curto por segurança — se for roubado, expira rapidamente
   expiration-ms: ${JWT_EXPIRATION_MS:900000}
-  # Refresh token: 7 dias
-  # Usado para obter um novo access token sem fazer login de novo
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
-  expiration: ${JWT_EXPIRATION_MS:900000}
-
-
-# ============================================================
-# MINIO — Armazenamento de ficheiros
-# ============================================================
-minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:hospitalao}
-  secret-key: ${MINIO_SECRET_KEY}
-  buckets:
-    faturas: faturas
-    fotos-pacientes: fotos-pacientes
-    resultados-exames: resultados-exames
-    documentos: documentos
-    backups: backups
-
-
-# ============================================================
-# DADOS DO HOSPITAL — Usados na faturação AGT
-# ============================================================
-hospital:
-  nome: ${HOSPITAL_NOME:Hospital AO}
-  nif: ${HOSPITAL_NIF:5000000001HA044}
-  morada: ${HOSPITAL_MORADA:Luanda, Angola}
-  telefone: ${HOSPITAL_TELEFONE:}
-  email: ${HOSPITAL_EMAIL:}
-  serie-fatura: ${HOSPITAL_SERIE_FATURA:HA2024}
 
 
 # ============================================================
 # Configuração AGT Angola — Facturação Electrónica
 # ============================================================
 agt:
-  # Ambiente: sandbox (testes) ou produção
-  sandbox: true
-  api-url: https://sandbox.portaldoparceiro.minfin.gov.ao
-
-  # Credenciais — obtidas no Portal do Parceiro
-  client-id: ${AGT_CLIENT_ID:test-client-id}
-  client-secret: ${AGT_CLIENT_SECRET:test-client-secret}
-
-  # NIF do hospital (usar NIF de teste em sandbox)
-  nif: 5000413178
-
-  # Software registado na AGT
-  software-id: HospitalAO
-  software-version: 1.0.0
-  software-validation-number: ${AGT_SOFTWARE_VALIDATION:123456}
-
-  # Chave privada RSA (do ficheiro Excel do Portal do Parceiro)
+  api-url: ${AGT_API_URL}
+  client-id: ${AGT_CLIENT_ID:}
+  client-secret: ${AGT_CLIENT_SECRET:}
+  nif: ${AGT_NIF}
+  software-id: ${AGT_SOFTWARE_ID}
+  software-version: ${AGT_SOFTWARE_VERSION}
+  software-validation-number: ${AGT_SOFTWARE_VALIDATION:}
   private-key-path: ${AGT_PRIVATE_KEY_PATH:}
+  private-key-content: ${AGT_PRIVATE_KEY_CONTENT:}
+  sandbox: ${AGT_SANDBOX:false}
+
+app:
+  base-url: ${APP_BASE_URL}
 # ============================================================
 # ACTUATOR — Health checks e métricas
 # ============================================================
@@ -256,9 +220,24 @@ spring:
   jpa:
     show-sql: true  # Ver as queries SQL no terminal em dev
 
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:4200}
+
+agt:
+  api-url: ${AGT_API_URL:https://sandbox.portaldoparceiro.minfin.gov.ao}
+  nif: ${AGT_NIF:5000413178}
+  software-id: ${AGT_SOFTWARE_ID:HospitalAO}
+  software-version: ${AGT_SOFTWARE_VERSION:0.0.1-SNAPSHOT}
+  sandbox: ${AGT_SANDBOX:true}
+
 logging:
   level:
     ao.hospitalao: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
-    org.springframework.security: TRACE
+    org.springframework.security: DEBUG

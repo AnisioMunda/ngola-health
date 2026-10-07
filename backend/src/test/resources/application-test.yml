@@ -30,7 +30,18 @@ spring:
 # JWT de teste
 jwt:
   secret: ${JWT_SECRET:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
-  expiration: 3600000
+  expiration-ms: 3600000
+  refresh-expiration-ms: 86400000
+
+app:
+  base-url: http://localhost:4200
+
+agt:
+  api-url: https://sandbox.portaldoparceiro.minfin.gov.ao
+  nif: 5000413178
+  software-id: HospitalAO
+  software-version: test
+  sandbox: true
 
 # Logging mínimo nos testes
 logging:

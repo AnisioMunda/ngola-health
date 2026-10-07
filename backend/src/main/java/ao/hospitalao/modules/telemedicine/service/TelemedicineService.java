@@ -1,5 +1,6 @@
 package ao.hospitalao.modules.telemedicine.service;
  
+import ao.hospitalao.config.properties.AppProperties;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
@@ -11,7 +12,6 @@ import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -30,9 +30,7 @@ public class TelemedicineService {
     private final PatientRepository      patientRepository;
     private final UserRepository         userRepository;
     private final HospitalRepository     hospitalRepository;
- 
-    @Value("${app.base-url:https://hospitalao.ao}")
-    private String baseUrl;
+    private final AppProperties appProperties;
  
     // ------------------------------------------------
     // Stats
@@ -176,7 +174,7 @@ public class TelemedicineService {
     }
  
     private SessionResponse toResponse(TelemedicineSession s) {
-        String roomUrl = baseUrl + "/video/" + s.getRoomToken();
+        String roomUrl = appProperties.baseUrl() + "/video/" + s.getRoomToken();
         return SessionResponse.builder()
             .id(s.getId())
             .patientId(s.getPatient().getId())

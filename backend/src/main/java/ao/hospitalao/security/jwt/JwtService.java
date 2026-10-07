@@ -1,12 +1,13 @@
 package ao.hospitalao.security.jwt;
 
+import ao.hospitalao.config.properties.JwtProperties;
 import ao.hospitalao.modules.auth.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,10 @@ import javax.crypto.SecretKey;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
-
-    @Value("${jwt.expiration}")
-    private long expiration;
+    private final JwtProperties properties;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -56,7 +54,7 @@ public class JwtService {
         if (userDetails instanceof User user && user.getHospital() != null) {
             extraClaims.put("hospital_id", user.getHospital().getId().toString());
         }
-        return buildToken(extraClaims, userDetails, expiration);
+        return buildToken(extraClaims, userDetails, properties.expirationMs());
     }
 
     private String buildToken(
@@ -91,7 +89,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
+        byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(properties.secret());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -109,7 +107,7 @@ public class JwtService {
             .setClaims(claims)
             .setSubject(email)
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .setExpiration(new Date(System.currentTimeMillis() + properties.expirationMs()))
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact();
     }

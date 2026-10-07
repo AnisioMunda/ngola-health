@@ -1,56 +1,29 @@
 package ao.hospitalao.modules.financial.agt;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
-/**
- * Configuração da integração com a API AGT Angola.
- * Configurar em application.yml:
- *
- * agt:
- *   api-url: https://sandbox.portaldoparceiro.minfin.gov.ao
- *   client-id: SEU_CLIENT_ID
- *   client-secret: SEU_CLIENT_SECRET
- *   nif: 5000413178            # NIF de teste
- *   software-id: HospitalAO
- *   software-version: 1.0.0
- *   software-validation-number: SEU_NUMERO_VALIDACAO
- *   private-key-path: /etc/hospitalao/agt-private.pem
- *   sandbox: true
- */
 @Data
-@Component
+@Validated
 @ConfigurationProperties(prefix = "agt")
 public class AgtProperties {
 
-    /** URL base da API AGT (sandbox ou produção) */
-    private String apiUrl = "https://sandbox.portaldoparceiro.minfin.gov.ao";
-
-    /** Client ID para autenticação OAuth2 AGT */
+    @NotBlank
+    @Pattern(regexp = "https?://[^\\s]+", message = "must be an absolute HTTP(S) URL")
+    private String apiUrl;
     private String clientId;
-
-    /** Client Secret para autenticação OAuth2 AGT */
     private String clientSecret;
-
-    /** NIF do hospital/contribuinte */
+    @NotBlank
     private String nif;
-
-    /** Nome do software de facturação */
-    private String softwareId = "HospitalAO";
-
-    /** Versão do software */
-    private String softwareVersion = "1.0.0";
-
-    /** Número de validação do software atribuído pela AGT */
+    @NotBlank
+    private String softwareId;
+    @NotBlank
+    private String softwareVersion;
     private String softwareValidationNumber;
-
-    /** Caminho para a chave privada RSA PEM */
     private String privateKeyPath;
-
-    /** Conteúdo da chave privada RSA (alternativa ao path) */
     private String privateKeyContent;
-
-    /** true = sandbox/teste, false = produção */
-    private boolean sandbox = true;
+    private boolean sandbox;
 }
