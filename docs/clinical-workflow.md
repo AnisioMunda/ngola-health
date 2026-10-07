@@ -148,9 +148,11 @@ ser acompanhados separadamente.
   correcção auditável de resultados laboratoriais já submetidos.
 - A triagem não é ligada automaticamente a um episódio; a criação de pedidos
   de exame e de prescrições também não é automática.
-- O agendamento, as notificações associadas a consultas e o portal do paciente
-  seguem as fases próprias do [roadmap](ROADMAP.md); não fazem parte desta
-  sequência implementada.
+- O agendamento, as notificações internas e o internamento têm fluxos
+  operacionais próprios, descritos no guia de
+  [agendamento, notificações e internamento](scheduling-notifications-inpatient.md).
+  Não são passos automáticos da sequência clínica acima. O portal do paciente
+  continua a seguir o [roadmap](ROADMAP.md).
 
 ## Referências de implementação
 
