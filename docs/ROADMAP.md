@@ -294,7 +294,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 |---|--------|---------------|
 | 4.1 | `feat(bd): criar tabela de notificações` | Tabela incluída e reversível no changelog; teste garante a migração |
 | 4.2 | `feat(notificacoes): adicionar API e serviço interno de notificações` | API paginada e isolada por utilizador; eventos Spring de laboratório e agendamento; **sem broker** |
-| 4.3 | `feat(notificacoes): adicionar sino, lista e página de notificações` | |
+| 4.3 | `feat(notificacoes): adicionar sino, lista e página de notificações` | Sino, lista paginada, leitura e erros tratados e cobertos por testes |
 | 4.4 | `feat(bd): criar tabelas de horários e agendamentos` | |
 | 4.5 | `feat(agendamento): adicionar API de horários e slots de médicos` | |
 | 4.6 | `feat(agendamento): adicionar API de marcação e estados da consulta` | Impossível marcar duas vezes o mesmo slot (restrição na BD + teste concorrente) (R17) |

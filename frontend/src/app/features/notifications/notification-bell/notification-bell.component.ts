@@ -6,6 +6,7 @@ import {
   NotificationDto,
   TYPE_ICONS,
   PRIORITY_COLORS,
+  notificationErrorMessage,
 } from '../../../core/services/notification.service';
 
 @Component({
@@ -19,6 +20,7 @@ export class NotificationBellComponent implements OnInit {
   open = false;
   notifications: NotificationDto[] = [];
   loading = false;
+  error = '';
 
   typeIcons = TYPE_ICONS;
   priorityColors = PRIORITY_COLORS;
@@ -42,12 +44,14 @@ export class NotificationBellComponent implements OnInit {
 
   loadTopUnread(): void {
     this.loading = true;
+    this.error = '';
     this.notificationService.getTopUnread().subscribe({
       next: (n) => {
         this.notifications = n;
         this.loading = false;
       },
-      error: () => {
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(error, 'Não foi possível carregar as notificações.');
         this.loading = false;
       },
     });
@@ -55,29 +59,45 @@ export class NotificationBellComponent implements OnInit {
 
   markAsRead(n: NotificationDto, event: Event): void {
     event.stopPropagation();
+    this.markNotificationAsRead(n);
+  }
+
+  private markNotificationAsRead(n: NotificationDto): void {
     if (n.read) return;
+    this.error = '';
     this.notificationService.markAsRead(n.id).subscribe({
       next: () => {
         n.read = true;
+        this.notifications = this.notifications.filter((notification) => notification.id !== n.id);
         this.notificationService.unreadCount.update((c) => Math.max(0, c - 1));
+      },
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(
+          error,
+          'Não foi possível marcar a notificação como lida.',
+        );
       },
     });
   }
 
   markAllAsRead(): void {
+    this.error = '';
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
-        this.notifications.forEach((n) => (n.read = true));
+        this.notifications = [];
         this.notificationService.unreadCount.set(0);
+      },
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(
+          error,
+          'Não foi possível marcar todas as notificações como lidas.',
+        );
       },
     });
   }
 
   open_(n: NotificationDto): void {
-    if (!n.read) {
-      this.notificationService.markAsRead(n.id).subscribe();
-      this.notificationService.unreadCount.update((c) => Math.max(0, c - 1));
-    }
+    this.markNotificationAsRead(n);
     if (n.actionUrl) {
       this.router.navigateByUrl(n.actionUrl);
     }

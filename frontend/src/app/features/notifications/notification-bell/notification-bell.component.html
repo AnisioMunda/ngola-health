@@ -29,6 +29,11 @@
       </button>
     </div>
 
+    <div class="dropdown-error" *ngIf="notificationService.pollingError()" role="alert">
+      Não foi possível actualizar o contador de notificações.
+    </div>
+    <div class="dropdown-error" *ngIf="error" role="alert">{{ error }}</div>
+
     <!-- Loading -->
     <div class="dropdown-loading" *ngIf="loading">
       <div class="spinner-sm"></div>

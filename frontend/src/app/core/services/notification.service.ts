@@ -1,7 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, interval } from 'rxjs';
-import { switchMap, startWith } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Observable, interval } from 'rxjs';
+import { catchError, startWith, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export type NotificationType =
@@ -21,11 +22,11 @@ export interface NotificationDto {
   priority: Priority;
   title: string;
   message: string;
-  actionUrl: string;
-  referenceId: string;
-  referenceType: string;
+  actionUrl: string | null;
+  referenceId: string | null;
+  referenceType: string | null;
   read: boolean;
-  readAt: string;
+  readAt: string | null;
   createdAt: string;
 }
 
@@ -53,25 +54,49 @@ export const PRIORITY_COLORS: Record<Priority, string> = {
   CRITICAL: '#ef4444',
 };
 
+export function notificationErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+    const body = error.error as Record<string, unknown>;
+    if (typeof body['detail'] === 'string' && body['detail']) return body['detail'];
+    if (typeof body['message'] === 'string' && body['message']) return body['message'];
+  }
+  return fallback;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly apiUrl = `${environment.apiUrl}/notifications`;
+  private pollingStarted = false;
 
   // Signal reactivo para o contador de não lidas
   unreadCount = signal<number>(0);
+  pollingError = signal(false);
 
   // Polling automático a cada 60 segundos
   startPolling(): void {
+    if (this.pollingStarted) return;
+    this.pollingStarted = true;
+
     interval(60_000)
       .pipe(
         startWith(0),
-        switchMap(() => this.getUnreadCount()),
+        switchMap(() =>
+          this.getUnreadCount().pipe(
+            tap((response) => {
+              this.unreadCount.set(response.count);
+              this.pollingError.set(false);
+            }),
+            catchError(() => {
+              this.pollingError.set(true);
+              return EMPTY;
+            }),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({
-        next: (res) => this.unreadCount.set(res.count),
-        error: () => {},
-      });
+      .subscribe();
   }
 
   getAll(page = 0, size = 20): Observable<Page<NotificationDto>> {
