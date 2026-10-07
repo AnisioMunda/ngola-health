@@ -5,52 +5,26 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <!-- Sprint 1 - Authentication & Users -->
-    <include file="db/changelog/sprint-01/001-schema-base.xml"/>
-    <include file="db/changelog/sprint-01/002-criar-tabela-users.xml"/>
-    <include file="db/changelog/sprint-01/003-token-black-list.xml"/>
-
-    <!-- Sprint 2 - Patients, Episodes & Dashboard -->
-    <include file="db/changelog/sprint-02/001-criar-tabela-pacientes.xml"/>
-    <include file="db/changelog/sprint-02/002-fix-patients-gender.xml"/>
-    <include file="db/changelog/sprint-02/006-criar-tabela-episodes.xml"/>
-
-    <!-- Sprint 3 - Multi-hospital, Laboratory e Farmacia -->
-    <include file="db/changelog/sprint-03/007-multi-hospital.xml"/>
-    <include file="db/changelog/sprint-03/008-laboratorio.xml"/>
-    <include file="db/changelog/sprint-03/009-farmacia.xml"/>
-
-    <!-- Sprint 4 -->
-    <include file="db/changelog/sprint-04/010-financeiro.xml"/>
-    <include file="db/changelog/sprint-04/011-agt-campos-invoice.xml"/>
-
-     <!-- Sprint 6 -->
-    <include file="db/changelog/sprint-06/012-agendamento.xml"/>
-
-    <!-- Sprint 7 -->
-    <include file="db/changelog/sprint-07/013-notifications.xml"/>
-
-     <!-- Sprint 8 -->
-    <include file="db/changelog/sprint-08/014-internamentos.xml"/>
-
-    <!-- Sprint 9 -->
-    <include file="db/changelog/sprint-09/015-audit.xml"/>
-
-     <!-- Sprint 10 -->
-    <include file="db/changelog/sprint-10/016-recursos-humanos.xml"/>
-
-    <!-- Sprint 11 -->
-    <include file="db/changelog/sprint-11/017-prescricoes.xml"/>
-
-    <!-- Sprint 12 -->
-    <include file="db/changelog/sprint-12/018-triagem.xml"/>
-
-    <!-- Sprint 13 -->
-    <include file="db/changelog/sprint-13/019-portal-paciente.xml"/>
-
-    <!-- Sprint 14 -->
-    <include file="db/changelog/sprint-14/020-telemedicina.xml"/>
-
-    <!-- Sprint 15 -->
-    <include file="db/changelog/sprint-15/021-equipamentos.xml"/>
+    <include file="changes/core/000-enable-uuid-ossp.sql" relativeToChangelogFile="true"/>
+    <include file="changes/core/001-schema-base.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/001-users-and-roles.sql" relativeToChangelogFile="true"/>
+    <include file="changes/auth/001-token-blacklist.sql" relativeToChangelogFile="true"/>
+    <include file="changes/patients/001-create-patients.sql" relativeToChangelogFile="true"/>
+    <include file="changes/patients/002-fix-patient-gender.sql" relativeToChangelogFile="true"/>
+    <include file="changes/episodes/001-create-episodes.sql" relativeToChangelogFile="true"/>
+    <include file="changes/hospitals/001-hospitals-and-tenancy.sql" relativeToChangelogFile="true"/>
+    <include file="changes/laboratory/001-laboratory.sql" relativeToChangelogFile="true"/>
+    <include file="changes/pharmacy/001-pharmacy.sql" relativeToChangelogFile="true"/>
+    <include file="changes/financial/001-financial.sql" relativeToChangelogFile="true"/>
+    <include file="changes/agt/001-invoice-agt-fields.sql" relativeToChangelogFile="true"/>
+    <include file="changes/scheduling/001-scheduling.sql" relativeToChangelogFile="true"/>
+    <include file="changes/notifications/001-notifications.sql" relativeToChangelogFile="true"/>
+    <include file="changes/inpatient/001-inpatient.sql" relativeToChangelogFile="true"/>
+    <include file="changes/audit/001-audit.sql" relativeToChangelogFile="true"/>
+    <include file="changes/human_resources/001-human-resources.sql" relativeToChangelogFile="true"/>
+    <include file="changes/prescriptions/001-prescriptions.sql" relativeToChangelogFile="true"/>
+    <include file="changes/triage/001-triage.sql" relativeToChangelogFile="true"/>
+    <include file="changes/patient_portal/001-patient-portal.sql" relativeToChangelogFile="true"/>
+    <include file="changes/telemedicine/001-telemedicine.sql" relativeToChangelogFile="true"/>
+    <include file="changes/equipment/001-equipment.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

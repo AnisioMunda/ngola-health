@@ -219,6 +219,8 @@ spring:
       on-profile: dev
   jpa:
     show-sql: true  # Ver as queries SQL no terminal em dev
+  liquibase:
+    contexts: dev
 
 server:
   error:
