@@ -53,6 +53,9 @@ public class FinancialDtos {
     /** Número AGT: ex. "FR 2026/0000001" */
     private String invoiceNumber;
 
+    /** Código ISO 4217 da moeda dos valores da factura */
+    private String currency;
+
     /** Tipo: FT | FR | NC | ND | RC */
     private DocumentType documentType;
 

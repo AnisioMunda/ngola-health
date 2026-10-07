@@ -38,6 +38,10 @@ public class Invoice extends TenantScopedEntity {
   @Column(name = "invoice_number", nullable = false, unique = true, length = 30)
   private String invoiceNumber;
 
+  @Column(name = "currency", nullable = false, length = 3)
+  @Builder.Default
+  private String currency = "AOA";
+
   /**
    * Tipo de documento fiscal — DP 50/19 AGT Angola: FT = Factura | FR = Factura/Recibo | NC = Nota
    * de Crédito ND = Nota de Débito | RC = Recibo

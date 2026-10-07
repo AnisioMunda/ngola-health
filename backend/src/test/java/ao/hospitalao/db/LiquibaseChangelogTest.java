@@ -64,6 +64,22 @@ class LiquibaseChangelogTest {
   }
 
   @Test
+  void financialTablesAndCurrencyMigrationAreIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "010-01-criar-tabela-service-prices", "changes/financial/001-financial.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "010-02-criar-tabela-invoices", "changes/financial/001-financial.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "010-03-criar-tabela-invoice-items", "changes/financial/001-financial.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "010-04-criar-tabela-payments", "changes/financial/001-financial.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "010-06-invoice-currency", "changes/financial/002-invoice-currency.sql");
+  }
+
+  @Test
   void triageTableMigrationIsIncludedAndReversible() throws Exception {
     var changelog = parseMasterChangelog();
 

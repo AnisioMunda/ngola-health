@@ -314,7 +314,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 
 | # | Commit | Pronto quando |
 |---|--------|---------------|
-| 5.1 | `feat(bd): criar tabelas de facturas, itens e pagamentos` | Valores em `NUMERIC`, moeda AOA |
+| 5.1 | `feat(bd): criar tabelas de facturas, itens e pagamentos` | Tabelas de facturas, itens e pagamentos em `NUMERIC`; moeda AOA persistida por factura |
 | 5.2 | `feat(financeiro): adicionar API de facturas, itens e pagamentos` | `BigDecimal` com arredondamento definido; totais e IVA testados |
 | 5.3 | `feat(financeiro): adicionar ecrãs de facturas` | |
 | 5.4 | `chore(agt): carregar chave privada e credenciais de segredo externo` | Nenhuma chave no repositório; falha ao arrancar em prod sem a chave (R1) |

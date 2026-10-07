@@ -364,6 +364,7 @@ public class FinancialService {
     return InvoiceResponse.builder()
         .id(inv.getId())
         .invoiceNumber(inv.getInvoiceNumber())
+        .currency(inv.getCurrency())
         .documentType(inv.getDocumentType())
         .patientId(inv.getPatient().getId())
         .patientName(inv.getPatient().getFullName())
