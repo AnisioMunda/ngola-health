@@ -14,6 +14,7 @@ import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.notifications.event.AppointmentCancelledEvent;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
+import ao.hospitalao.modules.scheduling.dto.SchedulingDtos.CalendarEventResponse;
 import ao.hospitalao.modules.scheduling.dto.SchedulingDtos.CreateScheduleRequest;
 import ao.hospitalao.modules.scheduling.entity.Appointment;
 import ao.hospitalao.modules.scheduling.entity.Appointment.AppointmentStatus;
@@ -115,6 +116,33 @@ class SchedulingServiceTest {
 
     assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     verify(appointmentRepository, never()).save(any(Appointment.class));
+  }
+
+  @Test
+  void calendarEventsExposeDoctorIdForFiltering() {
+    UUID hospitalId = UUID.randomUUID();
+    UUID doctorId = UUID.randomUUID();
+    LocalDate date = LocalDate.of(2026, 5, 21);
+    Appointment appointment =
+        Appointment.builder()
+            .id(UUID.randomUUID())
+            .patient(Patient.builder().id(UUID.randomUUID()).fullName("Ana Silva").build())
+            .doctor(User.builder().id(doctorId).fullName("Médico").build())
+            .appointmentDate(date)
+            .startTime(LocalTime.of(10, 0))
+            .endTime(LocalTime.of(10, 30))
+            .status(AppointmentStatus.SCHEDULED)
+            .build();
+    TenantContext.setCurrentHospital(hospitalId);
+    when(appointmentRepository.findByHospitalAndDateRange(hospitalId, date, date))
+        .thenReturn(List.of(appointment));
+
+    List<CalendarEventResponse> events = schedulingService.getCalendarEvents(date, date);
+
+    assertThat(events)
+        .singleElement()
+        .extracting(CalendarEventResponse::getDoctorId)
+        .isEqualTo(doctorId);
   }
 
   @Test

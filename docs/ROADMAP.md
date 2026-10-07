@@ -299,7 +299,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 4.5 | `feat(agendamento): adicionar API de horários e slots de médicos` | Horários validados; slots respeitam capacidade, bloqueios e marcações existentes |
 | 4.6 | `feat(agendamento): adicionar API de marcação e estados da consulta` | Capacidade por slot respeitada sob concorrência; lugares e paciente/slot protegidos por índices únicos na BD; estados inválidos rejeitados (R17) |
 | 4.7 | `feat(agendamento): adicionar lembretes automáticos de consultas` | Tarefa agendada gera notificações |
-| 4.8 | `feat(agendamento): adicionar horários e calendário no frontend` | |
+| 4.8 | `feat(agendamento): adicionar horários e calendário no frontend` | Horários com validação de intervalos e capacidade; calendário mensal acessível com datas locais e filtro por médico |
 | 4.9 | `feat(agendamento): adicionar marcação, lista e detalhe no frontend` | |
 | 4.10 | `feat(bd): criar tabelas de enfermarias, camas e internamentos` | |
 | 4.11 | `feat(internamento): adicionar API de enfermarias e camas` | |

@@ -147,6 +147,7 @@ public class SchedulingDtos {
   @Builder
   public static class CalendarEventResponse {
     private UUID id;
+    private UUID doctorId;
     private String title;
     private LocalDate date;
     private LocalTime startTime;

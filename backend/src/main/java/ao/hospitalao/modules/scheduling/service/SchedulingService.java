@@ -576,6 +576,7 @@ public class SchedulingService {
   private CalendarEventResponse toCalendarEvent(Appointment a) {
     return CalendarEventResponse.builder()
         .id(a.getId())
+        .doctorId(a.getDoctor().getId())
         .title(a.getPatient().getFullName())
         .date(a.getAppointmentDate())
         .startTime(a.getStartTime())
