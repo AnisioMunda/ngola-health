@@ -1,13 +1,44 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  FormArray,
+  FormControl,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FinancialService,
   ServicePriceResponse,
   DocumentType,
 } from '../../../core/services/financial.service';
 import { PatientService } from '../../../core/services/patient.service';
+
+type InvoiceItemControls = {
+  servicePriceId: FormControl<string>;
+  description: FormControl<string>;
+  quantity: FormControl<number>;
+  unitPrice: FormControl<number | null>;
+  discountPercent: FormControl<number>;
+  vatRate: FormControl<number>;
+};
+
+type InvoiceFormControls = {
+  patientId: FormControl<string>;
+  documentType: FormControl<DocumentType>;
+  patientNif: FormControl<string>;
+  patientFiscalName: FormControl<string>;
+  insuranceProvider: FormControl<string>;
+  insurancePolicyNumber: FormControl<string>;
+  insuranceCoveragePercent: FormControl<number>;
+  dueDate: FormControl<string>;
+  notes: FormControl<string>;
+  items: FormArray<FormGroup<InvoiceItemControls>>;
+};
 
 @Component({
   selector: 'app-invoice-form',
@@ -17,12 +48,18 @@ import { PatientService } from '../../../core/services/patient.service';
   styleUrls: ['./invoice-form.component.scss'],
 })
 export class InvoiceFormComponent implements OnInit {
-  form!: FormGroup;
+  private readonly destroyRef = inject(DestroyRef);
+
+  form!: FormGroup<InvoiceFormControls>;
   saving = false;
   error = '';
 
   patients: { id: string; fullName: string }[] = [];
   servicePrices: ServicePriceResponse[] = [];
+  patientsLoading = true;
+  pricesLoading = true;
+  patientsError = '';
+  pricesError = '';
 
   docTypes: { value: DocumentType; label: string; desc: string }[] = [
     { value: 'FR', label: 'FR — Factura/Recibo', desc: 'Com pagamento no acto' },
@@ -45,29 +82,32 @@ export class InvoiceFormComponent implements OnInit {
   }
 
   buildForm(): void {
-    this.form = this.fb.group({
+    this.form = this.fb.nonNullable.group({
       patientId: ['', Validators.required],
-      documentType: ['FR', Validators.required],
+      documentType: ['FR' as DocumentType, Validators.required],
       patientNif: [''],
       patientFiscalName: [''],
       insuranceProvider: [''],
+      insurancePolicyNumber: [''],
+      insuranceCoveragePercent: [0, [Validators.min(0), Validators.max(100)]],
+      dueDate: [''],
       notes: [''],
       items: this.fb.array([this.newItem()]),
     });
   }
 
-  get items(): FormArray {
-    return this.form.get('items') as FormArray;
+  get items(): FormArray<FormGroup<InvoiceItemControls>> {
+    return this.form.controls.items;
   }
 
-  newItem(): FormGroup {
-    return this.fb.group({
+  newItem(): FormGroup<InvoiceItemControls> {
+    return this.fb.nonNullable.group({
       servicePriceId: [''],
-      description: ['', Validators.required],
+      description: ['', [Validators.required, Validators.pattern(/\S/)]],
       quantity: [1, [Validators.required, Validators.min(1)]],
-      unitPrice: [null, [Validators.required, Validators.min(0.01)]],
-      discountPercent: [0],
-      vatRate: [0],
+      unitPrice: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+      discountPercent: [0, [Validators.min(0), Validators.max(100)]],
+      vatRate: [0, [Validators.min(0), Validators.max(100)]],
     });
   }
 
@@ -91,36 +131,56 @@ export class InvoiceFormComponent implements OnInit {
 
   getLineTotal(index: number): number {
     const item = this.items.at(index).value;
-    const base = (item.unitPrice || 0) * (item.quantity || 1);
-    const disc = (base * (item.discountPercent || 0)) / 100;
-    const afterDisc = base - disc;
-    const vat = (afterDisc * (item.vatRate || 0)) / 100;
-    return afterDisc + vat;
+    const unitPrice = this.roundMoney(Number(item.unitPrice) || 0);
+    const base = this.roundMoney(unitPrice * (Number(item.quantity) || 1));
+    const discount = this.roundMoney((base * (Number(item.discountPercent) || 0)) / 100);
+    const net = this.roundMoney(base - discount);
+    const vat = this.roundMoney((net * (Number(item.vatRate) || 0)) / 100);
+    return this.roundMoney(net + vat);
   }
 
   getGrandTotal(): number {
-    let total = 0;
-    for (let i = 0; i < this.items.length; i++) total += this.getLineTotal(i);
-    return total;
+    return this.roundMoney(
+      this.items.controls.reduce((total, _, index) => total + this.getLineTotal(index), 0),
+    );
   }
 
   loadPatients(): void {
-    this.patientService.findAll('', 0, 200).subscribe({
-      next: (p) => {
-        this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
-      },
-    });
+    this.patientsLoading = true;
+    this.patientService
+      .findAll('', 0, 200)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (p) => {
+          this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
+          this.patientsLoading = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.patientsError = this.errorMessage(error, 'Erro ao carregar pacientes.');
+          this.patientsLoading = false;
+        },
+      });
   }
 
   loadPrices(): void {
-    this.financialService.findAllPrices().subscribe({
-      next: (prices) => {
-        this.servicePrices = prices;
-      },
-    });
+    this.pricesLoading = true;
+    this.financialService
+      .findAllPrices()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (prices) => {
+          this.servicePrices = prices;
+          this.pricesLoading = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.pricesError = this.errorMessage(error, 'Erro ao carregar tabela de preços.');
+          this.pricesLoading = false;
+        },
+      });
   }
 
   onSubmit(): void {
+    if (this.saving) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -131,16 +191,32 @@ export class InvoiceFormComponent implements OnInit {
     const value = this.form.getRawValue();
     this.financialService
       .create({
-        ...value,
-        items: value.items.map((i: any) => ({
-          ...i,
-          servicePriceId: i.servicePriceId || undefined,
+        patientId: value.patientId,
+        documentType: value.documentType,
+        patientNif: value.patientNif || undefined,
+        patientFiscalName: value.patientFiscalName || undefined,
+        insuranceProvider: value.insuranceProvider || undefined,
+        insurancePolicyNumber: value.insurancePolicyNumber || undefined,
+        insuranceCoveragePercent: value.insuranceCoveragePercent,
+        dueDate: value.dueDate || undefined,
+        notes: value.notes || undefined,
+        items: value.items.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice ?? undefined,
+          discountPercent: item.discountPercent,
+          vatRate: item.vatRate,
+          servicePriceId: item.servicePriceId || undefined,
         })),
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.router.navigate(['/financial']),
-        error: (err) => {
-          this.error = err.error?.message ?? 'Erro ao criar documento.';
+        next: () => {
+          this.saving = false;
+          this.router.navigate(['/financial']);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao criar documento.');
           this.saving = false;
         },
       });
@@ -151,5 +227,13 @@ export class InvoiceFormComponent implements OnInit {
   }
   get f() {
     return this.form.controls;
+  }
+
+  private roundMoney(amount: number): number {
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
+  }
+
+  private errorMessage(error: HttpErrorResponse, fallback: string): string {
+    return error.error?.detail ?? error.error?.message ?? fallback;
   }
 }

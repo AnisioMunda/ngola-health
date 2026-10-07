@@ -13,7 +13,12 @@
   </header>
 
   <div class="filters">
-    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+    <label for="invoice-status-filter">Estado</label>
+    <select
+      id="invoice-status-filter"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="onFilterChange()"
+    >
       <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
     </select>
   </div>
@@ -40,9 +45,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let inv of invoices" (click)="goToDetail(inv.id)" class="clickable">
+        <tr *ngFor="let inv of invoices">
           <td>
-            <span class="invoice-number">{{ inv.invoiceNumber }}</span>
+            <button class="invoice-number-link" type="button" (click)="goToDetail(inv.id)">
+              {{ inv.invoiceNumber }}
+            </button>
             <span class="invoice-date">{{ inv.createdAt | date: 'dd/MM/yyyy' }}</span>
           </td>
           <td>{{ inv.patientName }}</td>
@@ -82,9 +89,10 @@
                 class="btn-action"
                 title="Emitir"
                 *ngIf="inv.status === 'RASCUNHO'"
+                [disabled]="issuingInvoiceIds.has(inv.id)"
                 (click)="issue(inv.id, $event)"
               >
-                Emitir
+                {{ issuingInvoiceIds.has(inv.id) ? 'A emitir...' : 'Emitir' }}
               </button>
               <button
                 class="btn-icon"
