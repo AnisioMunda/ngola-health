@@ -9,16 +9,14 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AppConfig {
 
-    /**
-     * RestTemplate para chamadas HTTP externas (API AGT, etc.)
-     */
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
+  /** RestTemplate para chamadas HTTP externas (API AGT, etc.) */
+  @Bean
+  public RestTemplate restTemplate() {
+    return new RestTemplate();
+  }
 
-    @Bean
-    public ObjectMapper jackson2ObjectMapper() {
-        return new ObjectMapper().registerModule(new JavaTimeModule());
-    }
+  @Bean
+  public ObjectMapper jackson2ObjectMapper() {
+    return new ObjectMapper().registerModule(new JavaTimeModule());
+  }
 }

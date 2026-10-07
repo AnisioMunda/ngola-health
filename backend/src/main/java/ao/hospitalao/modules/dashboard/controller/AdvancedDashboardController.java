@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class AdvancedDashboardController {
 
-    private final AdvancedDashboardService dashboardService;
+  private final AdvancedDashboardService dashboardService;
 
-    @GetMapping
-    @Operation(summary = "Get advanced dashboard — KPIs, trends, financial metrics")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AdvancedDashboardResponse> getDashboard() {
-        return ResponseEntity.ok(dashboardService.getDashboard());
-    }
+  @GetMapping
+  @Operation(summary = "Get advanced dashboard — KPIs, trends, financial metrics")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<AdvancedDashboardResponse> getDashboard() {
+    return ResponseEntity.ok(dashboardService.getDashboard());
+  }
 }

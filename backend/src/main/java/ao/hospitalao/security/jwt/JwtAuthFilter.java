@@ -10,6 +10,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,189 +29,174 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtService             jwtService;
-    private final UserDetailsService     userDetailsService;
-    private final ObjectMapper           objectMapper;
-    private final TokenBlackListService  blacklistService;
+  private final JwtService jwtService;
+  private final UserDetailsService userDetailsService;
+  private final ObjectMapper objectMapper;
+  private final TokenBlackListService blacklistService;
 
-    @Override
-    protected void doFilterInternal(
-        @NonNull HttpServletRequest  request,
-        @NonNull HttpServletResponse response,
-        @NonNull FilterChain         filterChain
-    ) throws ServletException, IOException {
+  @Override
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+    final String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+
+    try {
+      final String jwt = authHeader.substring(7);
+
+      if (blacklistService.isBlacklisted(jwt)) {
+        log.warn("Access attempt with revoked token");
+        handleException(response, HttpStatus.FORBIDDEN, "Token revoked. Please login again.");
+        return;
+      }
+
+      final String username = jwtService.extractUsername(jwt);
+
+      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+        // ── PORTAL DO PACIENTE ─────────────────────────────────
+        // Verificar ANTES de chamar o UserDetailsService interno,
+        // porque o email do paciente não existe como utilizador do sistema.
+        if (isPatientPortalToken(jwt)) {
+          authenticatePatientPortal(jwt, username, request);
+
+          // ── UTILIZADOR INTERNO ─────────────────────────────────
+        } else {
+          authenticateInternalUser(jwt, username, request);
         }
+      }
 
-        try {
-            final String jwt = authHeader.substring(7);
+      filterChain.doFilter(request, response);
 
-            if (blacklistService.isBlacklisted(jwt)) {
-                log.warn("Access attempt with revoked token");
-                handleException(response, HttpStatus.FORBIDDEN,
-                    "Token revoked. Please login again.");
-                return;
-            }
+    } catch (ExpiredJwtException e) {
+      log.error("Expired JWT token: {}", e.getMessage());
+      handleException(response, HttpStatus.UNAUTHORIZED, "Token expired. Please login again.");
+    } catch (MalformedJwtException e) {
+      log.error("Malformed JWT token: {}", e.getMessage());
+      handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
+    } catch (JwtException e) {
+      log.error("JWT validation error: {}", e.getMessage());
+      handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
+    } catch (UsernameNotFoundException e) {
+      log.error("User not found: {}", e.getMessage());
+      handleException(response, HttpStatus.UNAUTHORIZED, "User not found.");
+    } catch (Exception e) {
+      log.error("Authentication error: {}", e.getMessage());
+      handleException(response, HttpStatus.UNAUTHORIZED, "Authentication error.");
+    } finally {
+      TenantContext.clear();
+    }
+  }
 
-            final String username = jwtService.extractUsername(jwt);
+  // ----------------------------------------------------------------
+  // Portal do paciente — usa PatientPortalPrincipal
+  // ----------------------------------------------------------------
 
-            if (username != null
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
+  private boolean isPatientPortalToken(String token) {
+    try {
+      String tokenType =
+          jwtService.extractClaim(token, claims -> claims.get("token_type", String.class));
+      return "PATIENT_PORTAL".equals(tokenType);
+    } catch (Exception e) {
+      return false;
+    }
+  }
 
-                // ── PORTAL DO PACIENTE ─────────────────────────────────
-                // Verificar ANTES de chamar o UserDetailsService interno,
-                // porque o email do paciente não existe como utilizador do sistema.
-                if (isPatientPortalToken(jwt)) {
-                    authenticatePatientPortal(jwt, username, request);
+  private void authenticatePatientPortal(String jwt, String email, HttpServletRequest request) {
 
-                // ── UTILIZADOR INTERNO ─────────────────────────────────
-                } else {
-                    authenticateInternalUser(jwt, username, request);
-                }
-            }
+    UUID patientId =
+        jwtService.extractClaim(
+            jwt,
+            claims -> {
+              String pid = claims.get("patient_id", String.class);
+              return pid != null ? UUID.fromString(pid) : null;
+            });
 
-            filterChain.doFilter(request, response);
-
-        } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token: {}", e.getMessage());
-            handleException(response, HttpStatus.UNAUTHORIZED,
-                "Token expired. Please login again.");
-        } catch (MalformedJwtException e) {
-            log.error("Malformed JWT token: {}", e.getMessage());
-            handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
-        } catch (JwtException e) {
-            log.error("JWT validation error: {}", e.getMessage());
-            handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
-        } catch (UsernameNotFoundException e) {
-            log.error("User not found: {}", e.getMessage());
-            handleException(response, HttpStatus.UNAUTHORIZED, "User not found.");
-        } catch (Exception e) {
-            log.error("Authentication error: {}", e.getMessage());
-            handleException(response, HttpStatus.UNAUTHORIZED, "Authentication error.");
-        } finally {
-            TenantContext.clear();
-        }
+    if (patientId == null) {
+      log.warn("Portal token sem patient_id para email: {}", email);
+      return;
     }
 
-    // ----------------------------------------------------------------
-    // Portal do paciente — usa PatientPortalPrincipal
-    // ----------------------------------------------------------------
+    PatientPortalPrincipal principal = new PatientPortalPrincipal(patientId, email);
 
-    private boolean isPatientPortalToken(String token) {
-        try {
-            String tokenType = jwtService.extractClaim(token,
-                claims -> claims.get("token_type", String.class));
-            return "PATIENT_PORTAL".equals(tokenType);
-        } catch (Exception e) {
-            return false;
-        }
+    UsernamePasswordAuthenticationToken authToken =
+        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+
+    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+    log.debug("Portal autenticado: patientId={}, email={}", patientId, email);
+  }
+
+  // ----------------------------------------------------------------
+  // Utilizador interno — comportamento original sem alterações
+  // ----------------------------------------------------------------
+
+  private void authenticateInternalUser(String jwt, String username, HttpServletRequest request) {
+
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+    if (jwtService.isTokenValid(jwt, userDetails)) {
+      UUID hospitalId = jwtService.extractHospitalId(jwt);
+      if (hospitalId != null) {
+        TenantContext.setCurrentHospital(hospitalId);
+      }
+
+      UsernamePasswordAuthenticationToken authToken =
+          new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+      SecurityContextHolder.getContext().setAuthentication(authToken);
+
+      log.debug("Interno autenticado: {} (hospital: {})", username, hospitalId);
     }
+  }
 
-    private void authenticatePatientPortal(
-        String jwt, String email, HttpServletRequest request) {
+  // ----------------------------------------------------------------
+  // shouldNotFilter — igual ao original
+  // ----------------------------------------------------------------
 
-        UUID patientId = jwtService.extractClaim(jwt, claims -> {
-            String pid = claims.get("patient_id", String.class);
-            return pid != null ? UUID.fromString(pid) : null;
-        });
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getServletPath();
+    return path.startsWith("/auth/")
+        || path.startsWith("/swagger-ui")
+        || path.startsWith("/v3/api-docs")
+        || path.startsWith("/swagger-resources")
+        || path.startsWith("/webjars");
+  }
 
-        if (patientId == null) {
-            log.warn("Portal token sem patient_id para email: {}", email);
-            return;
-        }
+  // ----------------------------------------------------------------
+  // handleException — igual ao original
+  // ----------------------------------------------------------------
 
-        PatientPortalPrincipal principal =
-            new PatientPortalPrincipal(patientId, email);
+  private void handleException(HttpServletResponse response, HttpStatus status, String message)
+      throws IOException {
 
-        UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(
-                principal, null, principal.getAuthorities());
+    response.setStatus(status.value());
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
 
-        authToken.setDetails(
-            new WebAuthenticationDetailsSource().buildDetails(request));
+    Map<String, Object> error = new HashMap<>();
+    error.put("timestamp", LocalDateTime.now().toString());
+    error.put("status", status.value());
+    error.put("error", status.getReasonPhrase());
+    error.put("message", message);
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        log.debug("Portal autenticado: patientId={}, email={}", patientId, email);
-    }
-
-    // ----------------------------------------------------------------
-    // Utilizador interno — comportamento original sem alterações
-    // ----------------------------------------------------------------
-
-    private void authenticateInternalUser(
-        String jwt, String username, HttpServletRequest request) {
-
-        UserDetails userDetails =
-            userDetailsService.loadUserByUsername(username);
-
-        if (jwtService.isTokenValid(jwt, userDetails)) {
-            UUID hospitalId = jwtService.extractHospitalId(jwt);
-            if (hospitalId != null) {
-                TenantContext.setCurrentHospital(hospitalId);
-            }
-
-            UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-
-            authToken.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request));
-
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            log.debug("Interno autenticado: {} (hospital: {})",
-                username, hospitalId);
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // shouldNotFilter — igual ao original
-    // ----------------------------------------------------------------
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/auth/")
-            || path.startsWith("/swagger-ui")
-            || path.startsWith("/v3/api-docs")
-            || path.startsWith("/swagger-resources")
-            || path.startsWith("/webjars");
-    }
-
-    // ----------------------------------------------------------------
-    // handleException — igual ao original
-    // ----------------------------------------------------------------
-
-    private void handleException(HttpServletResponse response,
-        HttpStatus status, String message) throws IOException {
-
-        response.setStatus(status.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now().toString());
-        error.put("status",    status.value());
-        error.put("error",     status.getReasonPhrase());
-        error.put("message",   message);
-
-        response.getWriter().write(objectMapper.writeValueAsString(error));
-    }
+    response.getWriter().write(objectMapper.writeValueAsString(error));
+  }
 }

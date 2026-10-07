@@ -10,17 +10,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final AuditInterceptor auditInterceptor;
+  private final AuditInterceptor auditInterceptor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(auditInterceptor)
-            .addPathPatterns("/api/**")
-            .excludePathPatterns(
-                "/api/auth/**",
-                "/api/actuator/**",
-                "/api/swagger-ui/**",
-                "/api/v3/api-docs/**"
-            );
-    }
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry
+        .addInterceptor(auditInterceptor)
+        .addPathPatterns("/api/**")
+        .excludePathPatterns(
+            "/api/auth/**", "/api/actuator/**", "/api/swagger-ui/**", "/api/v3/api-docs/**");
+  }
 }

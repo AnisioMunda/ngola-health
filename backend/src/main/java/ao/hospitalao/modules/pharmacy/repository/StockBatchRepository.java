@@ -1,53 +1,50 @@
 package ao.hospitalao.modules.pharmacy.repository;
 
 import ao.hospitalao.modules.pharmacy.entity.StockBatch;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
 @Repository
 public interface StockBatchRepository extends JpaRepository<StockBatch, UUID> {
 
-    List<StockBatch> findByMedicationId(UUID medicationId);
+  List<StockBatch> findByMedicationId(UUID medicationId);
 
-    // FEFO — First Expired, First Out: lotes com stock disponível,
-    // ordenados pela validade mais próxima primeiro
-    @Query("""
+  // FEFO — First Expired, First Out: lotes com stock disponível,
+  // ordenados pela validade mais próxima primeiro
+  @Query(
+      """
         SELECT b FROM StockBatch b
         WHERE b.medication.id = :medicationId
         AND b.quantityAvailable > 0
         AND b.expiryDate >= :today
         ORDER BY b.expiryDate ASC
     """)
-    List<StockBatch> findAvailableBatchesFefo(
-        @Param("medicationId") UUID medicationId,
-        @Param("today") LocalDate today
-    );
+  List<StockBatch> findAvailableBatchesFefo(
+      @Param("medicationId") UUID medicationId, @Param("today") LocalDate today);
 
-    @Query("""
+  @Query(
+      """
         SELECT COALESCE(SUM(b.quantityAvailable), 0) FROM StockBatch b
         WHERE b.medication.id = :medicationId AND b.expiryDate >= :today
     """)
-    Integer getTotalAvailableQuantity(
-        @Param("medicationId") UUID medicationId,
-        @Param("today") LocalDate today
-    );
+  Integer getTotalAvailableQuantity(
+      @Param("medicationId") UUID medicationId, @Param("today") LocalDate today);
 
-    @Query("""
+  @Query(
+      """
         SELECT b FROM StockBatch b
         WHERE b.medication.hospital.id = :hospitalId
         AND b.quantityAvailable > 0
         AND b.expiryDate BETWEEN :today AND :limitDate
         ORDER BY b.expiryDate ASC
     """)
-    List<StockBatch> findExpiringSoon(
-        @Param("hospitalId") UUID hospitalId,
-        @Param("today") LocalDate today,
-        @Param("limitDate") LocalDate limitDate
-    );
+  List<StockBatch> findExpiringSoon(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("today") LocalDate today,
+      @Param("limitDate") LocalDate limitDate);
 }

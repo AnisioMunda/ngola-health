@@ -4,10 +4,9 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.episodes.entity.Episode;
 import ao.hospitalao.modules.patients.entity.Patient;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "stock_movements")
@@ -17,46 +16,50 @@ import java.util.UUID;
 @Builder
 public class StockMovement {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(updatable = false, nullable = false)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(updatable = false, nullable = false)
+  private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false)
-    private StockBatch batch;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "batch_id", nullable = false)
+  private StockBatch batch;
 
-    @Column(name = "movement_type", nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
-    private MovementType movementType;
+  @Column(name = "movement_type", nullable = false, length = 20)
+  @Enumerated(EnumType.STRING)
+  private MovementType movementType;
 
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+  @Column(name = "quantity", nullable = false)
+  private Integer quantity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id")
-    private Patient patient;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "patient_id")
+  private Patient patient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "episode_id")
-    private Episode episode;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "episode_id")
+  private Episode episode;
 
-    @Column(name = "reason", length = 500)
-    private String reason;
+  @Column(name = "reason", length = 500)
+  private String reason;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performed_by")
-    private User performedBy;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "performed_by")
+  private User performedBy;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private OffsetDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = OffsetDateTime.now();
-    }
+  @PrePersist
+  protected void onCreate() {
+    this.createdAt = OffsetDateTime.now();
+  }
 
-    public enum MovementType {
-        IN, DISPENSE, ADJUSTMENT, EXPIRED, RETURNED
-    }
+  public enum MovementType {
+    IN,
+    DISPENSE,
+    ADJUSTMENT,
+    EXPIRED,
+    RETURNED
+  }
 }

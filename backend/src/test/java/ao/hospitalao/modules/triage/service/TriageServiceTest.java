@@ -1,5 +1,3 @@
 package ao.hospitalao.modules.triage.service;
 
-public class TriageServiceTest {
-    
-}
+public class TriageServiceTest {}

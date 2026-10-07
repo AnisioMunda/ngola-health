@@ -2,12 +2,11 @@ package ao.hospitalao.modules.pharmacy.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "stock_batches")
@@ -17,54 +16,55 @@ import java.util.UUID;
 @Builder
 public class StockBatch {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(updatable = false, nullable = false)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(updatable = false, nullable = false)
+  private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "medication_id", nullable = false)
-    private Medication medication;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "medication_id", nullable = false)
+  private Medication medication;
 
-    @Column(name = "batch_number", nullable = false, length = 50)
-    private String batchNumber;
+  @Column(name = "batch_number", nullable = false, length = 50)
+  private String batchNumber;
 
-    @Column(name = "expiry_date", nullable = false)
-    private LocalDate expiryDate;
+  @Column(name = "expiry_date", nullable = false)
+  private LocalDate expiryDate;
 
-    @Column(name = "quantity_received", nullable = false)
-    private Integer quantityReceived;
+  @Column(name = "quantity_received", nullable = false)
+  private Integer quantityReceived;
 
-    @Column(name = "quantity_available", nullable = false)
-    private Integer quantityAvailable;
+  @Column(name = "quantity_available", nullable = false)
+  private Integer quantityAvailable;
 
-    @Column(name = "unit_cost", precision = 10, scale = 2)
-    private BigDecimal unitCost;
+  @Column(name = "unit_cost", precision = 10, scale = 2)
+  private BigDecimal unitCost;
 
-    @Column(name = "supplier", length = 200)
-    private String supplier;
+  @Column(name = "supplier", length = 200)
+  private String supplier;
 
-    @Column(name = "received_at", nullable = false)
-    private OffsetDateTime receivedAt;
+  @Column(name = "received_at", nullable = false)
+  private OffsetDateTime receivedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "created_by")
+  private User createdBy;
 
-    @PrePersist
-    protected void onCreate() {
-        this.receivedAt = OffsetDateTime.now();
-        if (this.quantityAvailable == null) {
-            this.quantityAvailable = this.quantityReceived;
-        }
+  @PrePersist
+  protected void onCreate() {
+    this.receivedAt = OffsetDateTime.now();
+    if (this.quantityAvailable == null) {
+      this.quantityAvailable = this.quantityReceived;
     }
+  }
 
-    public boolean isExpired() {
-        return expiryDate != null && expiryDate.isBefore(LocalDate.now());
-    }
+  public boolean isExpired() {
+    return expiryDate != null && expiryDate.isBefore(LocalDate.now());
+  }
 
-    public boolean isExpiringWithin(int days) {
-        return expiryDate != null && !isExpired()
-            && expiryDate.isBefore(LocalDate.now().plusDays(days));
-    }
+  public boolean isExpiringWithin(int days) {
+    return expiryDate != null
+        && !isExpired()
+        && expiryDate.isBefore(LocalDate.now().plusDays(days));
+  }
 }

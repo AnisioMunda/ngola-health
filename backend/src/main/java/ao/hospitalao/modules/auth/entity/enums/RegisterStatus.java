@@ -6,9 +6,10 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum RegisterStatus {
-    ACTIVE("Activo"),
-    INACTIVE("Inactivo"),
-    SUSPENDED("Suspenso"),;
+  ACTIVE("Activo"),
+  INACTIVE("Inactivo"),
+  SUSPENDED("Suspenso"),
+  ;
 
-    private final String descricao;
+  private final String descricao;
 }

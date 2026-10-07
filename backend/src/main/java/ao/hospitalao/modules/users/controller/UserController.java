@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,9 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -28,78 +27,71 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    @GetMapping
-    @Operation(summary = "List all users (paginated)")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<Page<UserResponse>> findAll(
-        @PageableDefault(size = 20, sort = "fullName") Pageable pageable
-    ) {
-        return ResponseEntity.ok(userService.findAll(pageable));
-    }
+  @GetMapping
+  @Operation(summary = "List all users (paginated)")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+  public ResponseEntity<Page<UserResponse>> findAll(
+      @PageableDefault(size = 20, sort = "fullName") Pageable pageable) {
+    return ResponseEntity.ok(userService.findAll(pageable));
+  }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or #id == authentication.principal.id")
-    public ResponseEntity<UserResponse> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.findById(id));
-    }
+  @GetMapping("/{id}")
+  @Operation(summary = "Get user by ID")
+  @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or #id == authentication.principal.id")
+  public ResponseEntity<UserResponse> findById(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.findById(id));
+  }
 
-    @PostMapping
-    @Operation(summary = "Create new user")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> create(
-        @Valid @RequestBody CreateUserRequest request
-    ) {
-        UserResponse created = userService.create(request);
-        URI uri = ServletUriComponentsBuilder
-            .fromCurrentRequest()
+  @PostMapping
+  @Operation(summary = "Create new user")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
+    UserResponse created = userService.create(request);
+    URI uri =
+        ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
             .buildAndExpand(created.getId())
             .toUri();
-        return ResponseEntity.created(uri).body(created);
-    }
+    return ResponseEntity.created(uri).body(created);
+  }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update user")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> update(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateUserRequest request
-    ) {
-        return ResponseEntity.ok(userService.update(id, request));
-    }
+  @PutMapping("/{id}")
+  @Operation(summary = "Update user")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<UserResponse> update(
+      @PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
+    return ResponseEntity.ok(userService.update(id, request));
+  }
 
-    @PatchMapping("/{id}/activate")
-    @Operation(summary = "Activate user")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> activate(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.ACTIVE));
-    }
+  @PatchMapping("/{id}/activate")
+  @Operation(summary = "Activate user")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<UserResponse> activate(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.ACTIVE));
+  }
 
-    @PatchMapping("/{id}/deactivate")
-    @Operation(summary = "Deactivate user")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> deactivate(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.INACTIVE));
-    }
+  @PatchMapping("/{id}/deactivate")
+  @Operation(summary = "Deactivate user")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<UserResponse> deactivate(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.INACTIVE));
+  }
 
-    @PatchMapping("/{id}/suspend")
-    @Operation(summary = "Suspend user")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> suspend(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.SUSPENDED));
-    }
+  @PatchMapping("/{id}/suspend")
+  @Operation(summary = "Suspend user")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<UserResponse> suspend(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.SUSPENDED));
+  }
 
-    @PatchMapping("/{id}/reset-password")
-    @Operation(summary = "Reset user password (admin)")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> resetPassword(
-        @PathVariable UUID id,
-        @RequestBody String newPassword
-    ) {
-        userService.resetPassword(id, newPassword);
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping("/{id}/reset-password")
+  @Operation(summary = "Reset user password (admin)")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Void> resetPassword(
+      @PathVariable UUID id, @RequestBody String newPassword) {
+    userService.resetPassword(id, newPassword);
+    return ResponseEntity.noContent().build();
+  }
 }

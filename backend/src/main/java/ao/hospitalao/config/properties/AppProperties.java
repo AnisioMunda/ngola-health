@@ -8,8 +8,5 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
-    @NotBlank
-    @Pattern(regexp = "https?://[^\\s]+", message = "must be an absolute HTTP(S) URL")
-    String baseUrl
-) {
-}
+    @NotBlank @Pattern(regexp = "https?://[^\\s]+", message = "must be an absolute HTTP(S) URL")
+        String baseUrl) {}

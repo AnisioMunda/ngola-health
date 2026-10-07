@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/inpatient")
 @RequiredArgsConstructor
@@ -27,132 +26,124 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearerAuth")
 public class InpatientController {
 
-    private final InpatientService inpatientService;
+  private final InpatientService inpatientService;
 
-    // ------------------------------------------------
-    // Enfermarias
-    // ------------------------------------------------
+  // ------------------------------------------------
+  // Enfermarias
+  // ------------------------------------------------
 
-    @GetMapping("/wards")
-    @Operation(summary = "Listar todas as enfermarias")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<WardResponse>> findAllWards() {
-        return ResponseEntity.ok(inpatientService.findAllWards());
-    }
+  @GetMapping("/wards")
+  @Operation(summary = "Listar todas as enfermarias")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<WardResponse>> findAllWards() {
+    return ResponseEntity.ok(inpatientService.findAllWards());
+  }
 
-    @PostMapping("/wards")
-    @Operation(summary = "Criar enfermaria")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ResponseEntity<WardResponse> createWard(
-        @Valid @RequestBody CreateWardRequest request
-    ) {
-        WardResponse created = inpatientService.createWard(request);
-        URI uri = ServletUriComponentsBuilder
-            .fromCurrentRequest().path("/{id}")
-            .buildAndExpand(created.getId()).toUri();
-        return ResponseEntity.created(uri).body(created);
-    }
+  @PostMapping("/wards")
+  @Operation(summary = "Criar enfermaria")
+  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  public ResponseEntity<WardResponse> createWard(@Valid @RequestBody CreateWardRequest request) {
+    WardResponse created = inpatientService.createWard(request);
+    URI uri =
+        ServletUriComponentsBuilder.fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(created.getId())
+            .toUri();
+    return ResponseEntity.created(uri).body(created);
+  }
 
-    // ------------------------------------------------
-    // Mapa de camas por enfermaria
-    // ------------------------------------------------
+  // ------------------------------------------------
+  // Mapa de camas por enfermaria
+  // ------------------------------------------------
 
-    @GetMapping("/wards/{wardId}/map")
-    @Operation(summary = "Mapa visual de camas de uma enfermaria")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WardMapResponse> getWardMap(@PathVariable UUID wardId) {
-        return ResponseEntity.ok(inpatientService.getWardMap(wardId));
-    }
+  @GetMapping("/wards/{wardId}/map")
+  @Operation(summary = "Mapa visual de camas de uma enfermaria")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<WardMapResponse> getWardMap(@PathVariable UUID wardId) {
+    return ResponseEntity.ok(inpatientService.getWardMap(wardId));
+  }
 
-    // ------------------------------------------------
-    // Camas
-    // ------------------------------------------------
+  // ------------------------------------------------
+  // Camas
+  // ------------------------------------------------
 
-    @GetMapping("/wards/{wardId}/beds")
-    @Operation(summary = "Listar camas de uma enfermaria")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<BedResponse>> findBedsByWard(@PathVariable UUID wardId) {
-        return ResponseEntity.ok(inpatientService.findBedsByWard(wardId));
-    }
+  @GetMapping("/wards/{wardId}/beds")
+  @Operation(summary = "Listar camas de uma enfermaria")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<BedResponse>> findBedsByWard(@PathVariable UUID wardId) {
+    return ResponseEntity.ok(inpatientService.findBedsByWard(wardId));
+  }
 
-    @PostMapping("/beds")
-    @Operation(summary = "Criar cama")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ResponseEntity<BedResponse> createBed(
-        @Valid @RequestBody CreateBedRequest request
-    ) {
-        return ResponseEntity.ok(inpatientService.createBed(request));
-    }
+  @PostMapping("/beds")
+  @Operation(summary = "Criar cama")
+  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  public ResponseEntity<BedResponse> createBed(@Valid @RequestBody CreateBedRequest request) {
+    return ResponseEntity.ok(inpatientService.createBed(request));
+  }
 
-    @PatchMapping("/beds/{id}/status")
-    @Operation(summary = "Actualizar estado da cama (AVAILABLE/MAINTENANCE/RESERVED)")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','NURSE')")
-    public ResponseEntity<BedResponse> updateBedStatus(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateBedStatusRequest request
-    ) {
-        return ResponseEntity.ok(inpatientService.updateBedStatus(id, request));
-    }
+  @PatchMapping("/beds/{id}/status")
+  @Operation(summary = "Actualizar estado da cama (AVAILABLE/MAINTENANCE/RESERVED)")
+  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','NURSE')")
+  public ResponseEntity<BedResponse> updateBedStatus(
+      @PathVariable UUID id, @Valid @RequestBody UpdateBedStatusRequest request) {
+    return ResponseEntity.ok(inpatientService.updateBedStatus(id, request));
+  }
 
-    // ------------------------------------------------
-    // Internamentos
-    // ------------------------------------------------
+  // ------------------------------------------------
+  // Internamentos
+  // ------------------------------------------------
 
-    @GetMapping("/admissions")
-    @Operation(summary = "Listar internamentos com filtros")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<AdmissionResponse>> findAll(
-        @RequestParam(required = false) AdmissionStatus status,
-        @RequestParam(required = false) UUID wardId,
-        @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return ResponseEntity.ok(inpatientService.findAll(status, wardId, pageable));
-    }
+  @GetMapping("/admissions")
+  @Operation(summary = "Listar internamentos com filtros")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<Page<AdmissionResponse>> findAll(
+      @RequestParam(required = false) AdmissionStatus status,
+      @RequestParam(required = false) UUID wardId,
+      @PageableDefault(size = 20) Pageable pageable) {
+    return ResponseEntity.ok(inpatientService.findAll(status, wardId, pageable));
+  }
 
-    @GetMapping("/admissions/active")
-    @Operation(summary = "Listar todos os internamentos activos")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<AdmissionResponse>> findActive() {
-        return ResponseEntity.ok(inpatientService.findActiveByHospital());
-    }
+  @GetMapping("/admissions/active")
+  @Operation(summary = "Listar todos os internamentos activos")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<AdmissionResponse>> findActive() {
+    return ResponseEntity.ok(inpatientService.findActiveByHospital());
+  }
 
-    @GetMapping("/admissions/{id}")
-    @Operation(summary = "Obter internamento por ID")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AdmissionResponse> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(inpatientService.findById(id));
-    }
+  @GetMapping("/admissions/{id}")
+  @Operation(summary = "Obter internamento por ID")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<AdmissionResponse> findById(@PathVariable UUID id) {
+    return ResponseEntity.ok(inpatientService.findById(id));
+  }
 
-    @PostMapping("/admissions")
-    @Operation(summary = "Admitir paciente (criar internamento)")
-    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER','RECEPTIONIST')")
-    public ResponseEntity<AdmissionResponse> admit(
-        @Valid @RequestBody CreateAdmissionRequest request
-    ) {
-        AdmissionResponse created = inpatientService.admit(request);
-        URI uri = ServletUriComponentsBuilder
-            .fromCurrentRequest().path("/{id}")
-            .buildAndExpand(created.getId()).toUri();
-        return ResponseEntity.created(uri).body(created);
-    }
+  @PostMapping("/admissions")
+  @Operation(summary = "Admitir paciente (criar internamento)")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER','RECEPTIONIST')")
+  public ResponseEntity<AdmissionResponse> admit(
+      @Valid @RequestBody CreateAdmissionRequest request) {
+    AdmissionResponse created = inpatientService.admit(request);
+    URI uri =
+        ServletUriComponentsBuilder.fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(created.getId())
+            .toUri();
+    return ResponseEntity.created(uri).body(created);
+  }
 
-    @PatchMapping("/admissions/{id}/discharge")
-    @Operation(summary = "Dar alta ao paciente")
-    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER')")
-    public ResponseEntity<AdmissionResponse> discharge(
-        @PathVariable UUID id,
-        @Valid @RequestBody DischargeRequest request
-    ) {
-        return ResponseEntity.ok(inpatientService.discharge(id, request));
-    }
+  @PatchMapping("/admissions/{id}/discharge")
+  @Operation(summary = "Dar alta ao paciente")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER')")
+  public ResponseEntity<AdmissionResponse> discharge(
+      @PathVariable UUID id, @Valid @RequestBody DischargeRequest request) {
+    return ResponseEntity.ok(inpatientService.discharge(id, request));
+  }
 
-    @PatchMapping("/admissions/{id}/transfer")
-    @Operation(summary = "Transferir paciente para outra cama/enfermaria")
-    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER')")
-    public ResponseEntity<AdmissionResponse> transfer(
-        @PathVariable UUID id,
-        @Valid @RequestBody TransferRequest request
-    ) {
-        return ResponseEntity.ok(inpatientService.transfer(id, request));
-    }
+  @PatchMapping("/admissions/{id}/transfer")
+  @Operation(summary = "Transferir paciente para outra cama/enfermaria")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER')")
+  public ResponseEntity<AdmissionResponse> transfer(
+      @PathVariable UUID id, @Valid @RequestBody TransferRequest request) {
+    return ResponseEntity.ok(inpatientService.transfer(id, request));
+  }
 }

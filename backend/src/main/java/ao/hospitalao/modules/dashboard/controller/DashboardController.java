@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class DashboardController {
 
-    private final DashboardService dashboardService;
+  private final DashboardService dashboardService;
 
-    @GetMapping
-    @Operation(summary = "Get dashboard statistics")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DashboardResponse> getDashboard() {
-        return ResponseEntity.ok(dashboardService.getDashboard());
-    }
+  @GetMapping
+  @Operation(summary = "Get dashboard statistics")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<DashboardResponse> getDashboard() {
+    return ResponseEntity.ok(dashboardService.getDashboard());
+  }
 }

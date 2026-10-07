@@ -8,16 +8,14 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-    info = @Info(
-        title = "HospitalAO API",
-        version = "1.0",
-        description = "Hospital Management System — Angola"
-    )
-)
+    info =
+        @Info(
+            title = "HospitalAO API",
+            version = "1.0",
+            description = "Hospital Management System — Angola"))
 @SecurityScheme(
     name = "bearerAuth",
     type = SecuritySchemeType.HTTP,
     scheme = "bearer",
-    bearerFormat = "JWT"
-)
+    bearerFormat = "JWT")
 public class SwaggerConfig {}
