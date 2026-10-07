@@ -4,20 +4,29 @@
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      Back
+      Voltar
     </button>
-    <h1>Lab Request</h1>
+    <h1>Pedido de laboratório</h1>
   </header>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading...</span>
+    <span>A carregar...</span>
   </div>
 
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">
+    {{ error }}
+    <button
+      type="button"
+      class="btn-page"
+      *ngIf="requestId && !loading && !request"
+      (click)="loadRequest(requestId)"
+    >
+      Tentar novamente
+    </button>
+  </div>
 
   <ng-container *ngIf="request && !loading">
-    <!-- Summary card -->
     <div class="summary-card">
       <div class="summary-header">
         <div>
@@ -31,57 +40,60 @@
         </div>
 
         <div class="summary-actions">
-          <button class="btn-action" *ngIf="request.status === 'PENDING'" (click)="collect()">
-            Collect Sample
+          <button class="btn-action" *ngIf="canCollect" [disabled]="saving" (click)="collect()">
+            Recolher amostra
           </button>
           <button
             class="btn-action"
-            *ngIf="request.status === 'COLLECTED'"
+            *ngIf="canStartAnalysis"
+            [disabled]="saving"
             (click)="startAnalysis()"
           >
-            Start Analysis
+            Iniciar análise
           </button>
           <button
             class="btn-cancel"
-            *ngIf="
-              request.status === 'PENDING' ||
-              request.status === 'COLLECTED' ||
-              request.status === 'IN_ANALYSIS'
-            "
+            *ngIf="canCancel"
+            [disabled]="saving"
             (click)="cancelRequest()"
           >
-            Cancel
+            Cancelar pedido
           </button>
         </div>
       </div>
 
       <div class="summary-meta">
         <div class="meta-item">
-          <span class="meta-label">Requested by</span>
+          <span class="meta-label">Solicitado por</span>
           <span class="meta-value">{{ request.requestedByName || '—' }}</span>
         </div>
         <div class="meta-item">
-          <span class="meta-label">Created</span>
-          <span class="meta-value">{{ request.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-label">Criado em</span>
+          <span class="meta-value">
+            {{ request.createdAt | date: 'dd/MM/yyyy HH:mm' : 'Africa/Luanda' }}
+          </span>
         </div>
         <div class="meta-item" *ngIf="request.collectedAt">
-          <span class="meta-label">Collected</span>
-          <span class="meta-value">{{ request.collectedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-label">Recolhido em</span>
+          <span class="meta-value">
+            {{ request.collectedAt | date: 'dd/MM/yyyy HH:mm' : 'Africa/Luanda' }}
+          </span>
         </div>
         <div class="meta-item" *ngIf="request.completedAt">
-          <span class="meta-label">Completed</span>
-          <span class="meta-value">{{ request.completedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-label">Concluído em</span>
+          <span class="meta-value">
+            {{ request.completedAt | date: 'dd/MM/yyyy HH:mm' : 'Africa/Luanda' }}
+          </span>
         </div>
       </div>
 
       <div class="clinical-notes" *ngIf="request.clinicalNotes">
-        <span class="meta-label">Clinical Notes</span>
+        <span class="meta-label">Notas clínicas</span>
         <p>{{ request.clinicalNotes }}</p>
       </div>
     </div>
 
-    <!-- Test items -->
-    <h2 class="section-title">Test Results</h2>
+    <h2 class="section-title">Resultados dos exames</h2>
 
     <div class="item-card" *ngFor="let item of request.items">
       <div class="item-header">
@@ -89,53 +101,58 @@
           <span class="item-name">{{ item.testName }}</span>
           <span class="item-code">{{ item.testCode }}</span>
         </div>
-        <span class="abnormal-flag" *ngIf="item.abnormal">⚠ Abnormal</span>
+        <span class="abnormal-flag" *ngIf="item.abnormal">⚠ Resultado anormal</span>
       </div>
 
-      <!-- View mode -->
       <div class="item-body" *ngIf="editingItemId !== item.id">
         <div class="result-display" *ngIf="item.resultValue">
           <div class="result-row">
-            <span class="result-label">Result</span>
+            <span class="result-label">Resultado</span>
             <span class="result-value" [class.abnormal]="item.abnormal">
               {{ item.resultValue }} {{ item.resultUnit }}
             </span>
           </div>
           <div class="result-row" *ngIf="item.referenceRange">
-            <span class="result-label">Reference</span>
+            <span class="result-label">Referência</span>
             <span class="result-value-muted">{{ item.referenceRange }}</span>
           </div>
           <div class="result-row" *ngIf="item.resultNotes">
-            <span class="result-label">Notes</span>
+            <span class="result-label">Notas</span>
             <span class="result-value-muted">{{ item.resultNotes }}</span>
           </div>
-          <button class="btn-edit-result" (click)="startEditing(item)">Edit Result</button>
         </div>
 
         <div class="no-result" *ngIf="!item.resultValue">
-          <span>No result submitted yet</span>
-          <button class="btn-add-result" (click)="startEditing(item)">Add Result</button>
+          <span>Resultado ainda não registado.</span>
+          <button class="btn-add-result" *ngIf="canSubmitResults" (click)="startEditing(item)">
+            Registar resultado
+          </button>
         </div>
       </div>
 
-      <!-- Edit mode -->
       <div class="item-form" *ngIf="editingItemId === item.id">
         <div class="field-row">
           <div class="field">
-            <label>Result Value</label>
-            <input type="text" [(ngModel)]="resultForm.resultValue" placeholder="e.g. 14.5" />
+            <label>Resultado *</label>
+            <input type="text" [(ngModel)]="resultForm.resultValue" placeholder="Ex.: 14,5" />
           </div>
           <div class="field">
-            <label>Unit</label>
-            <input type="text" [(ngModel)]="resultForm.resultUnit" placeholder="g/dL" />
+            <label>Unidade</label>
+            <input
+              type="text"
+              [(ngModel)]="resultForm.resultUnit"
+              maxlength="30"
+              placeholder="g/dL"
+            />
           </div>
         </div>
 
         <div class="field">
-          <label>Reference Range</label>
+          <label>Intervalo de referência</label>
           <input
             type="text"
             [(ngModel)]="resultForm.referenceRange"
+            maxlength="100"
             placeholder="12.0 - 16.0 g/dL"
           />
         </div>
@@ -143,19 +160,25 @@
         <div class="field-checkbox">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="resultForm.abnormal" />
-            <span>Mark as abnormal</span>
+            <span>Marcar como anormal</span>
           </label>
         </div>
 
         <div class="field">
-          <label>Notes</label>
+          <label>Notas</label>
           <textarea [(ngModel)]="resultForm.resultNotes" rows="2"></textarea>
         </div>
 
         <div class="item-actions">
-          <button class="btn-secondary" (click)="cancelEditing()">Cancel</button>
-          <button class="btn-primary" [disabled]="saving" (click)="saveResult(item)">
-            {{ saving ? 'Saving...' : 'Save Result' }}
+          <button class="btn-secondary" [disabled]="saving" (click)="cancelEditing()">
+            Cancelar
+          </button>
+          <button
+            class="btn-primary"
+            [disabled]="saving || !resultForm.resultValue.trim()"
+            (click)="saveResult(item)"
+          >
+            {{ saving ? 'A guardar...' : 'Guardar resultado' }}
           </button>
         </div>
       </div>

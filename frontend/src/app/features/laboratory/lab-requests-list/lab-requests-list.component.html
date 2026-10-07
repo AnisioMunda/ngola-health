@@ -1,14 +1,14 @@
 <div class="page">
   <header class="page-header">
     <div class="header-left">
-      <h1>Laboratory</h1>
-      <span class="total-badge">{{ totalElements }} requests</span>
+      <h1>Laboratório</h1>
+      <span class="total-badge">{{ totalElements }} pedidos</span>
     </div>
-    <button class="btn-primary" (click)="goToCreate()">
+    <button class="btn-primary" *ngIf="canCreate" (click)="goToCreate()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      New Request
+      Novo pedido
     </button>
   </header>
 
@@ -18,30 +18,35 @@
     </select>
   </div>
 
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">
+    {{ error }}
+    <button type="button" class="btn-page" *ngIf="canViewList && !loading" (click)="loadRequests()">
+      Tentar novamente
+    </button>
+  </div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading...</span>
+    <span>A carregar...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
     <table>
       <thead>
         <tr>
-          <th>Patient</th>
-          <th>Tests</th>
-          <th>Priority</th>
-          <th>Requested</th>
-          <th>Status</th>
-          <th>Action</th>
+          <th>Paciente</th>
+          <th>Exames</th>
+          <th>Prioridade</th>
+          <th>Pedido em</th>
+          <th>Estado</th>
+          <th>Acção</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let r of requests" (click)="goToDetail(r.id)" class="clickable">
           <td>
             <div class="name-cell">
-              <div class="avatar">{{ r.patientName[0] }}</div>
+              <div class="avatar">{{ patientInitial(r.patientName) }}</div>
               <span>{{ r.patientName }}</span>
             </div>
           </td>
@@ -60,7 +65,9 @@
               {{ priorityLabels[r.priority] }}
             </span>
           </td>
-          <td class="text-muted">{{ r.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td class="text-muted">
+            {{ r.createdAt | date: 'dd/MM/yyyy HH:mm' : 'Africa/Luanda' }}
+          </td>
           <td>
             <span class="status-badge" [class]="'status-' + r.status.toLowerCase()">
               {{ statusLabels[r.status] }}
@@ -69,10 +76,11 @@
           <td>
             <button
               class="btn-action"
-              *ngIf="r.status === 'PENDING' || r.status === 'COLLECTED'"
+              *ngIf="canAdvance(r.status)"
               (click)="advanceStatus(r, $event)"
+              [disabled]="advancingId === r.id"
             >
-              {{ getNextActionLabel(r.status) }}
+              {{ advancingId === r.id ? 'A actualizar...' : getNextActionLabel(r.status) }}
             </button>
           </td>
         </tr>
@@ -88,8 +96,10 @@
               />
               <path d="M14 28h20" stroke="currentColor" stroke-width="2" />
             </svg>
-            <p>No lab requests found</p>
-            <button class="btn-primary" (click)="goToCreate()">Create first request</button>
+            <p>Nenhum pedido de laboratório encontrado.</p>
+            <button class="btn-primary" *ngIf="canCreate" (click)="goToCreate()">
+              Criar o primeiro pedido
+            </button>
           </td>
         </tr>
       </tbody>
@@ -97,11 +107,11 @@
 
     <div class="pagination" *ngIf="totalPages > 1">
       <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
-        ← Previous
+        ← Anterior
       </button>
-      <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <span class="page-info">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
       <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-        Next →
+        Próxima →
       </button>
     </div>
   </div>

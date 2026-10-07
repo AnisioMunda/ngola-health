@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -20,10 +20,10 @@ export interface LabTestResponse {
   code: string;
   name: string;
   category: TestCategory;
-  sampleType: string;
-  turnaroundHours: number;
-  price: number;
-  referenceValues: string;
+  sampleType: string | null;
+  turnaroundHours: number | null;
+  price: number | null;
+  referenceValues: string | null;
   active: boolean;
 }
 
@@ -32,36 +32,36 @@ export interface LabRequestItemResponse {
   labTestId: string;
   testCode: string;
   testName: string;
-  resultValue: string;
-  resultUnit: string;
-  referenceRange: string;
+  resultValue: string | null;
+  resultUnit: string | null;
+  referenceRange: string | null;
   abnormal: boolean;
-  resultNotes: string;
-  resultedAt: string;
+  resultNotes: string | null;
+  resultedAt: string | null;
 }
 
 export interface LabRequestResponse {
   id: string;
   patientId: string;
   patientName: string;
-  episodeId: string;
-  requestedById: string;
-  requestedByName: string;
+  episodeId: string | null;
+  requestedById: string | null;
+  requestedByName: string | null;
   status: RequestStatus;
   priority: Priority;
-  clinicalNotes: string;
-  collectedAt: string;
-  completedAt: string;
+  clinicalNotes: string | null;
+  collectedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
   items: LabRequestItemResponse[];
 }
 
 export interface CreateLabRequestRequest {
   patientId: string;
-  episodeId?: string;
-  requestedById?: string;
+  episodeId?: string | null;
+  requestedById?: string | null;
   priority?: Priority;
-  clinicalNotes?: string;
+  clinicalNotes?: string | null;
   labTestIds: string[];
 }
 
@@ -82,18 +82,27 @@ export interface Page<T> {
 }
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
-  PENDING: 'Pending',
-  COLLECTED: 'Collected',
-  IN_ANALYSIS: 'In Analysis',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  PENDING: 'Pendente',
+  COLLECTED: 'Amostra recolhida',
+  IN_ANALYSIS: 'Em análise',
+  COMPLETED: 'Concluído',
+  CANCELLED: 'Cancelado',
 };
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
   NORMAL: 'Normal',
-  URGENT: 'Urgent',
+  URGENT: 'Urgente',
   STAT: 'STAT',
 };
+
+export function labErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+    const body = error.error as Record<string, unknown>;
+    if (typeof body['detail'] === 'string' && body['detail']) return body['detail'];
+    if (typeof body['message'] === 'string' && body['message']) return body['message'];
+  }
+  return fallback;
+}
 
 @Injectable({ providedIn: 'root' })
 export class LabService {
