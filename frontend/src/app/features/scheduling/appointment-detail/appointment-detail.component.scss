@@ -242,7 +242,11 @@
 }
 .info-value.link {
   color: #3b82f6;
+  padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
+  text-align: left;
   &:hover {
     text-decoration: underline;
   }

@@ -15,8 +15,8 @@
     <span>A carregar...</span>
   </div>
 
-  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" *ngIf="success" role="status">✓ {{ success }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <ng-container *ngIf="appointment && !loading">
     <!-- Card principal -->
@@ -41,7 +41,7 @@
                 stroke-linecap="round"
               />
             </svg>
-            {{ appointment.appointmentDate | date: 'EEEE, dd MMMM yyyy' : '' : 'pt' }}
+            {{ appointment.appointmentDate | date: 'EEEE, dd MMMM yyyy' : '' : 'pt-AO' }}
             &nbsp;|&nbsp; {{ appointment.startTime }} — {{ appointment.endTime }}
           </div>
           <div class="badges">
@@ -53,12 +53,31 @@
         </div>
 
         <div class="card-actions">
-          <button class="btn-confirm" *ngIf="canConfirm()" (click)="confirm()">✓ Confirmar</button>
-          <button class="btn-complete" *ngIf="canComplete()" (click)="complete()">
+          <button
+            class="btn-confirm"
+            *ngIf="canConfirm()"
+            [disabled]="updating"
+            (click)="confirm()"
+          >
+            ✓ Confirmar
+          </button>
+          <button
+            class="btn-complete"
+            *ngIf="canComplete()"
+            [disabled]="updating"
+            (click)="complete()"
+          >
             ✓ Realizada
           </button>
-          <button class="btn-noshow" *ngIf="canNoShow()" (click)="noShow()">! Falta</button>
-          <button class="btn-cancel" *ngIf="canCancel()" (click)="showCancelForm = !showCancelForm">
+          <button class="btn-noshow" *ngIf="canNoShow()" [disabled]="updating" (click)="noShow()">
+            ! Falta
+          </button>
+          <button
+            class="btn-cancel"
+            *ngIf="canCancel()"
+            [disabled]="updating"
+            (click)="showCancelForm = !showCancelForm"
+          >
             ✕ Cancelar
           </button>
         </div>
@@ -68,9 +87,9 @@
       <div class="info-grid">
         <div class="info-block">
           <span class="info-label">Paciente</span>
-          <span class="info-value link" (click)="goToPatient()">
+          <button type="button" class="info-value link" (click)="goToPatient()">
             {{ appointment.patientName }}
-          </span>
+          </button>
           <span class="info-sub" *ngIf="appointment.patientPhone">
             {{ appointment.patientPhone }}
           </span>
@@ -124,12 +143,18 @@
         <input
           type="text"
           [(ngModel)]="cancelReason"
+          maxlength="300"
           placeholder="Indique o motivo do cancelamento..."
         />
       </div>
       <div class="cancel-actions">
-        <button class="btn-secondary" (click)="showCancelForm = false">Voltar</button>
-        <button class="btn-danger" [disabled]="!cancelReason" (click)="cancel()">
+        <button type="button" class="btn-secondary" (click)="showCancelForm = false">Voltar</button>
+        <button
+          type="button"
+          class="btn-danger"
+          [disabled]="updating || !cancelReason.trim() || cancelReason.length > 300"
+          (click)="cancel()"
+        >
           Confirmar Cancelamento
         </button>
       </div>
