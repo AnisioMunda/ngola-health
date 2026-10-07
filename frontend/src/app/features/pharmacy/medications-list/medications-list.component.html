@@ -8,6 +8,15 @@
       <button class="btn-secondary" *ngIf="canViewStockDetails" (click)="goToExpiring()">
         ⚠ Validades próximas
       </button>
+      <button
+        type="button"
+        class="btn-secondary"
+        *ngIf="canViewStockDetails"
+        [disabled]="downloadingReport"
+        (click)="downloadStockReport()"
+      >
+        {{ downloadingReport ? 'A gerar PDF...' : 'Inventário em PDF' }}
+      </button>
       <button class="btn-primary" *ngIf="canManagePharmacy" (click)="goToAdd()">
         <svg viewBox="0 0 20 20" fill="none">
           <path
@@ -39,6 +48,12 @@
   <div class="alert-error" role="alert" *ngIf="error">
     <span>{{ error }}</span>
     <button type="button" class="retry-button" (click)="loadMedications()">Tentar novamente</button>
+  </div>
+  <div class="alert-error" role="alert" *ngIf="reportError">
+    <span>{{ reportError }}</span>
+    <button type="button" class="retry-button" (click)="downloadStockReport()">
+      Tentar novamente
+    </button>
   </div>
 
   <div class="loading-state" *ngIf="loading">

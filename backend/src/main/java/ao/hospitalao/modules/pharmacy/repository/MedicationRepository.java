@@ -18,6 +18,8 @@ public interface MedicationRepository extends JpaRepository<Medication, UUID> {
 
   Page<Medication> findByHospitalIdAndActiveTrue(UUID hospitalId, Pageable pageable);
 
+  List<Medication> findByHospitalIdAndActiveTrueOrderByNameAsc(UUID hospitalId);
+
   @Query(
       """
         SELECT m FROM Medication m

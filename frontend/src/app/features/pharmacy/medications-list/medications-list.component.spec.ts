@@ -3,12 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReportService } from '../../../core/services/report.service';
 import { MedicationResponse, PharmacyService } from '../../../core/services/pharmacy.service';
 import { MedicationsListComponent } from './medications-list.component';
 
 describe('MedicationsListComponent', () => {
   let component: MedicationsListComponent;
   let pharmacyService: jasmine.SpyObj<PharmacyService>;
+  let reportService: jasmine.SpyObj<ReportService>;
   let router: jasmine.SpyObj<Router>;
   let authService: jasmine.SpyObj<AuthService>;
 
@@ -29,6 +31,13 @@ describe('MedicationsListComponent', () => {
     pharmacyService = jasmine.createSpyObj<PharmacyService>('PharmacyService', [
       'findAllMedications',
     ]);
+    reportService = jasmine.createSpyObj<ReportService>('ReportService', [
+      'downloadStockReport',
+      'openOrDownload',
+    ]);
+    reportService.downloadStockReport.and.returnValue(
+      of(new Blob(['pdf'], { type: 'application/pdf' })),
+    );
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
     pharmacyService.findAllMedications.and.returnValue(
@@ -47,6 +56,7 @@ describe('MedicationsListComponent', () => {
       imports: [MedicationsListComponent],
       providers: [
         { provide: PharmacyService, useValue: pharmacyService },
+        { provide: ReportService, useValue: reportService },
         { provide: Router, useValue: router },
         { provide: AuthService, useValue: authService },
       ],
@@ -93,6 +103,48 @@ describe('MedicationsListComponent', () => {
     component.goToExpiring();
 
     expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('descarrega o inventário PDF apenas para perfis com acesso ao stock', () => {
+    component.downloadStockReport();
+
+    expect(reportService.downloadStockReport).toHaveBeenCalled();
+    expect(reportService.openOrDownload).toHaveBeenCalledWith(
+      jasmine.any(Blob),
+      'inventario-stock.pdf',
+    );
+    expect(component.downloadingReport).toBeFalse();
+
+    authService.getCurrentUser.and.returnValue({
+      id: 'doctor-1',
+      fullName: 'Médica',
+      username: 'medica',
+      email: 'medica@example.ao',
+      roles: ['DOCTOR'],
+      mustChangePassword: false,
+    });
+    reportService.downloadStockReport.calls.reset();
+    component.downloadStockReport();
+
+    expect(reportService.downloadStockReport).not.toHaveBeenCalled();
+  });
+
+  it('apresenta falhas ao gerar o inventário PDF', () => {
+    reportService.downloadStockReport.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: { detail: 'Inventário temporariamente indisponível.' },
+            status: 503,
+          }),
+      ),
+    );
+
+    component.downloadStockReport();
+
+    expect(component.reportError).toBe('Inventário temporariamente indisponível.');
+    expect(component.downloadingReport).toBeFalse();
+    expect(reportService.openOrDownload).not.toHaveBeenCalled();
   });
 
   it('apresenta o detalhe RFC 7807 quando a pesquisa falha', () => {

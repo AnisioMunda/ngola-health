@@ -19,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class PdfReportService {
 
   private static final Color PRIMARY = new Color(32, 58, 67);
   private static final Color ACCENT = new Color(94, 231, 223);
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
   private static final BufferedImage BRAND_LOGO = createBrandLogo();
   private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
   private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -74,7 +76,8 @@ public class PdfReportService {
               "Género", genderLabel(patient.getGender()),
               "Idade",
                   patient.getBirthDate() != null
-                      ? java.time.Period.between(patient.getBirthDate(), LocalDate.now()).getYears()
+                      ? java.time.Period.between(patient.getBirthDate(), LocalDate.now(ANGOLA_ZONE))
+                              .getYears()
                           + " anos"
                       : "-",
               "BI/NIF", nvl(patient.getNationalId()),
@@ -128,54 +131,80 @@ public class PdfReportService {
   @Transactional(readOnly = true)
   public byte[] generateStockReport() throws IOException {
     UUID hospitalId = TenantContext.getCurrentHospital();
-    Hospital hospital = getHospital();
-    List<Medication> medications = medicationRepository.findByHospitalIdAndActiveTrue(hospitalId);
+    if (hospitalId == null || TenantContext.hasPlatformAccess()) {
+      throw new AccessDeniedException("Stock reports require a hospital scope.");
+    }
+    Hospital hospital =
+        hospitalRepository
+            .findById(hospitalId)
+            .orElseThrow(() -> new EntityNotFoundException("Hospital not found: " + hospitalId));
+    List<Medication> medications =
+        medicationRepository.findByHospitalIdAndActiveTrueOrderByNameAsc(hospitalId);
+    LocalDate reportDate = LocalDate.now(ANGOLA_ZONE);
 
     try (PdfDocumentBuilder pdf = new PdfDocumentBuilder(40)) {
-      pdf.addBanner(
-          hospital != null ? hospital.getName() : "HospitalAO",
-          hospital != null ? nvl(hospital.getProvince()) : "Angola",
-          PRIMARY,
-          ACCENT);
-      pdf.addTitle("PHARMACY STOCK REPORT", 13, PRIMARY);
-      pdf.addText("Generated: " + OffsetDateTime.now().format(DT_FMT), 9, Color.GRAY, false, 4);
+      pdf.addBanner(hospital.getName(), nvl(hospital.getProvince()), PRIMARY, ACCENT);
+      pdf.addTitle("INVENTÁRIO DE STOCK DA FARMÁCIA", 13, PRIMARY);
+      pdf.addText(
+          "Gerado em: " + OffsetDateTime.now(ANGOLA_ZONE).format(DT_FMT), 9, Color.GRAY, false, 4);
 
       List<String[]> rows = new ArrayList<>();
       for (Medication medication : medications) {
-        int total =
-            stockBatchRepository.getTotalAvailableQuantity(medication.getId(), LocalDate.now());
-        boolean low = total <= medication.getMinStockLevel();
+        int total = stockBatchRepository.getTotalAvailableQuantity(medication.getId(), reportDate);
+        Integer minimum = medication.getMinStockLevel();
+        boolean low = minimum != null && total <= minimum;
         rows.add(
             new String[] {
               medication.getName(),
-              medication.getDosageForm().name(),
+              dosageFormLabel(medication.getDosageForm()),
               medication.getUnit(),
-              String.valueOf(total) + (low ? " (LOW)" : ""),
-              String.valueOf(medication.getMinStockLevel())
+              String.valueOf(total),
+              minimum != null ? String.valueOf(minimum) : "-",
+              low ? "Stock baixo" : "Normal"
             });
       }
       pdf.addTable(
-          new String[] {"Medication", "Form", "Unit", "Total Stock", "Min Level"},
+          new String[] {
+            "Medicamento", "Forma", "Unidade", "Stock disponível", "Stock mínimo", "Estado"
+          },
           rows,
-          new float[] {3, 1.5f, 1, 1.5f, 1.5f},
-          8,
+          new float[] {2.3f, 1.1f, 1, 1.3f, 1.2f, 1.1f},
+          7,
           PRIMARY,
           Color.WHITE);
 
       if (medications.isEmpty()) {
-        pdf.addText("No medications in catalog.", 10, Color.GRAY, false, 4);
+        pdf.addText("Não existem medicamentos activos no catálogo.", 10, Color.GRAY, false, 4);
       }
 
       addFooter(pdf);
       byte[] result = pdf.toByteArray();
-      log.info("Stock report generated: {} medications", medications.size());
+      log.info("Stock inventory PDF generated: {} medications", medications.size());
       return result;
     }
   }
 
   private void addFooter(PdfDocumentBuilder pdf) throws IOException {
     pdf.addText(
-        "Gerado pelo Ngola Health - " + LocalDate.now().format(DATE_FMT), 8, Color.GRAY, false, 4);
+        "Gerado pelo Ngola Health - " + LocalDate.now(ANGOLA_ZONE).format(DATE_FMT),
+        8,
+        Color.GRAY,
+        false,
+        4);
+  }
+
+  private String dosageFormLabel(Medication.DosageForm dosageForm) {
+    return switch (dosageForm) {
+      case TABLET -> "Comprimido";
+      case CAPSULE -> "Cápsula";
+      case SYRUP -> "Xarope";
+      case INJECTION -> "Injectável";
+      case CREAM -> "Creme";
+      case OINTMENT -> "Pomada";
+      case DROPS -> "Gotas";
+      case INHALER -> "Inalador";
+      case OTHER -> "Outro";
+    };
   }
 
   private String genderLabel(Patient.Gender gender) {
@@ -215,12 +244,6 @@ public class PdfReportService {
       rows.add(new String[] {values[i], values[i + 1], values[i + 2], values[i + 3]});
     }
     return rows;
-  }
-
-  private Hospital getHospital() {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-    if (hospitalId == null) return null;
-    return hospitalRepository.findById(hospitalId).orElse(null);
   }
 
   private String nvl(String value) {

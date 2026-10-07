@@ -2,6 +2,8 @@ package ao.hospitalao.modules.reports.service;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -9,6 +11,7 @@ import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
+import ao.hospitalao.modules.pharmacy.entity.Medication;
 import ao.hospitalao.modules.pharmacy.repository.MedicationRepository;
 import ao.hospitalao.modules.pharmacy.repository.StockBatchRepository;
 import ao.hospitalao.security.tenant.TenantContext;
@@ -87,24 +90,77 @@ class PdfReportServiceTest {
   }
 
   @Test
-  void stockReportCanBeGeneratedForAnEmptyCatalogue() throws Exception {
+  void stockInventoryCanBeGeneratedForAnEmptyCatalogue() throws Exception {
     UUID hospitalId = UUID.randomUUID();
     Hospital hospital = Hospital.builder().id(hospitalId).name("Hospital Geral").build();
     when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
-    when(medicationRepository.findByHospitalIdAndActiveTrue(hospitalId)).thenReturn(List.of());
+    when(medicationRepository.findByHospitalIdAndActiveTrueOrderByNameAsc(hospitalId))
+        .thenReturn(List.of());
 
     byte[] pdf;
     try (MockedStatic<TenantContext> tenantContext = mockStatic(TenantContext.class)) {
       tenantContext.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+      tenantContext.when(TenantContext::hasPlatformAccess).thenReturn(false);
       pdf = pdfReportService.generateStockReport();
     }
 
     try (var document = Loader.loadPDF(pdf)) {
       String text = new PDFTextStripper().getText(document);
 
-      assertTrue(text.contains("PHARMACY STOCK REPORT"));
-      assertTrue(text.contains("No medications in catalog."));
+      assertTrue(text.contains("INVENTÁRIO DE STOCK DA FARMÁCIA"));
+      assertTrue(text.contains("Não existem medicamentos activos no catálogo."));
       assertTrue(document.getNumberOfPages() > 0);
+    }
+  }
+
+  @Test
+  void stockInventoryIncludesLocalizedMedicationAndLowStockStatus() throws Exception {
+    UUID hospitalId = UUID.randomUUID();
+    UUID medicationId = UUID.randomUUID();
+    Hospital hospital =
+        Hospital.builder().id(hospitalId).name("Hospital São João").province("Huíla").build();
+    Medication medication =
+        Medication.builder()
+            .id(medicationId)
+            .name("Amoxicilina")
+            .genericName("Amoxicilina")
+            .dosageForm(Medication.DosageForm.CAPSULE)
+            .unit("cápsula")
+            .minStockLevel(5)
+            .build();
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(medicationRepository.findByHospitalIdAndActiveTrueOrderByNameAsc(hospitalId))
+        .thenReturn(List.of(medication));
+    when(stockBatchRepository.getTotalAvailableQuantity(eq(medicationId), any(LocalDate.class)))
+        .thenReturn(2);
+
+    byte[] pdf;
+    try (MockedStatic<TenantContext> tenantContext = mockStatic(TenantContext.class)) {
+      tenantContext.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+      tenantContext.when(TenantContext::hasPlatformAccess).thenReturn(false);
+      pdf = pdfReportService.generateStockReport();
+    }
+
+    try (var document = Loader.loadPDF(pdf)) {
+      String text = new PDFTextStripper().getText(document);
+
+      assertTrue(text.contains("Hospital São João"));
+      assertTrue(text.contains("Amoxicilina"));
+      assertTrue(text.contains("Cápsula"));
+      assertTrue(text.contains("Stock baixo"));
+      assertTrue(text.contains("2"));
+      assertTrue(text.contains("5"));
+      assertTrue(document.getNumberOfPages() > 0);
+    }
+  }
+
+  @Test
+  void stockInventoryRequiresHospitalScope() {
+    try (MockedStatic<TenantContext> tenantContext = mockStatic(TenantContext.class)) {
+      tenantContext.when(TenantContext::getCurrentHospital).thenReturn(null);
+      tenantContext.when(TenantContext::hasPlatformAccess).thenReturn(false);
+
+      assertThrows(AccessDeniedException.class, () -> pdfReportService.generateStockReport());
     }
   }
 }

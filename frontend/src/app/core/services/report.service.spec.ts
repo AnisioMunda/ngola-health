@@ -31,4 +31,18 @@ describe('ReportService', () => {
 
     expect(actualBlob).toBe(expectedBlob);
   });
+
+  it('requests the pharmacy stock inventory as a PDF blob', () => {
+    const expectedBlob = new Blob(['pdf'], { type: 'application/pdf' });
+    let actualBlob: Blob | undefined;
+
+    service.downloadStockReport().subscribe((blob) => (actualBlob = blob));
+
+    const request = httpMock.expectOne(`${environment.apiUrl}/reports/stock`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(expectedBlob);
+
+    expect(actualBlob).toBe(expectedBlob);
+  });
 });
