@@ -19,12 +19,14 @@ export type AuditAction =
 export type EntityType =
   | 'PATIENT'
   | 'EPISODE'
+  | 'PRESCRIPTION'
   | 'LAB_REQUEST'
   | 'MEDICATION'
   | 'INVOICE'
   | 'APPOINTMENT'
   | 'ADMISSION'
   | 'USER'
+  | 'HOSPITAL'
   | 'NOTIFICATION'
   | 'REPORT'
   | 'WARD'
@@ -35,17 +37,18 @@ export type AuditResult = 'SUCCESS' | 'FAILURE' | 'UNAUTHORIZED';
 
 export interface AuditLogDto {
   id: string;
+  userId: string | null;
   action: AuditAction;
   entityType: EntityType;
-  entityId: string;
+  entityId: string | null;
   description: string;
-  username: string;
-  userFullName: string;
-  ipAddress: string;
-  httpMethod: string;
-  requestUrl: string;
+  username: string | null;
+  userFullName: string | null;
+  ipAddress: string | null;
+  httpMethod: string | null;
+  requestUrl: string | null;
   result: AuditResult;
-  errorMessage: string;
+  errorMessage: string | null;
   createdAt: string;
 }
 
@@ -79,12 +82,14 @@ export const ACTION_LABELS: Record<AuditAction, string> = {
 export const ENTITY_LABELS: Record<EntityType, string> = {
   PATIENT: 'Paciente',
   EPISODE: 'Episódio',
+  PRESCRIPTION: 'Prescrição',
   LAB_REQUEST: 'Lab',
   MEDICATION: 'Medicamento',
   INVOICE: 'Factura',
   APPOINTMENT: 'Agendamento',
   ADMISSION: 'Internamento',
   USER: 'Utilizador',
+  HOSPITAL: 'Hospital',
   NOTIFICATION: 'Notificação',
   REPORT: 'Relatório',
   WARD: 'Enfermaria',

@@ -248,6 +248,7 @@ public class AuditService {
   private AuditLogDto toDto(AuditLog a) {
     return AuditLogDto.builder()
         .id(a.getId())
+        .userId(a.getUser() != null ? a.getUser().getId() : null)
         .action(a.getAction())
         .entityType(a.getEntityType())
         .entityId(a.getEntityId())
@@ -267,6 +268,7 @@ public class AuditService {
   @lombok.Builder
   public static class AuditLogDto {
     private UUID id;
+    private UUID userId;
     private AuditAction action;
     private EntityType entityType;
     private String entityId;
