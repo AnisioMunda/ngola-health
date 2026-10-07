@@ -2,6 +2,7 @@ package ao.hospitalao.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Set;
 import liquibase.changelog.ChangeLogParameters;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.parser.ChangeLogParserFactory;
@@ -10,12 +11,17 @@ import org.junit.jupiter.api.Test;
 
 class LiquibaseChangelogTest {
 
+  private static final Set<String> CHANGESETS_WITHOUT_ROLLBACK =
+      Set.of("users-004-dev-pgcrypto", "users-005-dev-bootstrap-password");
+
   @Test
-  void masterIncludesOnlySqlChangesetsThatCanBeRolledBack() throws Exception {
+  void masterIncludesSqlChangesetsAndRollsBackReversibleChanges() throws Exception {
     var changelog = parseMasterChangelog();
 
     assertThat(changelog.getChangeSets()).isNotEmpty();
     assertThat(changelog.getChangeSets())
+        // The extension can predate its changeset; the password changeset only validates input.
+        .filteredOn(changeSet -> !CHANGESETS_WITHOUT_ROLLBACK.contains(changeSet.getId()))
         .allSatisfy(
             changeSet -> {
               assertThat(changeSet.getFilePath()).endsWith(".sql");
@@ -36,6 +42,22 @@ class LiquibaseChangelogTest {
             changeSet -> {
               assertThat(changeSet.getFilePath())
                   .endsWith("changes/patients/003-hospital-scoped-identifiers.sql");
+              assertThat(changeSet.getRollback()).isNotNull();
+              assertThat(changeSet.getRollback().getChanges()).isNotEmpty();
+            });
+  }
+
+  @Test
+  void episodeTableMigrationIsIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertThat(changelog.getChangeSets())
+        .filteredOn(changeSet -> changeSet.getId().equals("006-02-criar-tabela-episodes"))
+        .singleElement()
+        .satisfies(
+            changeSet -> {
+              assertThat(changeSet.getFilePath())
+                  .endsWith("changes/episodes/001-create-episodes.sql");
               assertThat(changeSet.getRollback()).isNotNull();
               assertThat(changeSet.getRollback().getChanges()).isNotEmpty();
             });
