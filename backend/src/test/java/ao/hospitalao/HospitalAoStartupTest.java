@@ -50,5 +50,9 @@ class HospitalAoStartupTest {
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'hospitals'",
                 Long.class))
         .isEqualTo(1L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT name FROM hospitals WHERE code = 'HCL-001'", String.class))
+        .isEqualTo("Hospital Central de Luanda");
   }
 }
