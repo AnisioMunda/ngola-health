@@ -2,6 +2,9 @@ package ao.hospitalao.modules.triage.dto;
 
 import ao.hospitalao.modules.triage.entity.TriageRecord.TriagePriority;
 import ao.hospitalao.modules.triage.entity.TriageRecord.TriageStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -53,7 +56,11 @@ public class TriageDtos {
     private String patientGenderTemp;
     // Triagem
     private TriagePriority priority;
+
+    @NotBlank(message = "A queixa principal é obrigatória.")
+    @Size(max = 500, message = "A queixa principal não pode exceder 500 caracteres.")
     private String chiefComplaint;
+
     // Sinais vitais
     private String bloodPressure;
     private Integer heartRate;
@@ -67,7 +74,10 @@ public class TriageDtos {
 
   @Data
   public static class UpdatePriorityRequest {
+    @NotNull(message = "A prioridade é obrigatória.")
     private TriagePriority priority;
+
+    @Size(max = 500, message = "O motivo não pode exceder 500 caracteres.")
     private String reason;
   }
 

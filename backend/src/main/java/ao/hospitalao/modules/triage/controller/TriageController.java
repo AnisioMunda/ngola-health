@@ -28,28 +28,32 @@ public class TriageController {
 
   @GetMapping("/stats")
   @Operation(summary = "Estatísticas da urgência em tempo real")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<TriageStatsDto> getStats() {
     return ResponseEntity.ok(triageService.getStats());
   }
 
   @GetMapping("/queue")
   @Operation(summary = "Fila de espera activa (WAITING + IN_PROGRESS)")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<List<TriageResponse>> getActiveQueue() {
     return ResponseEntity.ok(triageService.getActiveQueue());
   }
 
   @GetMapping("/queue/waiting")
   @Operation(summary = "Apenas pacientes em espera")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<List<TriageResponse>> getWaitingQueue() {
     return ResponseEntity.ok(triageService.getWaitingQueue());
   }
 
   @GetMapping("/history")
   @Operation(summary = "Histórico de triagens por data")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<List<TriageResponse>> getHistory(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate date) {
@@ -58,7 +62,8 @@ public class TriageController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Detalhe de uma triagem")
-  @PreAuthorize("isAuthenticated()")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<TriageResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.findById(id));
   }
@@ -66,7 +71,7 @@ public class TriageController {
   @PostMapping
   @Operation(summary = "Criar triagem")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TriageResponse> create(@Valid @RequestBody CreateTriageRequest request) {
     TriageResponse created = triageService.create(request);
     URI uri =
@@ -80,7 +85,7 @@ public class TriageController {
   @PatchMapping("/{id}/priority")
   @Operation(summary = "Actualizar prioridade de triagem")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TriageResponse> updatePriority(
       @PathVariable UUID id, @Valid @RequestBody UpdatePriorityRequest request) {
     return ResponseEntity.ok(triageService.updatePriority(id, request));
@@ -89,7 +94,7 @@ public class TriageController {
   @PatchMapping("/{id}/call")
   @Operation(summary = "Chamar paciente — WAITING → IN_PROGRESS")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TriageResponse> callNext(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.callNext(id));
   }
@@ -97,7 +102,7 @@ public class TriageController {
   @PatchMapping("/{id}/complete")
   @Operation(summary = "Completar atendimento — IN_PROGRESS → COMPLETED")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TriageResponse> complete(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.complete(id));
   }
@@ -105,7 +110,7 @@ public class TriageController {
   @PatchMapping("/{id}/left")
   @Operation(summary = "Marcar paciente como saiu sem ser atendido")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TriageResponse> markAsLeft(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.markAsLeft(id));
   }

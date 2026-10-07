@@ -56,6 +56,11 @@ Actuator e documentação OpenAPI são restritos a `ADMIN`, `MANAGER` e
 `SUPER_ADMIN`. O CORS aceita apenas a origem exacta configurada em
 `APP_BASE_URL`; não usar origens abertas em produção.
 
+Os endpoints com dados clínicos detalhados de triagem — fila, histórico,
+detalhe, criação e alteração de estado/prioridade — exigem `ADMIN`, `DOCTOR`
+ou `NURSE`. `MANAGER` só pode consultar estatísticas agregadas; `RECEPTIONIST`
+não recebe acesso à triagem clínica.
+
 ## Isolamento entre hospitais
 
 As entidades pertencentes a um hospital que estendem `TenantScopedEntity` usam

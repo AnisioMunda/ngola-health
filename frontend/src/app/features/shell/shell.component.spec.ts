@@ -38,6 +38,12 @@ describe('ShellComponent', () => {
     ]);
   });
 
+  it('does not expose clinical triage records to managers or receptionists', () => {
+    component.currentUser = createUser(['MANAGER', 'RECEPTIONIST']);
+
+    expect(component.visibleNavItems.map((item) => item.route)).not.toContain('/triage');
+  });
+
   it('fails closed when no recognized role is present', () => {
     component.currentUser = createUser(['PATIENT', 'UNKNOWN']);
 

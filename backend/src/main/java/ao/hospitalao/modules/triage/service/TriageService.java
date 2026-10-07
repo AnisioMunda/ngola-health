@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TriageService {
 
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
+
   private final TriageRepository triageRepository;
   private final PatientRepository patientRepository;
   private final UserRepository userRepository;
@@ -71,10 +73,9 @@ public class TriageService {
   @Transactional(readOnly = true)
   public List<TriageResponse> getHistory(LocalDate date) {
     UUID hospitalId = TenantContext.getCurrentHospital();
-    LocalDate d = date != null ? date : LocalDate.now();
+    LocalDate d = date != null ? date : LocalDate.now(ANGOLA_ZONE);
 
-    // Define início do dia (00:00:00) e início do dia seguinte (00:00:00 do dia posterior)
-    OffsetDateTime startOfDay = d.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+    OffsetDateTime startOfDay = d.atStartOfDay(ANGOLA_ZONE).toOffsetDateTime();
     OffsetDateTime endOfDay = startOfDay.plusDays(1);
 
     return triageRepository.findByDate(hospitalId, startOfDay, endOfDay).stream()
@@ -98,7 +99,8 @@ public class TriageService {
   public TriageResponse create(CreateTriageRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();
 
-    if (req.getPatientId() == null && req.getPatientNameTemp() == null) {
+    if (req.getPatientId() == null
+        && (req.getPatientNameTemp() == null || req.getPatientNameTemp().isBlank())) {
       throw new IllegalArgumentException(
           "É necessário identificar o paciente ou indicar um nome temporário.");
     }
@@ -111,7 +113,8 @@ public class TriageService {
             .queueNumber((int) queueNum)
             .priority(req.getPriority() != null ? req.getPriority() : TriagePriority.GREEN)
             .chiefComplaint(req.getChiefComplaint())
-            .patientNameTemp(req.getPatientNameTemp())
+            .patientNameTemp(
+                req.getPatientNameTemp() != null ? req.getPatientNameTemp().trim() : null)
             .patientAgeTemp(req.getPatientAgeTemp())
             .patientGenderTemp(req.getPatientGenderTemp())
             .bloodPressure(req.getBloodPressure())
@@ -141,6 +144,13 @@ public class TriageService {
   @Transactional
   public TriageResponse updatePriority(UUID id, UpdatePriorityRequest req) {
     TriageRecord record = getOrThrow(id);
+    if (record.getStatus() != TriageStatus.WAITING) {
+      throw new IllegalStateException(
+          "Só é possível alterar a prioridade enquanto o paciente espera.");
+    }
+    if (req.getPriority() == null) {
+      throw new IllegalArgumentException("A prioridade é obrigatória.");
+    }
     TriagePriority oldPriority = record.getPriority();
     record.setPriority(req.getPriority());
     if (req.getReason() != null) {
@@ -182,6 +192,9 @@ public class TriageService {
   @Transactional
   public TriageResponse complete(UUID id) {
     TriageRecord record = getOrThrow(id);
+    if (record.getStatus() != TriageStatus.IN_PROGRESS) {
+      throw new IllegalStateException("Só é possível concluir uma triagem em atendimento.");
+    }
     record.setStatus(TriageStatus.COMPLETED);
     record.setCompletedAt(OffsetDateTime.now());
     return toResponse(triageRepository.save(record));
