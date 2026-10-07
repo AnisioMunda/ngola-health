@@ -2,6 +2,7 @@ package ao.hospitalao.modules.pharmacy.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.episodes.entity.Episode;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.patients.entity.Patient;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
@@ -14,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StockMovement {
+public class StockMovement extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

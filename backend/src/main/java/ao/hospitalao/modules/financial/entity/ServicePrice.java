@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.financial.entity;
 
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -13,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ServicePrice {
+public class ServicePrice extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,7 +22,7 @@ public class ServicePrice {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @Column(name = "code", nullable = false, length = 30)

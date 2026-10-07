@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,6 +31,7 @@ public class AuthController {
 
   @PostMapping("/register")
   @Operation(summary = "Register new user", description = "Create a new user account")
+  @PreAuthorize("hasRole('ADMIN')")
   @ApiResponses(
       value = {
         @ApiResponse(

@@ -2,6 +2,7 @@ package ao.hospitalao.modules.episodes.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.patients.entity.Patient;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Episode {
+public class Episode extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,7 +28,7 @@ public class Episode {
   private Patient patient;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @ManyToOne(fetch = FetchType.LAZY)

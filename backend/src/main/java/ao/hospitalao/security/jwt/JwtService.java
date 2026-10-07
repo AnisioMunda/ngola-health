@@ -15,6 +15,7 @@ import java.util.function.Function;
 import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,11 @@ public class JwtService {
     return hospitalId != null ? UUID.fromString(hospitalId) : null;
   }
 
+  public boolean isPlatformAdminToken(String token) {
+    return Boolean.TRUE.equals(
+        extractClaim(token, claims -> claims.get("platform_admin", Boolean.class)));
+  }
+
   public Date extractExpiration(String token) {
     return extractClaim(token, Claims::getExpiration);
   }
@@ -48,9 +54,14 @@ public class JwtService {
   }
 
   public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-    // Adicionar hospital_id ao token se o utilizador tiver hospital
-    if (userDetails instanceof User user && user.getHospital() != null) {
-      extraClaims.put("hospital_id", user.getHospital().getId().toString());
+    if (userDetails instanceof User user) {
+      boolean platformAdmin =
+          user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+      if (platformAdmin) {
+        extraClaims.put("platform_admin", true);
+      } else if (user.getHospitalId() != null) {
+        extraClaims.put("hospital_id", user.getHospitalId().toString());
+      }
     }
     return buildToken(extraClaims, userDetails, properties.expirationMs());
   }
@@ -92,11 +103,16 @@ public class JwtService {
    * Gera token JWT para o portal do paciente. Inclui patient_id e token_type=PATIENT_PORTAL nos
    * claims.
    */
-  public String generatePortalToken(UUID patientId, String email) {
+  public String generatePortalToken(UUID patientId, String email, UUID hospitalId) {
+    if (hospitalId == null) {
+      throw new IllegalArgumentException("A patient portal token requires a hospital scope");
+    }
+
     Map<String, Object> claims = new HashMap<>();
     claims.put("patient_id", patientId.toString());
     claims.put("token_type", "PATIENT_PORTAL");
     claims.put("email", email);
+    claims.put("hospital_id", hospitalId.toString());
 
     return Jwts.builder()
         .setClaims(claims)

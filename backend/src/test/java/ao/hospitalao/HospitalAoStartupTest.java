@@ -44,7 +44,7 @@ class HospitalAoStartupTest {
     Long appliedChangesets =
         jdbcTemplate.queryForObject("SELECT COUNT(*) FROM databasechangelog", Long.class);
 
-    assertThat(appliedChangesets).isEqualTo(52L);
+    assertThat(appliedChangesets).isEqualTo(64L);
     assertThat(
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'hospitals'",
@@ -58,5 +58,15 @@ class HospitalAoStartupTest {
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM roles WHERE name = 'SUPER_ADMIN'", Long.class))
         .isEqualTo(1L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND column_name = 'hospital_id'
+                    """,
+                Long.class))
+        .isEqualTo(34L);
   }
 }

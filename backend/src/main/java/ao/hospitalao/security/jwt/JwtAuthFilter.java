@@ -45,59 +45,61 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain)
       throws ServletException, IOException {
-
-    final String authHeader = request.getHeader("Authorization");
-
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
-
     try {
-      final String jwt = authHeader.substring(7);
-
-      if (blacklistService.isBlacklisted(jwt)) {
-        log.warn("Access attempt with revoked token");
-        handleException(response, HttpStatus.FORBIDDEN, "Token revoked. Please login again.");
-        return;
-      }
-
-      final String username = jwtService.extractUsername(jwt);
-
-      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-        // ── PORTAL DO PACIENTE ─────────────────────────────────
-        // Verificar ANTES de chamar o UserDetailsService interno,
-        // porque o email do paciente não existe como utilizador do sistema.
-        if (isPatientPortalToken(jwt)) {
-          authenticatePatientPortal(jwt, username, request);
-
-          // ── UTILIZADOR INTERNO ─────────────────────────────────
-        } else {
-          authenticateInternalUser(jwt, username, request);
+      String authHeader = request.getHeader("Authorization");
+      if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        try {
+          if (!authenticateToken(authHeader.substring(7), request, response)) {
+            return;
+          }
+        } catch (ExpiredJwtException e) {
+          log.warn("Expired JWT token: {}", e.getMessage());
+          handleException(response, HttpStatus.UNAUTHORIZED, "Token expired. Please login again.");
+          return;
+        } catch (MalformedJwtException e) {
+          log.warn("Malformed JWT token: {}", e.getMessage());
+          handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
+          return;
+        } catch (JwtException e) {
+          log.warn("JWT validation error: {}", e.getMessage());
+          handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
+          return;
+        } catch (UsernameNotFoundException e) {
+          log.warn("User not found: {}", e.getMessage());
+          handleException(response, HttpStatus.UNAUTHORIZED, "User not found.");
+          return;
+        } catch (Exception e) {
+          log.warn("Authentication error: {}", e.getMessage());
+          handleException(response, HttpStatus.UNAUTHORIZED, "Authentication error.");
+          return;
         }
       }
 
       filterChain.doFilter(request, response);
-
-    } catch (ExpiredJwtException e) {
-      log.error("Expired JWT token: {}", e.getMessage());
-      handleException(response, HttpStatus.UNAUTHORIZED, "Token expired. Please login again.");
-    } catch (MalformedJwtException e) {
-      log.error("Malformed JWT token: {}", e.getMessage());
-      handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
-    } catch (JwtException e) {
-      log.error("JWT validation error: {}", e.getMessage());
-      handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
-    } catch (UsernameNotFoundException e) {
-      log.error("User not found: {}", e.getMessage());
-      handleException(response, HttpStatus.UNAUTHORIZED, "User not found.");
-    } catch (Exception e) {
-      log.error("Authentication error: {}", e.getMessage());
-      handleException(response, HttpStatus.UNAUTHORIZED, "Authentication error.");
     } finally {
       TenantContext.clear();
     }
+  }
+
+  private boolean authenticateToken(
+      String jwt, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    if (blacklistService.isBlacklisted(jwt)) {
+      log.warn("Access attempt with revoked token");
+      handleException(response, HttpStatus.FORBIDDEN, "Token revoked. Please login again.");
+      return false;
+    }
+
+    String username = jwtService.extractUsername(jwt);
+    if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+      return true;
+    }
+
+    if (isPatientPortalToken(jwt)) {
+      authenticatePatientPortal(jwt, username, request);
+    } else {
+      authenticateInternalUser(jwt, username, request);
+    }
+    return true;
   }
 
   // ----------------------------------------------------------------
@@ -126,8 +128,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     if (patientId == null) {
       log.warn("Portal token sem patient_id para email: {}", email);
-      return;
+      throw new UsernameNotFoundException("Patient portal token has no patient ID");
     }
+
+    UUID hospitalId = jwtService.extractHospitalId(jwt);
+    if (hospitalId == null) {
+      throw new UsernameNotFoundException("Patient portal token has no hospital scope");
+    }
+    TenantContext.setCurrentHospital(hospitalId);
 
     PatientPortalPrincipal principal = new PatientPortalPrincipal(patientId, email);
 
@@ -142,38 +150,58 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   }
 
   // ----------------------------------------------------------------
-  // Utilizador interno — comportamento original sem alterações
+  // Utilizador interno
   // ----------------------------------------------------------------
 
   private void authenticateInternalUser(String jwt, String username, HttpServletRequest request) {
 
+    UUID hospitalId = jwtService.extractHospitalId(jwt);
+    boolean platformAdmin = jwtService.isPlatformAdminToken(jwt);
+    if (platformAdmin) {
+      TenantContext.setPlatformAccess();
+    } else if (hospitalId != null) {
+      TenantContext.setCurrentHospital(hospitalId);
+    } else {
+      throw new UsernameNotFoundException("Token has no hospital scope");
+    }
+
     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-    if (jwtService.isTokenValid(jwt, userDetails)) {
-      UUID hospitalId = jwtService.extractHospitalId(jwt);
-      if (hospitalId != null) {
-        TenantContext.setCurrentHospital(hospitalId);
-      }
-
-      UsernamePasswordAuthenticationToken authToken =
-          new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-      SecurityContextHolder.getContext().setAuthentication(authToken);
-
-      log.debug("Interno autenticado: {} (hospital: {})", username, hospitalId);
+    boolean hasPlatformRole =
+        userDetails.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+    if (!jwtService.isTokenValid(jwt, userDetails) || platformAdmin != hasPlatformRole) {
+      throw new UsernameNotFoundException("Token authority does not match the user account");
     }
+
+    if (!platformAdmin) {
+      if (!(userDetails instanceof ao.hospitalao.modules.auth.entity.User user)
+          || !hospitalId.equals(user.getHospitalId())) {
+        throw new UsernameNotFoundException("Token hospital does not match the user account");
+      }
+    }
+
+    UsernamePasswordAuthenticationToken authToken =
+        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+    log.debug("Interno autenticado: {} (hospital: {})", username, hospitalId);
   }
 
   // ----------------------------------------------------------------
-  // shouldNotFilter — igual ao original
+  // Rotas que não exigem autenticação JWT neste filtro
   // ----------------------------------------------------------------
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String path = request.getServletPath();
-    return path.startsWith("/auth/")
+    return path.equals("/auth/login")
+        || path.equals("/auth/refresh")
+        || path.equals("/portal/register")
+        || path.equals("/portal/login")
         || path.startsWith("/swagger-ui")
         || path.startsWith("/v3/api-docs")
         || path.startsWith("/swagger-resources")

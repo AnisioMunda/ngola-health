@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.prescription.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.pharmacy.entity.Medication;
 import ao.hospitalao.modules.pharmacy.entity.StockBatch;
 import jakarta.persistence.*;
@@ -14,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Dispensation {
+public class Dispensation extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

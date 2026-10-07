@@ -172,6 +172,9 @@ public class AuditService {
       OffsetDateTime to,
       Pageable pageable) {
     UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null && !TenantContext.hasPlatformAccess()) {
+      return Page.empty(pageable);
+    }
     return auditLogRepository
         .findAll(
             ao.hospitalao.modules.audit.repository.AuditSpecification.withFilters(
@@ -182,7 +185,16 @@ public class AuditService {
 
   @Transactional(readOnly = true)
   public List<AuditLogDto> findByEntity(EntityType entityType, String entityId) {
-    return auditLogRepository.findByEntity(entityType, entityId).stream().map(this::toDto).toList();
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null && !TenantContext.hasPlatformAccess()) {
+      return List.of();
+    }
+
+    var logs =
+        hospitalId == null
+            ? auditLogRepository.findByEntity(entityType, entityId)
+            : auditLogRepository.findByEntityAndHospital(entityType, entityId, hospitalId);
+    return logs.stream().map(this::toDto).toList();
   }
 
   @Transactional(readOnly = true)

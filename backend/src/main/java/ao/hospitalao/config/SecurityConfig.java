@@ -39,7 +39,8 @@ public class SecurityConfig {
                 auth
                     // ── Públicos ──────────────────────────────────────────
                     .requestMatchers(
-                        "/auth/**",
+                        "/auth/login",
+                        "/auth/refresh",
                         "/portal/register",
                         "/portal/login",
                         "/actuator/**",
@@ -52,9 +53,7 @@ public class SecurityConfig {
                     .permitAll()
 
                     // ── Portal do paciente ────────────────────────────────
-                    // Permite acesso a qualquer utilizador autenticado em /portal/**
-                    // (o JwtAuthFilter já garante que só tokens de portal chegam aqui
-                    //  com ROLE_PATIENT — utilizadores internos não têm esta role)
+                    // Endpoints do portal aplicam adicionalmente ROLE_PATIENT por método.
                     .requestMatchers("/portal/**")
                     .authenticated()
 

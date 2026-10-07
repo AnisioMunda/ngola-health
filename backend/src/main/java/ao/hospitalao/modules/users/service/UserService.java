@@ -6,10 +6,12 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.repository.RoleRepository;
 import ao.hospitalao.modules.auth.repository.UserRepository;
+import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.dto.UpdateUserRequest;
 import ao.hospitalao.modules.users.dto.UserResponse;
 import ao.hospitalao.modules.users.mapper.UserMapper;
+import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+  private final HospitalRepository hospitalRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
 
@@ -72,6 +75,10 @@ public class UserService {
     }
 
     Set<Role> roles = resolveRoles(request.getRoleIds());
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null) {
+      throw new AccessDeniedException("A hospital scope is required to create a user");
+    }
 
     User user =
         User.builder()
@@ -85,7 +92,9 @@ public class UserService {
             .registerStatus(RegisterStatus.ACTIVE)
             .mustChangePassword(request.isMustChangePassword())
             .roles(roles)
+            .hospital(hospitalRepository.getReferenceById(hospitalId))
             .build();
+    user.setHospitalId(hospitalId);
 
     User saved = userRepository.save(user);
     log.info("User created: {} ({})", saved.getUsername(), saved.getId());

@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.equipment.entity;
 
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.inpatient.entity.Ward;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Equipment {
+public class Equipment extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,7 +26,7 @@ public class Equipment {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @Column(name = "name", nullable = false, length = 200)

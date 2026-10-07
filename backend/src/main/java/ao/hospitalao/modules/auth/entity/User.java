@@ -2,6 +2,7 @@ package ao.hospitalao.modules.auth.entity;
 
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -16,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User implements UserDetails {
+public class User extends TenantScopedEntity implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -56,7 +57,7 @@ public class User implements UserDetails {
 
   // Multi-tenancy — hospital a que o utilizador pertence
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "hospital_id")
+  @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
   private Hospital hospital;
 
   @Column(name = "created_at", nullable = false, updatable = false)

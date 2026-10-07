@@ -14,8 +14,7 @@ de cada serviço se lembrar de acrescentar filtros às consultas.
 
 - Associar cada registo pertencente a um hospital a um `hospital_id`.
 - Aplicar o âmbito do hospital activo automaticamente na camada de persistência
-  usando um mecanismo de multi-tenancy do Hibernate, a seleccionar durante a
-  implementação técnica.
+  com `@TenantId` do Hibernate e um `CurrentTenantIdentifierResolver`.
 - Negar por omissão o acesso a dados sem um âmbito hospitalar válido.
 - Provar o isolamento com testes entre hospitais, incluindo operações de
   leitura e escrita.
@@ -31,6 +30,12 @@ de cada serviço se lembrar de acrescentar filtros às consultas.
   hospitais desactivados na listagem.
 - As mutações de hospitais são registadas na auditoria como entidade
   `HOSPITAL`.
+- O login global por email e a consulta de contas do portal são fluxos de
+  identidade: podem resolver uma conta antes de conhecer o hospital, mas só
+  em contexto explícito de plataforma e sem expor consultas clínicas fora do
+  hospital associado ao token.
+- Os eventos de auditoria podem ser globais e ter `hospital_id` nulo; a sua
+  consulta continua a ser filtrada explicitamente pelo serviço de auditoria.
 
 ## Alternativas consideradas
 
@@ -42,15 +47,20 @@ de cada serviço se lembrar de acrescentar filtros às consultas.
 ## Consequências esperadas
 
 - Entidades que pertencem a um hospital terão de transportar a associação
-  hospitalar definida pelo modelo de dados.
+  hospitalar através do `TenantScopedEntity`; tabelas de detalhe sem coluna
+  própria recebem `hospital_id` e são preenchidas a partir do registo pai.
 - O contexto do hospital terá de ser estabelecido e validado em cada pedido
   autenticado antes do acesso aos dados.
+- Sem hospital activo, o resolver usa um identificador que não corresponde a
+  nenhum hospital; o acesso global só existe durante fluxos explícitos de
+  plataforma e é confirmado pela role `SUPER_ADMIN`.
 - Testes de integração terão de provar que uma conta de um hospital não lê nem
   altera os dados de outro.
-- A escolha concreta entre `@TenantId`, `@Filter` ou outro mecanismo suportado
-  pelo Hibernate permanece por validar na fundação técnica.
+- As contas do portal são resolvidas globalmente pelo email único apenas nos
+  fluxos de login/registo; o token resultante inclui o hospital e os dados do
+  paciente ficam sujeitos ao filtro automático.
 
 ## Decisões técnicas pendentes
 
-- Seleccionar o mecanismo do Hibernate depois de verificar compatibilidade,
-  gestão do contexto e comportamento em transacções.
+- Provar a propagação do contexto de hospital em tarefas assíncronas de
+  auditoria e nos restantes fluxos que forem acrescentados.

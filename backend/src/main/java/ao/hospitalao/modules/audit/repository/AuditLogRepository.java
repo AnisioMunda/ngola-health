@@ -28,6 +28,19 @@ public interface AuditLogRepository
   List<AuditLog> findByEntity(
       @Param("entityType") EntityType entityType, @Param("entityId") String entityId);
 
+  @Query(
+      """
+        SELECT a FROM AuditLog a
+        WHERE a.entityType = :entityType
+        AND   a.entityId   = :entityId
+        AND   a.hospital.id = :hospitalId
+        ORDER BY a.createdAt DESC
+    """)
+  List<AuditLog> findByEntityAndHospital(
+      @Param("entityType") EntityType entityType,
+      @Param("entityId") String entityId,
+      @Param("hospitalId") UUID hospitalId);
+
   // Actividade recente de um utilizador
   Page<AuditLog> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 

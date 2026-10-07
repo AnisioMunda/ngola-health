@@ -28,4 +28,5 @@
     <include file="changes/patient_portal/001-patient-portal.sql" relativeToChangelogFile="true"/>
     <include file="changes/telemedicine/001-telemedicine.sql" relativeToChangelogFile="true"/>
     <include file="changes/equipment/001-equipment.sql" relativeToChangelogFile="true"/>
+    <include file="changes/hospitals/002-tenant-scoped-records.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

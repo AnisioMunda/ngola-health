@@ -72,7 +72,8 @@ public class PatientPortalService {
     portalAccountRepository.save(account);
     log.info("Portal account created for patient {}", patient.getId());
 
-    String token = jwtService.generatePortalToken(patient.getId(), req.getEmail());
+    String token =
+        jwtService.generatePortalToken(patient.getId(), req.getEmail(), patient.getHospitalId());
     return PortalLoginResponse.builder()
         .token(token)
         .patientId(patient.getId())
@@ -102,7 +103,9 @@ public class PatientPortalService {
     account.setLastLoginAt(OffsetDateTime.now());
     portalAccountRepository.save(account);
 
-    String token = jwtService.generatePortalToken(account.getPatient().getId(), account.getEmail());
+    String token =
+        jwtService.generatePortalToken(
+            account.getPatient().getId(), account.getEmail(), account.getPatient().getHospitalId());
 
     return PortalLoginResponse.builder()
         .token(token)

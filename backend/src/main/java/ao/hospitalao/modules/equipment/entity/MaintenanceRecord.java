@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.equipment.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MaintenanceRecord {
+public class MaintenanceRecord extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

@@ -8,12 +8,17 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.mapper.AuthMapper;
 import ao.hospitalao.modules.auth.repository.UserRepository;
+import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.security.jwt.JwtService;
+import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Date;
+import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,10 +37,16 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final TokenBlackListService tokenBlackListService;
   private final AuthMapper authMapper;
+  private final HospitalRepository hospitalRepository;
 
   @Transactional
   public AuthResponse register(RegisterRequest request) {
     log.info("Register attempt for email: {}", request.getEmail());
+
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null) {
+      throw new AccessDeniedException("A hospital scope is required to register a user");
+    }
 
     if (userRepository.existsByEmail(request.getEmail())) {
       log.warn("Register attempt with existing email: {}", request.getEmail());
@@ -50,7 +61,9 @@ public class AuthService {
             .fullName(request.getFullName().trim())
             .registerStatus(RegisterStatus.ACTIVE)
             .mustChangePassword(request.isMustChangePassword())
+            .hospital(hospitalRepository.getReferenceById(hospitalId))
             .build();
+    user.setHospitalId(hospitalId);
 
     User savedUser = userRepository.save(user);
 
@@ -62,32 +75,41 @@ public class AuthService {
   }
 
   public AuthResponse authenticate(AuthRequest request) {
-    log.info("Authentication attempt for email: {}", request.getEmail());
-
-    // Carregar utilizador pelo email primeiro
-    User user =
-        userRepository
-            .findByEmail(request.getEmail())
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
+    TenantContext.setPlatformAccess();
     try {
-      // Autenticar usando o username (campo usado pelo UserDetailsService)
-      authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
-    } catch (BadCredentialsException e) {
-      log.warn("Authentication failed for email: {}", request.getEmail());
-      throw new BadCredentialsException("Invalid email or password");
+      log.info("Authentication attempt for email: {}", request.getEmail());
+
+      User user =
+          userRepository
+              .findByEmail(request.getEmail())
+              .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+      try {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
+      } catch (BadCredentialsException e) {
+        log.warn("Authentication failed for email: {}", request.getEmail());
+        throw new BadCredentialsException("Invalid email or password");
+      }
+
+      boolean platformAdmin =
+          user.getAuthorities().stream()
+              .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+      if (!platformAdmin && user.getHospitalId() == null) {
+        throw new BadCredentialsException("Invalid email or password");
+      }
+
+      user.setLastLogin(OffsetDateTime.now());
+      userRepository.save(user);
+
+      String accessToken = jwtService.generateToken(user);
+      String refreshToken = jwtService.generateToken(new java.util.HashMap<>(), user);
+
+      log.info("Authentication successful for: {}", user.getEmail());
+      return authMapper.toAuthResponse(user, accessToken, refreshToken);
+    } finally {
+      TenantContext.clear();
     }
-
-    // Actualizar último login
-    user.setLastLogin(OffsetDateTime.now());
-    userRepository.save(user);
-
-    String accessToken = jwtService.generateToken(user);
-    String refreshToken = jwtService.generateToken(new java.util.HashMap<>(), user);
-
-    log.info("Authentication successful for: {}", user.getEmail());
-    return authMapper.toAuthResponse(user, accessToken, refreshToken);
   }
 
   public AuthResponse refreshToken(String authHeader) {
@@ -96,19 +118,36 @@ public class AuthService {
     }
 
     String refreshToken = authHeader.substring(7);
-    String username = jwtService.extractUsername(refreshToken);
+    TenantContext.setPlatformAccess();
+    try {
+      String username = jwtService.extractUsername(refreshToken);
+      User user =
+          userRepository
+              .findByUsername(username)
+              .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-    User user =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+      boolean platformAdmin =
+          user.getAuthorities().stream()
+              .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+      boolean tokenPlatformAdmin = jwtService.isPlatformAdminToken(refreshToken);
+      UUID tokenHospitalId = jwtService.extractHospitalId(refreshToken);
+      boolean hospitalMatches =
+          platformAdmin
+              ? tokenHospitalId == null
+              : user.getHospitalId() != null
+                  && Objects.equals(tokenHospitalId, user.getHospitalId());
 
-    if (!jwtService.isTokenValid(refreshToken, user)) {
-      throw new IllegalArgumentException("Token expired or invalid");
+      if (!jwtService.isTokenValid(refreshToken, user)
+          || tokenPlatformAdmin != platformAdmin
+          || !hospitalMatches) {
+        throw new IllegalArgumentException("Token expired or invalid");
+      }
+
+      String newAccessToken = jwtService.generateToken(user);
+      return authMapper.toAuthResponse(user, newAccessToken, refreshToken);
+    } finally {
+      TenantContext.clear();
     }
-
-    String newAccessToken = jwtService.generateToken(user);
-    return authMapper.toAuthResponse(user, newAccessToken, refreshToken);
   }
 
   public void logout(String authHeader) {
