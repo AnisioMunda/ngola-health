@@ -1,0 +1,205 @@
+<div class="page">
+
+  <header class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goToMap()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Mapa
+      </button>
+      <div>
+        <h1>Configuração de Enfermarias</h1>
+        <p>Gerir enfermarias e camas do hospital</p>
+      </div>
+    </div>
+    <button class="btn-primary" (click)="showWardForm = !showWardForm">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Nova Enfermaria
+    </button>
+  </header>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <!-- Formulário nova enfermaria -->
+  <div class="form-card" *ngIf="showWardForm">
+    <h2 class="form-title">Nova Enfermaria</h2>
+    <form [formGroup]="wardForm" (ngSubmit)="createWard()" novalidate>
+      <div class="form-grid-3">
+        <div class="field">
+          <label>Nome *</label>
+          <input type="text" formControlName="name" placeholder="Ex: Medicina Interna A"/>
+          <span class="field-error" *ngIf="wf['name'].invalid && wf['name'].touched">Obrigatório</span>
+        </div>
+        <div class="field">
+          <label>Código *</label>
+          <input type="text" formControlName="code" placeholder="Ex: MIA"/>
+          <span class="field-error" *ngIf="wf['code'].invalid && wf['code'].touched">Obrigatório</span>
+        </div>
+        <div class="field">
+          <label>Tipo *</label>
+          <select formControlName="type">
+            <option *ngFor="let t of wardTypes" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Piso</label>
+          <input type="text" formControlName="floor" placeholder="Ex: 2º Piso"/>
+        </div>
+        <div class="field">
+          <label>Médico Responsável</label>
+          <select formControlName="responsibleDoctorId">
+            <option value="">Seleccionar...</option>
+            <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Notas</label>
+          <input type="text" formControlName="notes" placeholder="Observações..."/>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showWardForm = false">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="savingWard">
+          {{ savingWard ? 'A guardar...' : 'Criar Enfermaria' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div><span>A carregar...</span>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && wards.length === 0">
+    <svg viewBox="0 0 48 48" fill="none">
+      <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2"/>
+      <path d="M16 8V4M32 8V4M4 20h40" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <p>Nenhuma enfermaria configurada.</p>
+    <button class="btn-primary" (click)="showWardForm = true">Criar primeira enfermaria</button>
+  </div>
+
+  <div class="layout" *ngIf="!loading && wards.length > 0">
+
+    <!-- Lista de enfermarias -->
+    <div class="wards-panel">
+      <h2 class="panel-title">Enfermarias</h2>
+      <div class="ward-list">
+        <div class="ward-item"
+          *ngFor="let w of wards"
+          [class.active]="selectedWardId === w.id"
+          (click)="selectedWardId = w.id; onWardSelect()">
+          <div class="ward-avatar">{{ getInitials(w.name) }}</div>
+          <div class="ward-info">
+            <span class="ward-name">{{ w.name }}</span>
+            <span class="ward-meta">{{ wardTypeLabels[w.type] }} · {{ w.totalBeds }} camas</span>
+          </div>
+          <div class="ward-occ">
+            <span class="occ-avail">{{ w.availableBeds }}</span>
+            <span class="occ-sep">/</span>
+            <span class="occ-total">{{ w.totalBeds }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Camas da enfermaria seleccionada -->
+    <div class="beds-panel" *ngIf="selectedWardId">
+      <div class="beds-header">
+        <h2 class="panel-title">
+            Camas — {{ getSelectedWardName() }}
+        </h2>
+        <button class="btn-add-bed" (click)="showBedForm = !showBedForm">
+          + Adicionar Cama
+        </button>
+      </div>
+
+      <!-- Formulário nova cama -->
+      <div class="bed-form" *ngIf="showBedForm">
+        <form [formGroup]="bedForm" (ngSubmit)="createBed()" novalidate>
+          <div class="bed-form-row">
+            <div class="field">
+              <label>Nº Cama *</label>
+              <input type="text" formControlName="bedNumber" placeholder="Ex: 01A"/>
+              <span class="field-error" *ngIf="bf['bedNumber'].invalid && bf['bedNumber'].touched">
+                Obrigatório
+              </span>
+            </div>
+            <div class="field">
+              <label>Tipo</label>
+              <select formControlName="type">
+                <option *ngFor="let t of bedTypes" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Notas</label>
+              <input type="text" formControlName="notes" placeholder="Observações..."/>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="showBedForm = false">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="savingBed">
+              {{ savingBed ? 'A guardar...' : 'Adicionar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="beds-loading" *ngIf="loadingBeds">
+        <div class="spinner-sm"></div> A carregar camas...
+      </div>
+
+      <div class="beds-table" *ngIf="!loadingBeds">
+        <div class="beds-empty" *ngIf="beds.length === 0">
+          <p>Nenhuma cama configurada. Adicione a primeira cama.</p>
+        </div>
+
+        <table *ngIf="beds.length > 0">
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Paciente</th>
+              <th>Acções</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of beds">
+              <td class="bed-number-cell">{{ b.bedNumber }}</td>
+              <td>{{ b.type }}</td>
+              <td>
+                <span class="status-chip" [class]="'s-' + b.status.toLowerCase()">
+                  {{ bedStatusLabels[b.status] }}
+                </span>
+              </td>
+              <td>{{ b.patientName || '—' }}</td>
+              <td>
+                <div class="row-actions" *ngIf="b.status !== 'OCCUPIED'">
+                  <button class="btn-xs green"
+                    *ngIf="b.status !== 'AVAILABLE'"
+                    (click)="setBedStatus(b.id, 'AVAILABLE')">Disponível</button>
+                  <button class="btn-xs amber"
+                    *ngIf="b.status !== 'MAINTENANCE'"
+                    (click)="setBedStatus(b.id, 'MAINTENANCE')">Manutenção</button>
+                  <button class="btn-xs blue"
+                    *ngIf="b.status !== 'RESERVED'"
+                    (click)="setBedStatus(b.id, 'RESERVED')">Reservar</button>
+                </div>
+                <span class="occupied-label" *ngIf="b.status === 'OCCUPIED'">
+                  Internamento activo
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>

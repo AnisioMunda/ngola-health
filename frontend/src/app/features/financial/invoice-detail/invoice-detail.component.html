@@ -1,0 +1,221 @@
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Voltar
+    </button>
+    <h1 *ngIf="invoice">{{ invoice.invoiceNumber }}</h1>
+  </header>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div><span>A carregar...</span>
+  </div>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="invoice && !loading">
+
+    <!-- Summary card -->
+    <div class="summary-card">
+      <div class="summary-header">
+        <div>
+          <div class="doc-title">
+            <span class="doc-type-badge">{{ invoice.documentType }}</span>
+            <h2>{{ invoice.invoiceNumber }}</h2>
+          </div>
+          <div class="badges">
+            <span class="status-badge" [class]="'status-' + invoice.status.toLowerCase()">
+              {{ statusLabels[invoice.status] }}
+            </span>
+            <span class="agt-badge"
+              [class]="'agt-' + (invoice.agtStatus.toLowerCase() || 'nao_submetido')">
+              AGT: {{ invoice.agtStatus === 'ACEITE' ? '✓ Aceite' :
+                      invoice.agtStatus === 'PENDING' ? '⏳ Pendente' :
+                      invoice.agtStatus === 'REJEITADO' ? '✗ Rejeitado' :
+                      invoice.agtStatus === 'ERRO_SUBMISSAO' ? '⚠ Erro' : 'Não submetido' }}
+            </span>
+            <span class="validation-code" *ngIf="invoice.agtValidationCode">
+              Código AGT: {{ invoice.agtValidationCode }}
+            </span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-issue" *ngIf="invoice.status === 'RASCUNHO'" (click)="issue()">
+            Emitir Documento
+          </button>
+          <button class="btn-payment" *ngIf="canRegisterPayment()"
+            (click)="showPaymentForm = !showPaymentForm">
+            Registar Pagamento
+          </button>
+          <button class="btn-pdf" (click)="downloadPdf()">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path d="M10 3v10M5 13l5 4 5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M3 17h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            PDF
+          </button>
+          <button class="btn-void" *ngIf="canVoid()"
+            (click)="showVoidForm = !showVoidForm">
+            Anular
+          </button>
+        </div>
+      </div>
+
+      <!-- Meta info -->
+      <div class="summary-meta">
+        <div class="meta-item">
+          <span class="meta-label">Paciente</span>
+          <span class="meta-value">{{ invoice.patientName }}</span>
+        </div>
+        <div class="meta-item" *ngIf="invoice.patientNif">
+          <span class="meta-label">NIF</span>
+          <span class="meta-value">{{ invoice.patientNif }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Data de Emissão</span>
+          <span class="meta-value">{{ invoice.issuedAt ? (invoice.issuedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Vencimento</span>
+          <span class="meta-value">{{ invoice.dueDate ? (invoice.dueDate | date:'dd/MM/yyyy') : '—' }}</span>
+        </div>
+        <div class="meta-item" *ngIf="invoice.insuranceProvider">
+          <span class="meta-label">Seguradora</span>
+          <span class="meta-value">{{ invoice.insuranceProvider }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment form -->
+    <div class="payment-card" *ngIf="showPaymentForm">
+      <h3>Registar Pagamento</h3>
+      <div class="field-row">
+        <div class="field">
+          <label>Valor (AOA) *</label>
+          <input type="number" [(ngModel)]="paymentAmount"
+            [placeholder]="'Saldo: ' + (invoice.balance | number:'1.2-2') + ' Kz'"
+            min="0.01" [max]="invoice.balance" step="0.01"/>
+        </div>
+        <div class="field">
+          <label>Forma de Pagamento *</label>
+          <select [(ngModel)]="paymentMethod">
+            <option *ngFor="let pm of paymentMethods" [value]="pm.value">{{ pm.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Referência</label>
+        <input type="text" [(ngModel)]="paymentReference"
+          placeholder="Ref. bancária, nº cheque, código Multicaixa..."/>
+      </div>
+      <div class="field">
+        <label>Notas</label>
+        <input type="text" [(ngModel)]="paymentNotes" placeholder="Observações..."/>
+      </div>
+      <div class="payment-actions">
+        <button class="btn-secondary" (click)="showPaymentForm = false">Cancelar</button>
+        <button class="btn-primary" [disabled]="!paymentAmount || savingPayment"
+          (click)="registerPayment()">
+          {{ savingPayment ? 'A registar...' : 'Confirmar Pagamento' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Void form -->
+    <div class="void-card" *ngIf="showVoidForm">
+      <h3>Anular Documento</h3>
+      <div class="field">
+        <label>Motivo de anulação *</label>
+        <input type="text" [(ngModel)]="voidReason" placeholder="Motivo obrigatório..."/>
+      </div>
+      <div class="payment-actions">
+        <button class="btn-secondary" (click)="showVoidForm = false">Cancelar</button>
+        <button class="btn-danger" [disabled]="!voidReason" (click)="voidInvoice()">
+          Confirmar Anulação
+        </button>
+      </div>
+    </div>
+
+    <!-- Linhas -->
+    <div class="section-card">
+      <h3 class="section-title">Linhas do Documento</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Qt</th>
+            <th>Preço Unit.</th>
+            <th>Desc. %</th>
+            <th>IVA %</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of invoice.items">
+            <td>{{ item.description }}</td>
+            <td>{{ item.quantity }}</td>
+            <td class="amount">{{ item.unitPrice | number:'1.2-2' }} Kz</td>
+            <td>{{ item.discountPercent || 0 }}%</td>
+            <td>{{ item.vatRate || 0 }}%</td>
+            <td class="amount total-col">{{ item.lineTotal | number:'1.2-2' }} Kz</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totais -->
+      <div class="totals-section">
+        <div class="totals-table">
+          <div class="totals-row">
+            <span>Totais sem impostos</span>
+            <span>{{ invoice.subtotal | number:'1.2-2' }} Kz</span>
+          </div>
+          <div class="totals-row">
+            <span>Valor de impostos (IVA)</span>
+            <span>{{ invoice.vatAmount | number:'1.2-2' }} Kz</span>
+          </div>
+          <div class="totals-row">
+            <span>Valor de descontos</span>
+            <span>{{ invoice.discountAmount | number:'1.2-2' }} Kz</span>
+          </div>
+          <div class="totals-row grand-total">
+            <span>Valor total a pagar</span>
+            <span>{{ invoice.totalAmount | number:'1.2-2' }} Kz</span>
+          </div>
+          <div class="totals-row paid-row" *ngIf="invoice.paidAmount > 0">
+            <span>Valor pago</span>
+            <span>{{ invoice.paidAmount | number:'1.2-2' }} Kz</span>
+          </div>
+          <div class="totals-row balance-row" *ngIf="invoice.balance > 0">
+            <span>Saldo em dívida</span>
+            <span class="balance-due">{{ invoice.balance | number:'1.2-2' }} Kz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Histórico de pagamentos -->
+    <div class="section-card" *ngIf="invoice.payments?.length">
+      <h3 class="section-title">Histórico de Pagamentos</h3>
+      <div class="payments-list">
+        <div class="payment-item" *ngFor="let p of invoice.payments">
+          <div class="payment-main">
+            <span class="payment-method">{{ pmLabels[p.paymentMethod] }}</span>
+            <span class="payment-ref" *ngIf="p.reference">Ref: {{ p.reference }}</span>
+          </div>
+          <div class="payment-meta">
+            <span>{{ p.paidAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span *ngIf="p.receivedByName">— {{ p.receivedByName }}</span>
+          </div>
+          <span class="payment-amount">{{ p.amount | number:'1.2-2' }} Kz</span>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

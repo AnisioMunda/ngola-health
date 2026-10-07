@@ -1,0 +1,180 @@
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Voltar
+    </button>
+    <h1>Novo Documento Fiscal</h1>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <div class="form-grid">
+
+      <!-- Coluna esquerda -->
+      <div class="form-section">
+        <h2 class="section-title">Dados do Documento</h2>
+
+        <div class="field">
+          <label>Tipo de Documento *</label>
+          <div class="doc-type-grid">
+            <button type="button"
+              *ngFor="let dt of docTypes"
+              class="doc-type-btn"
+              [class.selected]="f['documentType'].value === dt.value"
+              (click)="form.get('documentType')?.setValue(dt.value)">
+              <span class="doc-code">{{ dt.value }}</span>
+              <span class="doc-name">{{ dt.label.split('—')[1].trim() }}</span>
+              <span class="doc-desc">{{ dt.desc }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Paciente *</label>
+          <select formControlName="patientId">
+            <option value="">Seleccionar paciente...</option>
+            <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
+          </select>
+          <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
+            Paciente é obrigatório
+          </span>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>NIF do Paciente</label>
+            <input type="text" formControlName="patientNif"
+              placeholder="000415195LA035"/>
+            <span class="field-hint">Obrigatório para valores acima de 50.000 Kz</span>
+          </div>
+          <div class="field">
+            <label>Nome Fiscal</label>
+            <input type="text" formControlName="patientFiscalName"
+              placeholder="Nome conforme NIF"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Seguradora (opcional)</label>
+          <input type="text" formControlName="insuranceProvider"
+            placeholder="ENSA, AAA, Tranquilidade..."/>
+        </div>
+
+        <div class="field">
+          <label>Observações</label>
+          <textarea formControlName="notes" rows="2"
+            placeholder="Notas adicionais..."></textarea>
+        </div>
+      </div>
+
+      <!-- Coluna direita — resumo -->
+      <div class="form-section summary-section">
+        <h2 class="section-title">Resumo</h2>
+
+        <div class="summary-row">
+          <span>Nº linhas</span>
+          <span>{{ items.length }}</span>
+        </div>
+        <div class="summary-row total-row">
+          <span>Total a pagar</span>
+          <span>{{ getGrandTotal() | number:'1.2-2' }} Kz</span>
+        </div>
+
+        <div class="agt-info">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 6v5M10 14h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <p>O documento será submetido automaticamente à <strong>AGT Angola</strong> após emissão.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Linhas do documento -->
+    <div class="form-section" style="margin-top:1rem">
+      <div class="items-header">
+        <h2 class="section-title">Linhas do Documento</h2>
+        <button type="button" class="btn-add-item" (click)="addItem()">
+          + Adicionar Linha
+        </button>
+      </div>
+
+      <div class="items-table">
+        <div class="items-thead">
+          <span class="col-service">Serviço / Tabela de Preços</span>
+          <span class="col-desc">Descrição</span>
+          <span class="col-qty">Qt</span>
+          <span class="col-price">Preço Unit.</span>
+          <span class="col-disc">Desc. %</span>
+          <span class="col-vat">IVA %</span>
+          <span class="col-total">Total</span>
+          <span class="col-del"></span>
+        </div>
+
+        <div class="item-row" *ngFor="let item of items.controls; let i = index"
+          [formGroup]="$any(item)">
+
+          <div class="col-service">
+            <select formControlName="servicePriceId"
+              (change)="onPriceSelect(i, $any($event.target).value)">
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let p of servicePrices" [value]="p.id">
+                {{ p.code }} — {{ p.description }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-desc">
+            <input type="text" formControlName="description" placeholder="Descrição"/>
+          </div>
+
+          <div class="col-qty">
+            <input type="number" formControlName="quantity" min="1"/>
+          </div>
+
+          <div class="col-price">
+            <input type="number" formControlName="unitPrice" min="0" step="0.01"
+              placeholder="0.00"/>
+          </div>
+
+          <div class="col-disc">
+            <input type="number" formControlName="discountPercent" min="0" max="100" step="0.1"/>
+          </div>
+
+          <div class="col-vat">
+            <input type="number" formControlName="vatRate" min="0" step="0.1"/>
+          </div>
+
+          <div class="col-total amount">
+            {{ getLineTotal(i) | number:'1.2-2' }} Kz
+          </div>
+
+          <div class="col-del">
+            <button type="button" class="btn-remove" (click)="removeItem(i)"
+              [disabled]="items.length === 1">✕</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="saving">
+        <span *ngIf="!saving">Criar Documento</span>
+        <span *ngIf="saving" class="saving-state">
+          <span class="spinner-sm"></span> A guardar...
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>

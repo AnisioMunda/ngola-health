@@ -1,0 +1,136 @@
+<div class="page">
+
+  <!-- Header -->
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Back
+    </button>
+    <h1>{{ isEdit ? 'Edit User' : 'New User' }}</h1>
+  </header>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+    <span>Loading...</span>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading" novalidate>
+
+    <div class="form-grid">
+
+      <!-- Left column -->
+      <div class="form-section">
+        <h2 class="section-title">Personal Information</h2>
+
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" formControlName="fullName" placeholder="Dr. João Silva"/>
+          <span class="field-error"
+            *ngIf="f['fullName'].invalid && f['fullName'].touched">
+            Full name is required (min 3 characters)
+          </span>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Username *</label>
+            <input type="text" formControlName="username" placeholder="dr.joao.silva"/>
+            <span class="field-error"
+              *ngIf="f['username'].invalid && f['username'].touched">
+              Only lowercase letters, numbers, dots and hyphens
+            </span>
+          </div>
+
+          <div class="field">
+            <label>Email *</label>
+            <input type="email" formControlName="email" placeholder="joao@hospitalao.ao"/>
+            <span class="field-error"
+              *ngIf="f['email'].invalid && f['email'].touched">
+              Valid email is required
+            </span>
+          </div>
+        </div>
+
+        <div class="field" *ngIf="!isEdit">
+          <label>Password *</label>
+          <input type="password" formControlName="password" placeholder="Min 8 chars, uppercase, lowercase and numbers"/>
+          <span class="field-error"
+            *ngIf="f['password'].invalid && f['password'].touched">
+            Min 8 characters with uppercase, lowercase and numbers
+          </span>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" formControlName="phone" placeholder="923 456 789"/>
+          </div>
+          <div class="field">
+            <label>Professional Card</label>
+            <input type="text" formControlName="professionalCard" placeholder="OM-12345"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Speciality</label>
+          <input type="text" formControlName="especiality" placeholder="Cardiology, Pediatrics..."/>
+        </div>
+
+        <div class="field-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="mustChangePassword"/>
+            <span>Must change password on first login</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Right column — roles -->
+      <div class="form-section">
+        <h2 class="section-title">Roles *</h2>
+        <p class="section-desc">Select at least one role for this user.</p>
+
+        <div class="roles-grid">
+          <button type="button"
+            class="role-card"
+            *ngFor="let role of roles"
+            [class.role-selected]="isRoleSelected(role.id)"
+            (click)="toggleRole(role.id)">
+            <div class="role-check">
+              <svg *ngIf="isRoleSelected(role.id)" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span>{{ role.name }}</span>
+          </button>
+        </div>
+
+        <span class="field-error"
+          *ngIf="f['roleIds'].value?.length === 0 && f['roleIds'].touched">
+          Select at least one role
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Error -->
+    <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="submit" class="btn-primary" [disabled]="saving">
+        <span *ngIf="!saving">{{ isEdit ? 'Save Changes' : 'Create User' }}</span>
+        <span *ngIf="saving" class="loading-state-sm">
+          <span class="spinner-sm"></span>
+          Saving...
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>

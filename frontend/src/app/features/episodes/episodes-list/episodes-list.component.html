@@ -1,0 +1,108 @@
+<div class="page">
+
+  <header class="page-header">
+    <div class="header-left">
+      <h1>Consultations</h1>
+      <span class="total-badge">{{ totalElements }} total</span>
+    </div>
+    <button class="btn-primary" (click)="goToCreate()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Episode
+    </button>
+  </header>
+
+  <!-- Filter -->
+  <div class="filters">
+    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+      <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+    </select>
+  </div>
+
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+    <span>Loading episodes...</span>
+  </div>
+
+  <div class="table-card" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Type</th>
+          <th>Doctor</th>
+          <th>Scheduled</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of episodes" (click)="goToDetail(e.id)" class="clickable">
+          <td>
+            <div class="name-cell">
+              <div class="avatar">{{ e.patientName[0] }}</div>
+              <span>{{ e.patientName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="type-badge" [class]="'type-' + e.episodeType.toLowerCase()">
+              {{ typeLabels[e.episodeType] }}
+            </span>
+          </td>
+          <td class="text-muted">{{ e.doctorName || '—' }}</td>
+          <td class="text-muted">
+            {{ e.scheduledAt ? (e.scheduledAt | date:'dd/MM/yyyy HH:mm') : '—' }}
+          </td>
+          <td>
+            <span class="status-badge" [class]="'status-' + e.status.toLowerCase()">
+              {{ statusLabels[e.status] }}
+            </span>
+          </td>
+          <td>
+            <div class="actions" (click)="$event.stopPropagation()">
+              <button class="btn-action btn-start"
+                *ngIf="e.status === 'SCHEDULED'"
+                (click)="changeStatus(e, 'start', $event)"
+                title="Start">
+                ▶
+              </button>
+              <button class="btn-action btn-complete"
+                *ngIf="e.status === 'IN_PROGRESS'"
+                (click)="changeStatus(e, 'complete', $event)"
+                title="Complete">
+                ✓
+              </button>
+              <button class="btn-action btn-cancel"
+                *ngIf="e.status === 'SCHEDULED' || e.status === 'IN_PROGRESS'"
+                (click)="changeStatus(e, 'cancel', $event)"
+                title="Cancel">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="episodes.length === 0">
+          <td colspan="6" class="empty-state">
+            <svg viewBox="0 0 48 48" fill="none">
+              <rect x="8" y="6" width="32" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 16h16M16 24h16M16 32h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <p>No episodes found</p>
+            <button class="btn-primary" (click)="goToCreate()">Schedule first episode</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Previous</button>
+      <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Next →</button>
+    </div>
+  </div>
+
+</div>

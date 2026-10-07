@@ -1,0 +1,161 @@
+<div class="page">
+
+  <header class="page-header">
+    <div>
+      <h1>Auditoria e Segurança</h1>
+      <p>Rastreabilidade completa de todas as acções do sistema</p>
+    </div>
+  </header>
+
+  <!-- Stats cards -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M4 6h12M4 10h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.totalToday }}</span>
+        <span class="stat-label">Acções hoje</span>
+      </div>
+    </div>
+
+    <div class="stat-card" [class.alert-card]="stats.failedLoginsLast7Days > 0">
+      <div class="stat-icon" [class.red]="stats.failedLoginsLast7Days > 0" [class.green]="stats.failedLoginsLast7Days === 0">
+        <svg viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="10" cy="13" r="1.5" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.failedLoginsLast7Days }}</span>
+        <span class="stat-label">Logins falhados (7 dias)</span>
+      </div>
+    </div>
+
+    <div class="stat-card top-users-card" *ngIf="(stats.topActiveUsers?.length ?? 0) > 0">
+      <div class="stat-icon purple">
+        <svg viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <span class="stat-label">Utilizadores mais activos (7 dias)</span>
+        <div class="top-users">
+          <div class="top-user" *ngFor="let u of stats.topActiveUsers">
+            <span class="user-name-badge">{{ u.fullName || u.username }}</span>
+            <span class="user-count">{{ u.total }} acções</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <select [(ngModel)]="actionFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let a of actions" [value]="a.value">{{ a.label }}</option>
+      </select>
+
+      <select [(ngModel)]="entityTypeFilter" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let e of entityTypes" [value]="e.value">{{ e.label }}</option>
+      </select>
+
+      <div class="date-range">
+        <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()"
+          placeholder="De"/>
+        <span>—</span>
+        <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()"
+          placeholder="Até"/>
+      </div>
+
+      <button class="btn-clear"
+        *ngIf="actionFilter || entityTypeFilter || dateFrom || dateTo"
+        (click)="clearFilters()">
+        Limpar
+      </button>
+    </div>
+
+    <span class="total-count">{{ totalElements }} registos</span>
+  </div>
+
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div><span>A carregar logs...</span>
+  </div>
+
+  <!-- Tabela de logs -->
+  <div class="logs-card" *ngIf="!loading">
+
+    <div class="empty-state" *ngIf="logs.length === 0">
+      <svg viewBox="0 0 48 48" fill="none">
+        <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 18h24M12 24h18M12 30h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Sem logs de auditoria encontrados</p>
+    </div>
+
+    <table *ngIf="logs.length > 0">
+      <thead>
+        <tr>
+          <th>Acção</th>
+          <th>Utilizador</th>
+          <th>Entidade</th>
+          <th>Descrição</th>
+          <th>IP</th>
+          <th>Resultado</th>
+          <th>Quando</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs" [class]="'row-' + resultClass(log.result)">
+          <td>
+            <div class="action-cell">
+              <span class="action-icon">{{ actionIcons[log.action] }}</span>
+              <span class="action-label">{{ actionLabels[log.action] }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="user-name">{{ log.userFullName || log.username || '—' }}</span>
+            <span class="user-email" *ngIf="log.userFullName && log.username">
+              {{ log.username }}
+            </span>
+          </td>
+          <td>
+            <span class="entity-chip">{{ entityLabels[log.entityType] }}</span>
+          </td>
+          <td class="description-cell">{{ log.description }}</td>
+          <td class="ip-cell">{{ log.ipAddress || '—' }}</td>
+          <td>
+            <span class="result-badge" [class]="'result-' + resultClass(log.result)">
+              {{ log.result === 'SUCCESS' ? '✓' :
+                 log.result === 'FAILURE' ? '✗' : '⚠' }}
+              {{ log.result === 'SUCCESS' ? 'OK' :
+                 log.result === 'FAILURE' ? 'Erro' : 'Não autorizado' }}
+            </span>
+          </td>
+          <td>
+            <span class="time-ago" [title]="log.createdAt | date:'dd/MM/yyyy HH:mm:ss'">
+              {{ timeAgo(log.createdAt) }}
+            </span>
+            <span class="time-full">{{ log.createdAt | date:'dd/MM HH:mm' }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+      <span>Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+    </div>
+  </div>
+
+</div>

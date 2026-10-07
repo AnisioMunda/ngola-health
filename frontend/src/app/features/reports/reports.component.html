@@ -1,0 +1,67 @@
+<div class="page">
+
+  <header class="page-header">
+    <h1>Relatórios</h1>
+    <p>Exportação de dados e dashboards analíticos</p>
+  </header>
+
+  <!-- Dashboard Executivo -->
+  <div class="reports-grid">
+
+    <div class="report-card featured" (click)="router.navigate(['/reports/executive'])">
+      <div class="report-icon">📊</div>
+      <div class="report-info">
+        <h3>Dashboard Executivo</h3>
+        <p>KPIs financeiros, clínicos e operacionais em tempo real. Tendências mensais, ocupação de camas e produtividade médica.</p>
+      </div>
+      <span class="report-arrow">→</span>
+    </div>
+
+    <div class="report-card" (click)="exportPatients()">
+      <div class="report-icon">👥</div>
+      <div class="report-info">
+        <h3>Relatório de Pacientes</h3>
+        <p>Listagem completa com dados demográficos e episódios.</p>
+      </div>
+      <span class="btn-export-sm">PDF</span>
+    </div>
+
+    <div class="report-card" (click)="exportEpisodes()">
+      <div class="report-icon">📋</div>
+      <div class="report-info">
+        <h3>Relatório de Consultas</h3>
+        <p>Episódios por período, médico e tipo de consulta.</p>
+      </div>
+      <span class="btn-export-sm">PDF</span>
+    </div>
+
+    <div class="report-card" (click)="exportFinancial()">
+      <div class="report-icon">💰</div>
+      <div class="report-info">
+        <h3>Relatório Financeiro</h3>
+        <p>Facturas emitidas, receita por período e estado de pagamentos.</p>
+      </div>
+      <span class="btn-export-sm">PDF</span>
+    </div>
+
+    <div class="report-card" (click)="exportPharmacy()">
+      <div class="report-icon">💊</div>
+      <div class="report-info">
+        <h3>Relatório de Farmácia</h3>
+        <p>Stock actual, lotes a expirar e movimentos de saída.</p>
+      </div>
+      <span class="btn-export-sm">PDF</span>
+    </div>
+
+    <div class="report-card" (click)="exportLab()">
+      <div class="report-icon">🔬</div>
+      <div class="report-info">
+        <h3>Relatório Laboratorial</h3>
+        <p>Pedidos de exame, resultados e pendentes.</p>
+      </div>
+      <span class="btn-export-sm">PDF</span>
+    </div>
+
+  </div>
+
+</div>

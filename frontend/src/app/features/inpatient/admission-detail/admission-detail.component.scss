@@ -1,0 +1,190 @@
+:host { display: block; }
+.page { padding: 2rem; max-width: 900px; margin: 0 auto; }
+
+.page-header {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 1.5rem;
+  h1 { font-size: 1.4rem; font-weight: 700; color: #1a1f2e; margin: 0; }
+}
+
+.btn-back {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: none; border: 1px solid #e5e7eb; border-radius: 8px;
+  font-size: 0.875rem; color: #6b7280; cursor: pointer;
+  svg { width: 16px; height: 16px; }
+  &:hover { background: #f9fafb; }
+}
+
+.loading-state {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 4rem; color: #6b7280;
+}
+
+.spinner-lg {
+  width: 28px; height: 28px; border: 3px solid #e5e7eb;
+  border-top-color: #203a43; border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.alert-success {
+  padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 10px; color: #16a34a; font-size: 0.875rem; margin-bottom: 1rem;
+}
+.alert-error {
+  padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 10px; color: #dc2626; font-size: 0.875rem; margin-bottom: 1rem;
+}
+
+.detail-card, .action-card, .section-card {
+  background: white; border: 1px solid #e5e7eb; border-radius: 14px;
+  padding: 1.5rem; margin-bottom: 1rem;
+}
+
+.card-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 1.25rem; gap: 1rem; flex-wrap: wrap;
+}
+
+.patient-title {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  svg { width: 20px; height: 20px; color: #6b7280; }
+}
+
+.patient-name { font-size: 1.1rem; font-weight: 700; color: #1a1f2e; }
+.patient-name.link { cursor: pointer; color: #3b82f6; &:hover { text-decoration: underline; } }
+.patient-phone { font-size: 0.82rem; color: #9ca3af; }
+
+.badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.status-active      { background: #dbeafe; color: #1d4ed8; }
+.status-discharged  { background: #dcfce7; color: #16a34a; }
+.status-transferred { background: #fef3c7; color: #d97706; }
+.status-deceased    { background: #f1f5f9; color: #64748b; }
+
+.overdue-badge {
+  padding: 3px 10px; background: #fee2e2; color: #dc2626;
+  border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+
+.card-actions { display: flex; gap: 8px; }
+
+.btn-discharge {
+  padding: 8px 16px; background: #16a34a; color: white;
+  border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  &:hover { opacity: 0.88; }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.btn-transfer {
+  padding: 8px 16px; background: #f0f9ff; color: #0369a1;
+  border: 1px solid #bae6fd; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  &:hover { background: #e0f2fe; }
+}
+
+.info-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+  padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1rem;
+  @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.info-block { display: flex; flex-direction: column; gap: 3px; }
+.info-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; }
+.info-value { font-size: 0.875rem; color: #1a1f2e; font-weight: 600; }
+.info-value.bed-num { font-family: monospace; font-size: 1rem; color: #203a43; }
+.overdue-text { color: #dc2626 !important; }
+.days-badge { color: #7c3aed; font-size: 1rem; }
+
+.reason-section { margin-bottom: 1rem; }
+.reason-text { font-size: 0.875rem; color: #374151; line-height: 1.6; margin: 4px 0 0; }
+
+.discharge-info {
+  padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+  margin-top: 1rem;
+  .discharge-header {
+    display: flex; align-items: center; gap: 8px; font-size: 0.875rem;
+    font-weight: 600; color: #16a34a; margin-bottom: 6px;
+    svg { width: 16px; height: 16px; }
+  }
+  p { font-size: 0.82rem; color: #166534; margin: 0; }
+}
+
+.condition-badge {
+  padding: 2px 8px; background: #dcfce7; color: #16a34a;
+  border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+}
+
+// Action card
+.action-card {
+  border-color: #e5e7eb;
+  h3 { font-size: 0.95rem; font-weight: 700; color: #1a1f2e; margin: 0 0 1rem; }
+}
+
+.field {
+  margin-bottom: 0.875rem;
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 5px; }
+}
+
+input, select, textarea {
+  width: 100%; height: 42px; padding: 0 12px;
+  border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.875rem;
+  color: #1a1f2e; background: white; box-sizing: border-box; outline: none; font-family: inherit;
+  &:focus { border-color: #203a43; }
+}
+textarea { height: auto; padding: 10px 12px; resize: vertical; }
+
+.action-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 0.5rem; }
+
+.btn-secondary {
+  padding: 9px 16px; background: white; color: #374151;
+  border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+
+.btn-transfer-confirm {
+  padding: 9px 18px; background: #3b82f6; color: white; border: none;
+  border-radius: 9px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { background: #2563eb; }
+}
+
+.beds-loading {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  color: #9ca3af; font-size: 0.875rem;
+}
+.spinner-sm {
+  width: 16px; height: 16px; border: 2px solid #e5e7eb;
+  border-top-color: #203a43; border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+
+.beds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+
+.bed-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px;
+  background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; cursor: pointer;
+  &.selected { background: #16a34a; border-color: #16a34a;
+    .bed-num, .bed-lbl { color: white; } }
+  &:hover:not(.selected) { border-color: #16a34a; }
+}
+.bed-num { font-size: 0.9rem; font-weight: 800; color: #16a34a; }
+.bed-lbl { font-size: 0.62rem; color: #9ca3af; text-align: center; }
+
+.no-beds { padding: 1rem; color: #9ca3af; font-size: 0.875rem; text-align: center; }
+
+// Transfers
+.section-title { font-size: 0.875rem; font-weight: 700; color: #1a1f2e; margin: 0 0 1rem; }
+.transfer-list { display: flex; flex-direction: column; gap: 10px; }
+
+.transfer-item {
+  padding: 10px 12px; background: #f8f9fb; border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.transfer-arrow {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  font-size: 0.875rem; font-weight: 600; color: #1a1f2e;
+  svg { width: 16px; height: 16px; color: #9ca3af; flex-shrink: 0; }
+}
+
+.transfer-meta {
+  display: flex; gap: 10px; font-size: 0.75rem; color: #9ca3af; flex-wrap: wrap;
+}
+.transfer-reason { color: #6b7280; font-style: italic; }

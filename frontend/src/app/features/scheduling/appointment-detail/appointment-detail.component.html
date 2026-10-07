@@ -1,0 +1,117 @@
+<!-- appointment-detail.component.html -->
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Voltar
+    </button>
+    <h1>Detalhe do Agendamento</h1>
+  </header>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div><span>A carregar...</span>
+  </div>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="appointment && !loading">
+
+    <!-- Card principal -->
+    <div class="detail-card">
+      <div class="card-header">
+        <div>
+          <div class="appt-date">
+            <svg viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M2 8h16M7 2v2M13 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            {{ appointment.appointmentDate | date:'EEEE, dd MMMM yyyy':'':'pt' }}
+            &nbsp;|&nbsp; {{ appointment.startTime }} — {{ appointment.endTime }}
+          </div>
+          <div class="badges">
+            <span class="status-badge" [class]="'status-' + appointment.status.toLowerCase()">
+              {{ statusLabels[appointment.status] }}
+            </span>
+            <span class="type-badge">{{ typeLabels[appointment.appointmentType] }}</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-confirm"  *ngIf="canConfirm()"  (click)="confirm()">✓ Confirmar</button>
+          <button class="btn-complete" *ngIf="canComplete()" (click)="complete()">✓ Realizada</button>
+          <button class="btn-noshow"   *ngIf="canNoShow()"   (click)="noShow()">! Falta</button>
+          <button class="btn-cancel"   *ngIf="canCancel()"
+            (click)="showCancelForm = !showCancelForm">✕ Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div class="info-grid">
+        <div class="info-block">
+          <span class="info-label">Paciente</span>
+          <span class="info-value link" (click)="goToPatient()">
+            {{ appointment.patientName }}
+          </span>
+          <span class="info-sub" *ngIf="appointment.patientPhone">
+            {{ appointment.patientPhone }}
+          </span>
+        </div>
+        <div class="info-block">
+          <span class="info-label">Médico</span>
+          <span class="info-value">{{ appointment.doctorName }}</span>
+          <span class="info-sub">{{ appointment.doctorSpecialty }}</span>
+        </div>
+        <div class="info-block">
+          <span class="info-label">Motivo</span>
+          <span class="info-value">{{ appointment.reason }}</span>
+        </div>
+        <div class="info-block" *ngIf="appointment.notes">
+          <span class="info-label">Notas</span>
+          <span class="info-value">{{ appointment.notes }}</span>
+        </div>
+        <div class="info-block" *ngIf="appointment.bookedByName">
+          <span class="info-label">Marcado por</span>
+          <span class="info-value">{{ appointment.bookedByName }}</span>
+        </div>
+        <div class="info-block" *ngIf="appointment.confirmedAt">
+          <span class="info-label">Confirmado em</span>
+          <span class="info-value">{{ appointment.confirmedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+
+      <!-- Cancelamento -->
+      <div class="cancellation-info" *ngIf="appointment.status === 'CANCELLED'">
+        <svg viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <span class="cancel-label">Motivo de cancelamento</span>
+          <span class="cancel-reason">{{ appointment.cancellationReason }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário de cancelamento -->
+    <div class="cancel-card" *ngIf="showCancelForm">
+      <h3>Confirmar Cancelamento</h3>
+      <div class="field">
+        <label>Motivo *</label>
+        <input type="text" [(ngModel)]="cancelReason"
+          placeholder="Indique o motivo do cancelamento..."/>
+      </div>
+      <div class="cancel-actions">
+        <button class="btn-secondary" (click)="showCancelForm = false">Voltar</button>
+        <button class="btn-danger" [disabled]="!cancelReason" (click)="cancel()">
+          Confirmar Cancelamento
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

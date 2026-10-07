@@ -1,0 +1,755 @@
+<div class="portal-layout">
+
+  <!-- Sidebar -->
+  <aside class="portal-sidebar">
+
+    <div class="sidebar-brand">
+      <span class="brand-icon">H</span>
+      <span class="brand-name">HospitalAO</span>
+    </div>
+
+    <div class="patient-card">
+      <div class="patient-avatar">{{ getInitials() }}</div>
+
+      <div class="patient-info">
+        <span class="patient-name">{{ user?.patientName }}</span>
+        <span class="patient-email">{{ user?.email }}</span>
+      </div>
+    </div>
+
+    <nav class="portal-nav">
+
+      <!-- Início -->
+      <button
+        class="nav-item"
+        [class.active]="activeTab === 'home'"
+        (click)="onTabChange('home')">
+
+        <svg viewBox="0 0 20 20" fill="none">
+          <path
+            d="M3 9.5L10 3l7 6.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+
+          <path
+            d="M7 18v-6h6v6"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+        </svg>
+
+        Início
+      </button>
+
+      <!-- Consultas -->
+      <button
+        class="nav-item"
+        [class.active]="activeTab === 'episodes'"
+        (click)="onTabChange('episodes')">
+
+        <svg viewBox="0 0 20 20" fill="none">
+          <rect
+            x="3"
+            y="2"
+            width="14"
+            height="16"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+
+          <path
+            d="M7 7h6M7 10h6M7 13h4"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"/>
+        </svg>
+
+        Consultas
+
+        <span
+          class="nav-badge"
+          *ngIf="(dashboard?.totalEpisodes ?? 0) > 0">
+
+          {{ dashboard?.totalEpisodes ?? 0 }}
+
+        </span>
+
+      </button>
+
+      <!-- Prescrições -->
+      <button
+        class="nav-item"
+        [class.active]="activeTab === 'prescriptions'"
+        (click)="onTabChange('prescriptions')">
+
+        <svg viewBox="0 0 20 20" fill="none">
+
+          <path
+            d="M4 2h12a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+
+          <path
+            d="M7 7h6M7 10h6M7 13h3"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"/>
+
+        </svg>
+
+        Prescrições
+
+      </button>
+
+      <!-- Facturas -->
+      <button
+        class="nav-item"
+        [class.active]="activeTab === 'invoices'"
+        (click)="onTabChange('invoices')">
+
+        <svg viewBox="0 0 20 20" fill="none">
+
+          <rect
+            x="2"
+            y="4"
+            width="16"
+            height="13"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+
+          <path
+            d="M2 8h16"
+            stroke="currentColor"
+            stroke-width="1.5"/>
+
+          <circle
+            cx="6"
+            cy="13"
+            r="1"
+            fill="currentColor"/>
+
+          <path
+            d="M10 12h4"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"/>
+
+        </svg>
+
+        Facturas
+
+        <span
+          class="nav-badge alert"
+          *ngIf="(dashboard?.pendingInvoices ?? 0) > 0">
+
+          {{ dashboard?.pendingInvoices ?? 0 }}
+
+        </span>
+
+      </button>
+
+    </nav>
+
+    <!-- Logout -->
+    <button
+      class="logout-btn"
+      (click)="logout()">
+
+      <svg viewBox="0 0 20 20" fill="none">
+
+        <path
+          d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"/>
+
+        <path
+          d="M13 6l4 4-4 4M7 10h10"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"/>
+
+      </svg>
+
+      Sair
+
+    </button>
+
+  </aside>
+
+
+  <!-- Main content -->
+  <main class="portal-main">
+
+    <!-- Loading -->
+    <div
+      class="loading-state"
+      *ngIf="loading">
+
+      <div class="spinner-lg"></div>
+
+      <span>A carregar...</span>
+
+    </div>
+
+
+    <!-- Error -->
+    <div
+      class="alert-error"
+      *ngIf="error">
+
+      {{ error }}
+
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- HOME -->
+    <!-- ====================================================== -->
+
+    <ng-container
+      *ngIf="!loading && activeTab === 'home' && dashboard">
+
+      <!-- Header -->
+      <header class="content-header">
+
+        <h1>
+          Olá, {{ getPatientFirstName() }} 👋
+        </h1>
+
+        <p>
+          O seu resumo de saúde
+        </p>
+
+      </header>
+
+
+      <!-- ================================================== -->
+      <!-- KPIs -->
+      <!-- ================================================== -->
+
+      <div class="kpi-grid">
+
+        <!-- Consultas -->
+        <div class="kpi-card">
+
+          <span class="kpi-icon">
+            📋
+          </span>
+
+          <div class="kpi-data">
+
+            <span class="kpi-value">
+              {{ dashboard.totalEpisodes }}
+            </span>
+
+            <span class="kpi-label">
+              Consultas
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- Próximas consultas -->
+        <div class="kpi-card">
+
+          <span class="kpi-icon">
+            📅
+          </span>
+
+          <div class="kpi-data">
+
+            <span class="kpi-value">
+              {{ dashboard.upcomingAppointments }}
+            </span>
+
+            <span class="kpi-label">
+              Próximas consultas
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- Facturas pendentes -->
+        <div
+          class="kpi-card"
+          [class.alert-card]="dashboard.pendingInvoices > 0">
+
+          <span class="kpi-icon">
+            💰
+          </span>
+
+          <div class="kpi-data">
+
+            <span class="kpi-value">
+              {{ dashboard.pendingInvoices }}
+            </span>
+
+            <span class="kpi-label">
+              Facturas pendentes
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================== -->
+      <!-- Próximas consultas -->
+      <!-- ================================================== -->
+
+      <div
+        class="section-card"
+        *ngIf="(dashboard.upcomingAppointmentsList?.length ?? 0) > 0">
+
+        <h2>
+          Próximas Consultas
+        </h2>
+
+        <div class="appointment-list">
+
+          <div
+            class="appointment-row"
+            *ngFor="let a of dashboard.upcomingAppointmentsList">
+
+            <div class="appt-icon">
+              📅
+            </div>
+
+            <div class="appt-info">
+
+              <span class="appt-doctor">
+                {{ a.doctorName }}
+              </span>
+
+              <span class="appt-date">
+                {{ a.scheduledAt | date:'dd MMM yyyy, HH:mm' }}
+              </span>
+
+              <span
+                class="appt-reason"
+                *ngIf="a.reason">
+
+                {{ a.reason }}
+
+              </span>
+
+            </div>
+
+            <span
+              class="appt-status"
+              [style.color]="statusColor(a.status)">
+
+              {{ a.status }}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================================================== -->
+      <!-- Últimas consultas -->
+      <!-- ================================================== -->
+
+      <div
+        class="section-card"
+        *ngIf="(dashboard.recentEpisodes?.length ?? 0) > 0">
+
+        <h2>
+          Últimas Consultas
+        </h2>
+
+        <div class="episode-list">
+
+          <div
+            class="episode-row"
+            *ngFor="let e of dashboard.recentEpisodes">
+
+            <div class="ep-date">
+
+              <span class="ep-day">
+                {{ e.scheduledAt | date:'dd' }}
+              </span>
+
+              <span class="ep-mon">
+                {{ e.scheduledAt | date:'MMM' }}
+              </span>
+
+            </div>
+
+            <div class="ep-info">
+
+              <span class="ep-type">
+                {{ e.episodeType }}
+              </span>
+
+              <span
+                class="ep-doctor"
+                *ngIf="e.doctorName">
+
+                Dr(a). {{ e.doctorName }}
+
+              </span>
+
+              <span
+                class="ep-reason"
+                *ngIf="e.reason">
+
+                {{ e.reason }}
+
+              </span>
+
+            </div>
+
+            <span
+              class="ep-status"
+              [style.background]="statusColor(e.status) + '22'"
+              [style.color]="statusColor(e.status)">
+
+              {{ e.statusLabel || e.status }}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+
+    <!-- ====================================================== -->
+    <!-- CONSULTAS -->
+    <!-- ====================================================== -->
+
+    <ng-container
+      *ngIf="activeTab === 'episodes'">
+
+      <header class="content-header">
+
+        <h1>
+          Histórico de Consultas
+        </h1>
+
+      </header>
+
+
+      <div class="table-card">
+
+        <!-- Empty -->
+        <div
+          class="empty-state"
+          *ngIf="episodes.length === 0 && !loading">
+
+          <p>
+            Sem consultas registadas.
+          </p>
+
+        </div>
+
+
+        <!-- List -->
+        <div
+          class="episode-list"
+          *ngIf="episodes.length > 0">
+
+          <div
+            class="episode-row"
+            *ngFor="let e of episodes">
+
+            <div class="ep-date">
+
+              <span class="ep-day">
+                {{ (e.scheduledAt || e.completedAt) | date:'dd' }}
+              </span>
+
+              <span class="ep-mon">
+                {{ (e.scheduledAt || e.completedAt) | date:'MMM' }}
+              </span>
+
+            </div>
+
+
+            <div class="ep-info">
+
+              <span class="ep-type">
+                {{ e.episodeType }}
+              </span>
+
+              <span
+                class="ep-doctor"
+                *ngIf="e.doctorName">
+
+                Dr(a). {{ e.doctorName }}
+
+              </span>
+
+              <span
+                class="ep-reason"
+                *ngIf="e.reason">
+
+                {{ e.reason }}
+
+              </span>
+
+              <span
+                class="ep-diagnosis"
+                *ngIf="e.diagnosis">
+
+                Diagnóstico: {{ e.diagnosis }}
+
+              </span>
+
+            </div>
+
+
+            <span
+              class="ep-status"
+              [style.background]="statusColor(e.status) + '22'"
+              [style.color]="statusColor(e.status)">
+
+              {{ e.statusLabel || e.status }}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+
+    <!-- ====================================================== -->
+    <!-- PRESCRIÇÕES -->
+    <!-- ====================================================== -->
+
+    <ng-container
+      *ngIf="activeTab === 'prescriptions'">
+
+      <header class="content-header">
+
+        <h1>
+          Prescrições
+        </h1>
+
+      </header>
+
+
+      <!-- Empty -->
+      <div
+        class="empty-state"
+        *ngIf="prescriptions.length === 0">
+
+        <p>
+          Sem prescrições registadas.
+        </p>
+
+      </div>
+
+
+      <!-- Prescriptions -->
+      <div
+        class="prescription-card"
+        *ngFor="let p of prescriptions">
+
+        <div class="rx-header">
+
+          <span class="rx-number">
+            {{ p.prescriptionNumber }}
+          </span>
+
+          <span
+            class="rx-status"
+            [style.background]="statusColor(p.status) + '22'"
+            [style.color]="statusColor(p.status)">
+
+            {{ p.statusLabel || p.status }}
+
+          </span>
+
+        </div>
+
+
+        <div class="rx-meta">
+
+          <span>
+            Dr(a). {{ p.doctorName }}
+          </span>
+
+          <span>
+            {{ p.prescriptionDate | date:'dd/MM/yyyy' }}
+          </span>
+
+          <span>
+            Válida até: {{ p.expiryDate | date:'dd/MM/yyyy' }}
+          </span>
+
+        </div>
+
+
+        <div
+          class="rx-diagnosis"
+          *ngIf="p.diagnosis">
+
+          {{ p.diagnosis }}
+
+        </div>
+
+
+        <div class="rx-items">
+
+          <div
+            class="rx-item"
+            *ngFor="let i of p.items">
+
+            <span class="item-med">
+              {{ i.medicationName }}
+            </span>
+
+            <span class="item-dosage">
+              {{ i.dosage }}
+            </span>
+
+            <span
+              class="item-route"
+              *ngIf="i.route">
+
+              {{ i.route }}
+
+            </span>
+
+
+            <div class="item-progress">
+
+              <div class="progress-bar">
+
+                <div
+                  class="progress-fill"
+                  [style.width.%]="
+                    i.quantityPrescribed > 0
+                      ? (i.quantityDispensed / i.quantityPrescribed) * 100
+                      : 0
+                  ">
+
+                </div>
+
+              </div>
+
+              <span class="progress-text">
+                {{ i.quantityDispensed }}/{{ i.quantityPrescribed }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+
+    <!-- ====================================================== -->
+    <!-- FACTURAS -->
+    <!-- ====================================================== -->
+
+    <ng-container
+      *ngIf="activeTab === 'invoices'">
+
+      <header class="content-header">
+
+        <h1>
+          Facturas
+        </h1>
+
+      </header>
+
+
+      <!-- Empty -->
+      <div
+        class="empty-state"
+        *ngIf="invoices.length === 0">
+
+        <p>
+          Sem facturas registadas.
+        </p>
+
+      </div>
+
+
+      <!-- Invoice list -->
+      <div
+        class="table-card"
+        *ngIf="invoices.length > 0">
+
+        <div
+          class="invoice-row"
+          *ngFor="let inv of invoices"
+          [class.overdue]="inv.status === 'OVERDUE'">
+
+          <div class="inv-icon">
+            🧾
+          </div>
+
+
+          <div class="inv-info">
+
+            <span class="inv-number">
+              {{ inv.invoiceNumber }}
+            </span>
+
+            <span class="inv-date">
+              {{ inv.issueDate | date:'dd/MM/yyyy' }}
+            </span>
+
+            <span
+              class="inv-desc"
+              *ngIf="inv.description">
+
+              {{ inv.description }}
+
+            </span>
+
+          </div>
+
+
+          <div class="inv-right">
+
+            <span class="inv-amount">
+              {{ formatCurrency(inv.totalAmount) }}
+            </span>
+
+            <span
+              class="inv-status"
+              [style.background]="statusColor(inv.status) + '22'"
+              [style.color]="statusColor(inv.status)">
+
+              {{ invoiceStatusLabel(inv.status) }}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+  </main>
+
+</div>

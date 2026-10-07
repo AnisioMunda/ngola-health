@@ -1,0 +1,168 @@
+<div class="page">
+
+  <header class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        RH
+      </button>
+      <h1>Folgas e Férias</h1>
+    </div>
+    <button class="btn-primary" (click)="showForm = !showForm">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Pedir Folga
+    </button>
+  </header>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <!-- Formulário pedido de folga -->
+  <div class="form-card" *ngIf="showForm">
+    <h2 class="form-title">Novo Pedido de Folga</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label>Tipo de Ausência *</label>
+          <select formControlName="leaveType">
+            <option *ngFor="let t of leaveTypes" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Data de Início *</label>
+          <input type="date" formControlName="startDate" [min]="minDate"/>
+          <span class="field-error" *ngIf="f['startDate'].invalid && f['startDate'].touched">
+            Obrigatório
+          </span>
+        </div>
+        <div class="field">
+          <label>Data de Fim *</label>
+          <input type="date" formControlName="endDate" [min]="f['startDate'].value || minDate"/>
+          <span class="field-error" *ngIf="f['endDate'].invalid && f['endDate'].touched">
+            Obrigatório
+          </span>
+        </div>
+        <div class="field">
+          <label>Motivo</label>
+          <input type="text" formControlName="reason" placeholder="Opcional..."/>
+        </div>
+      </div>
+
+      <div class="days-preview" *ngIf="totalDaysPreview() > 0">
+        <svg viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M8 5v3.5L10 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Total: <strong>{{ totalDaysPreview() }} dia(s)</strong>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showForm = false">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'A enviar...' : 'Submeter Pedido' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'pending'"
+      (click)="activeTab = 'pending'">
+      Pedidos Pendentes
+      <span class="tab-badge" *ngIf="pendingLeaves.length > 0">{{ pendingLeaves.length }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'mine'"
+      (click)="activeTab = 'mine'">
+      Os Meus Pedidos
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+  </div>
+
+  <!-- Pedidos pendentes -->
+  <ng-container *ngIf="!loading && activeTab === 'pending'">
+    <div class="empty-state" *ngIf="pendingLeaves.length === 0">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"/>
+        <path d="M17 24l5 5 9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Sem pedidos pendentes.</p>
+    </div>
+
+    <div class="leaves-list" *ngIf="pendingLeaves.length > 0">
+      <div class="leave-card pending" *ngFor="let l of pendingLeaves">
+        <div class="leave-main">
+          <div class="leave-user-info">
+            <div class="user-avatar">
+              {{ l.userFullName.split(' ')[0][0] }}{{ l.userFullName.split(' ').length > 1 ? l.userFullName.split(' ')[1][0] : '' }}
+            </div>
+            <div>
+              <span class="user-name">{{ l.userFullName }}</span>
+              <span class="leave-type-label">{{ leaveTypeLabels[l.leaveType] }}</span>
+            </div>
+          </div>
+          <div class="leave-dates-info">
+            <span class="date-range">{{ l.startDate | date:'dd/MM/yyyy' }} — {{ l.endDate | date:'dd/MM/yyyy' }}</span>
+            <span class="total-days">{{ l.totalDays }} dia(s)</span>
+          </div>
+          <div class="leave-reason" *ngIf="l.reason">{{ l.reason }}</div>
+        </div>
+        <div class="leave-actions">
+          <button class="btn-approve" (click)="approve(l.id)">✓ Aprovar</button>
+          <button class="btn-reject"  (click)="reject(l.id)">✕ Rejeitar</button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Os meus pedidos -->
+  <ng-container *ngIf="!loading && activeTab === 'mine'">
+    <div class="empty-state" *ngIf="myLeaves.length === 0">
+      <p>Sem pedidos registados.</p>
+    </div>
+
+    <div class="leaves-list" *ngIf="myLeaves.length > 0">
+      <div class="leave-card"
+        *ngFor="let l of myLeaves"
+        [class]="'leave-' + l.status.toLowerCase()">
+        <div class="leave-main">
+          <div class="leave-header">
+            <span class="leave-type-label">{{ leaveTypeLabels[l.leaveType] }}</span>
+            <span class="status-badge" [class]="'s-' + l.status.toLowerCase()">
+              {{ leaveStatusLabels[l.status] }}
+            </span>
+          </div>
+          <div class="leave-dates-info">
+            <span class="date-range">{{ l.startDate | date:'dd/MM/yyyy' }} — {{ l.endDate | date:'dd/MM/yyyy' }}</span>
+            <span class="total-days">{{ l.totalDays }} dia(s)</span>
+          </div>
+          <div class="leave-reason" *ngIf="l.reason">{{ l.reason }}</div>
+          <div class="leave-meta" *ngIf="l.approvedByName">
+            Aprovado por {{ l.approvedByName }}
+            em {{ l.approvedAt | date:'dd/MM/yyyy' }}
+          </div>
+          <div class="leave-meta rejection" *ngIf="l.rejectionReason">
+            Motivo: {{ l.rejectionReason }}
+          </div>
+        </div>
+        <div class="leave-actions" *ngIf="l.status === 'PENDING'">
+          <button class="btn-cancel" (click)="cancel(l.id)">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+      <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+    </div>
+  </ng-container>
+
+</div>

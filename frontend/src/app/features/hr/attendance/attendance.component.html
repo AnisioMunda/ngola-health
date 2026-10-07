@@ -1,0 +1,181 @@
+<!-- attendance.component.html -->
+<div class="page">
+
+  <header class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        RH
+      </button>
+      <h1>Controlo de Ponto</h1>
+    </div>
+  </header>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <!-- Card de ponto do dia -->
+  <div class="checkin-card">
+    <div class="checkin-info">
+      <div class="today-label">Hoje — {{ dailyDate | date:'dd/MM/yyyy' }}</div>
+      <div class="checkin-times" *ngIf="todayRecord">
+        <div class="time-block">
+          <span class="time-label">Entrada</span>
+          <span class="time-value">{{ formatTime(todayRecord.checkIn) }}</span>
+        </div>
+        <div class="time-sep">→</div>
+        <div class="time-block">
+          <span class="time-label">Saída</span>
+          <span class="time-value">{{ todayRecord.checkOut ? formatTime(todayRecord.checkOut) : '—' }}</span>
+        </div>
+        <div class="time-block" *ngIf="todayRecord.hoursWorked && todayRecord.hoursWorked !== '—'">
+          <span class="time-label">Trabalhado</span>
+          <span class="time-value green">{{ todayRecord.hoursWorked }}</span>
+        </div>
+      </div>
+      <div class="no-record" *ngIf="!todayRecord">
+        Sem registo de ponto para hoje.
+      </div>
+    </div>
+    <div class="checkin-actions">
+      <button class="btn-checkin"
+        *ngIf="!hasCheckedIn"
+        [disabled]="saving"
+        (click)="checkIn()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M10 3v9M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M3 17h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ saving ? 'A registar...' : 'Registar Entrada' }}
+      </button>
+      <button class="btn-checkout"
+        *ngIf="hasCheckedIn && !hasCheckedOut"
+        [disabled]="saving"
+        (click)="checkOut()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M10 17V8M6 12l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M3 3h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ saving ? 'A registar...' : 'Registar Saída' }}
+      </button>
+      <div class="done-badge" *ngIf="hasCheckedOut">
+        ✓ Ponto do dia completo
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats do mês -->
+  <div class="month-stats">
+    <div class="stat-chip">
+      <span class="stat-label">Dias presentes</span>
+      <span class="stat-val">{{ presentDays() }}</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Total trabalhado</span>
+      <span class="stat-val">{{ totalHoursThisMonth() }}</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Horas extra</span>
+      <span class="stat-val amber">{{ totalOvertimeThisMonth() }}</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'daily'" (click)="activeTab = 'daily'">
+      Presenças do Dia
+    </button>
+    <button class="tab" [class.active]="activeTab === 'mine'" (click)="activeTab = 'mine'">
+      O Meu Histórico
+    </button>
+  </div>
+
+  <!-- Presenças do dia -->
+  <ng-container *ngIf="activeTab === 'daily'">
+    <div class="date-filter">
+      <label>Data:</label>
+      <input type="date" [(ngModel)]="dailyDate" (ngModelChange)="onDateChange()"/>
+    </div>
+
+    <div class="table-card">
+      <div class="empty-state" *ngIf="dailyAttendance.length === 0">
+        <p>Sem registos para {{ dailyDate | date:'dd/MM/yyyy' }}.</p>
+      </div>
+      <table *ngIf="dailyAttendance.length > 0">
+        <thead>
+          <tr>
+            <th>Funcionário</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Trabalhado</th>
+            <th>Horas Extra</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of dailyAttendance">
+            <td class="user-cell">{{ a.userFullName }}</td>
+            <td class="time-cell">{{ formatTime(a.checkIn) }}</td>
+            <td class="time-cell">{{ a.checkOut ? formatTime(a.checkOut) : '—' }}</td>
+            <td class="time-cell green">{{ a.hoursWorked }}</td>
+            <td class="time-cell amber">
+              {{ a.overtimeMinutes ? (a.overtimeMinutes / 60 | number:'1.0-0') + 'h' : '—' }}
+            </td>
+            <td>
+              <span class="status-chip" [class]="'sc-' + a.status.toLowerCase()">
+                {{ statusLabels[a.status] }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- Histórico pessoal -->
+  <ng-container *ngIf="activeTab === 'mine'">
+    <div class="period-filter">
+      <label>De:</label>
+      <input type="date" [(ngModel)]="fromDate" (ngModelChange)="onPeriodChange()"/>
+      <label>Até:</label>
+      <input type="date" [(ngModel)]="toDate" (ngModelChange)="onPeriodChange()"/>
+    </div>
+
+    <div class="table-card">
+      <div class="empty-state" *ngIf="myAttendance.length === 0">
+        <p>Sem registos neste período.</p>
+      </div>
+      <table *ngIf="myAttendance.length > 0">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Entrada</th>
+            <th>Saída</th>
+            <th>Trabalhado</th>
+            <th>Horas Extra</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of myAttendance">
+            <td class="date-cell">{{ a.workDate | date:'EEE, dd/MM':'':'pt' }}</td>
+            <td class="time-cell">{{ formatTime(a.checkIn) }}</td>
+            <td class="time-cell">{{ a.checkOut ? formatTime(a.checkOut) : '—' }}</td>
+            <td class="time-cell green">{{ a.hoursWorked }}</td>
+            <td class="time-cell amber">
+              {{ a.overtimeMinutes ? (a.overtimeMinutes / 60 | number:'1.0-0') + 'h' : '—' }}
+            </td>
+            <td>
+              <span class="status-chip" [class]="'sc-' + a.status.toLowerCase()">
+                {{ statusLabels[a.status] }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+</div>

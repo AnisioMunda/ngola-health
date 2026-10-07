@@ -1,0 +1,310 @@
+<div class="dashboard">
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+    <span>A carregar dashboard...</span>
+  </div>
+
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="data && !loading">
+
+    <!-- ====================================== -->
+    <!-- Header                                 -->
+    <!-- ====================================== -->
+    <header class="dash-header">
+      <div>
+        <h1>Painel de Controlo</h1>
+        <p>Hospital Central de Luanda — visão geral do sistema</p>
+      </div>
+      <button class="btn-refresh" (click)="load()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M4 10a6 6 0 0 1 10.5-4M16 10a6 6 0 0 1-10.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M14 6l.5-2.5 2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Actualizar
+      </button>
+    </header>
+
+    <!-- ====================================== -->
+    <!-- Alertas rápidos                        -->
+    <!-- ====================================== -->
+    <div class="alerts-row" *ngIf="data.lowStockMedications > 0 || data.expiringMedications > 0 || data.pendingInvoices > 0 || data.labRequestsPending > 0">
+      <div class="alert-chip warning" *ngIf="data.lowStockMedications > 0" (click)="goTo('/pharmacy')">
+        <span>⚠</span> {{ data.lowStockMedications }} medicamento(s) com stock baixo
+      </div>
+      <div class="alert-chip danger" *ngIf="data.expiringMedications > 0" (click)="goTo('/pharmacy/expiring')">
+        <span>⏱</span> {{ data.expiringMedications }} lote(s) a expirar em 30 dias
+      </div>
+      <div class="alert-chip info" *ngIf="data.pendingInvoices > 0" (click)="goTo('/financial')">
+        <span>💶</span> {{ data.pendingInvoices }} factura(s) por receber
+      </div>
+      <div class="alert-chip info" *ngIf="data.labRequestsPending > 0" (click)="goTo('/lab')">
+        <span>🔬</span> {{ data.labRequestsPending }} pedido(s) de lab pendentes
+      </div>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- KPI Cards — Clínicos                   -->
+    <!-- ====================================== -->
+    <section class="section-label">Indicadores Clínicos</section>
+    <div class="kpi-grid">
+
+      <div class="kpi-card" (click)="goTo('/patients')">
+        <div class="kpi-icon blue">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ data.totalPatients }}</span>
+          <span class="kpi-label">Total Pacientes</span>
+          <span class="kpi-sub">+{{ data.newPatientsThisMonth }} este mês</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" (click)="goTo('/episodes')">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 2v4M16 2v4M3 10h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M8 14h8M8 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ data.activeEpisodes }}</span>
+          <span class="kpi-label">Episódios Activos</span>
+          <span class="kpi-sub">{{ data.scheduledToday }} agendados hoje</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon amber">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ data.completedToday }}</span>
+          <span class="kpi-label">Completados Hoje</span>
+          <span class="kpi-sub">{{ data.newPatientsThisWeek }} novos pacientes/semana</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" (click)="goTo('/lab')">
+        <div class="kpi-icon purple">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 3h6M10 3v5L6 17a2 2 0 0 0 1.8 2.9h8.4A2 2 0 0 0 18 17l-4-9V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ data.labRequestsThisMonth }}</span>
+          <span class="kpi-label">Pedidos Lab (mês)</span>
+          <span class="kpi-sub">{{ data.labRequestsPending }} pendentes</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- KPI Cards — Financeiros                -->
+    <!-- ====================================== -->
+    <section class="section-label">Indicadores Financeiros</section>
+    <div class="kpi-grid">
+
+      <div class="kpi-card" (click)="goTo('/financial')">
+        <div class="kpi-icon green">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 10h20" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="7" cy="15" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ formatKzShort(data.revenueThisMonth) }}</span>
+          <span class="kpi-label">Receita Este Mês</span>
+          <span class="kpi-sub" [class.positive]="revenueGrowth >= 0" [class.negative]="revenueGrowth < 0">
+            {{ revenueGrowth >= 0 ? '↑' : '↓' }} {{ revenueGrowth | number:'1.0-0' }}% vs mês anterior
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon blue">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ formatKzShort(data.revenueThisYear) }}</span>
+          <span class="kpi-label">Receita Este Ano</span>
+          <span class="kpi-sub">{{ data.invoicesThisMonth }} facturas este mês</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" (click)="goTo('/financial')">
+        <div class="kpi-icon amber">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ formatKzShort(data.pendingAmount) }}</span>
+          <span class="kpi-label">Valor Por Receber</span>
+          <span class="kpi-sub">{{ data.pendingInvoices }} documentos em aberto</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon" [class.green]="data.collectionRate >= 80" [class.amber]="data.collectionRate >= 50 && data.collectionRate < 80" [class.red]="data.collectionRate < 50">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ data.collectionRate | number:'1.0-0' }}%</span>
+          <span class="kpi-label">Taxa de Cobrança</span>
+          <div class="progress-bar">
+            <div class="progress-fill"
+              [style.width.%]="data.collectionRate"
+              [class.fill-green]="data.collectionRate >= 80"
+              [class.fill-amber]="data.collectionRate >= 50 && data.collectionRate < 80"
+              [class.fill-red]="data.collectionRate < 50">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- Gráficos                               -->
+    <!-- ====================================== -->
+    <div class="charts-grid">
+
+      <!-- Receita por mês -->
+      <div class="chart-card wide">
+        <h3 class="chart-title">Receita Mensal (últimos 6 meses)</h3>
+        <div class="chart-wrap" *ngIf="data.revenueByMonth?.length; else noData">
+          <canvas #revenueChart></canvas>
+        </div>
+        <ng-template #noData>
+          <div class="no-data">Sem dados suficientes para o gráfico</div>
+        </ng-template>
+      </div>
+
+      <!-- Episódios por tipo -->
+      <div class="chart-card">
+        <h3 class="chart-title">Episódios por Tipo</h3>
+        <div class="chart-wrap-sm" *ngIf="data.episodesByType && objectKeys(data.episodesByType).length; else noData2">
+          <canvas #episodesTypeChart></canvas>
+        </div>
+        <ng-template #noData2>
+          <div class="no-data">Sem dados</div>
+        </ng-template>
+      </div>
+
+      <!-- Pacientes por mês -->
+      <div class="chart-card wide">
+        <h3 class="chart-title">Novos Pacientes e Episódios (últimos 6 meses)</h3>
+        <div class="chart-wrap" *ngIf="data.patientsByMonth?.length; else noData3">
+          <canvas #patientsChart></canvas>
+        </div>
+        <ng-template #noData3>
+          <div class="no-data">Sem dados suficientes para o gráfico</div>
+        </ng-template>
+      </div>
+
+      <!-- Pacientes por província -->
+      <div class="chart-card">
+        <h3 class="chart-title">Top Províncias</h3>
+        <div class="province-list" *ngIf="data.patientsByProvince?.length; else noProvince">
+          <div class="province-item" *ngFor="let p of data.patientsByProvince">
+            <span class="province-name">{{ p.province }}</span>
+            <div class="province-bar-wrap">
+              <div class="province-bar"
+                [style.width.%]="(p.count / data.totalPatients) * 100">
+              </div>
+            </div>
+            <span class="province-count">{{ p.count }}</span>
+          </div>
+        </div>
+        <ng-template #noProvince>
+          <div class="no-data">Sem dados</div>
+        </ng-template>
+      </div>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- Tabelas recentes                       -->
+    <!-- ====================================== -->
+    <div class="tables-grid">
+
+      <!-- Facturas recentes -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Facturas Recentes</h3>
+          <button class="btn-see-all" (click)="goTo('/financial')">Ver todas →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nº</th>
+              <th>Paciente</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inv of data.recentInvoices" (click)="goTo('/financial/' + inv.id)">
+              <td class="mono">{{ inv.invoiceNumber }}</td>
+              <td>{{ inv.patientName }}</td>
+              <td class="mono">{{ formatKzShort(inv.totalAmount) }}</td>
+              <td>
+                <span class="status-badge" [class]="'status-' + inv.status.toLowerCase()">
+                  {{ STATUS_LABELS[inv.status] }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="!data.recentInvoices?.length">
+              <td colspan="4" class="empty">Sem facturas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pacientes recentes -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Últimos Pacientes Registados</h3>
+          <button class="btn-see-all" (click)="goTo('/patients')">Ver todos →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Registado em</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of data.recentPatients" (click)="goTo('/patients/' + p.id + '/edit')">
+              <td>{{ p.fullName }}</td>
+              <td>{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr *ngIf="!data.recentPatients?.length">
+              <td colspan="2" class="empty">Sem pacientes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>

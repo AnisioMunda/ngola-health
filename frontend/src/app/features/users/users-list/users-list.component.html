@@ -1,0 +1,124 @@
+<div class="page">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1>Users</h1>
+      <span class="total-badge">{{ totalElements }} total</span>
+    </div>
+    <button class="btn-primary" (click)="goToCreate()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New User
+    </button>
+  </header>
+
+  <!-- Error -->
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+    <span>Loading users...</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Roles</th>
+          <th>Speciality</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>
+            <div class="user-cell">
+              <div class="avatar">{{ user.fullName[0] }}</div>
+              <div class="user-info">
+                <span class="user-name">{{ user.fullName }}</span>
+                <span class="user-email">{{ user.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="tags">
+              <span class="tag" *ngFor="let role of user.roles">
+                {{ getRoleLabel(role) }}
+              </span>
+            </div>
+          </td>
+          <td class="text-muted">{{ user.especiality || '—' }}</td>
+          <td>
+            <span class="status-badge"
+              [class.status-active]="user.registerStatus === 'ACTIVE'"
+              [class.status-inactive]="user.registerStatus === 'INACTIVE'"
+              [class.status-suspended]="user.registerStatus === 'SUSPENDED'">
+              {{ getStatusLabel(user.registerStatus) }}
+            </span>
+          </td>
+          <td class="text-muted">
+            {{ user.lastLogin ? (user.lastLogin | date:'dd/MM/yyyy HH:mm') : 'Never' }}
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon" title="Edit" (click)="goToEdit(user.id)">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path d="M14.7 3.3a1 1 0 011.4 1.4L6 14.8l-3 .5.5-3L14.7 3.3z"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="btn-icon"
+                [title]="user.registerStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                (click)="toggleStatus(user)">
+                <svg viewBox="0 0 20 20" fill="none"
+                  [style.color]="user.registerStatus === 'ACTIVE' ? '#ef4444' : '#22c55e'">
+                  <circle cx="10" cy="10" r="7"
+                    stroke="currentColor" stroke-width="1.5"/>
+                  <path *ngIf="user.registerStatus === 'ACTIVE'"
+                    d="M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path *ngIf="user.registerStatus !== 'ACTIVE'"
+                    d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="users.length === 0">
+          <td colspan="6" class="empty-state">
+            <svg viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="18" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 42c0-8.8 7.2-16 16-16s16 7.2 16 16"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <p>No users found</p>
+            <button class="btn-primary" (click)="goToCreate()">Create first user</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Previous
+      </button>
+      <span class="page-info">
+        Page {{ currentPage + 1 }} of {{ totalPages }}
+      </span>
+      <button class="btn-page" (click)="nextPage()"
+        [disabled]="currentPage >= totalPages - 1">
+        Next →
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,13 @@
+{
+  "/api": {
+    "target": "http://backend:8080",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/ws": {
+    "target": "ws://backend:8080",
+    "secure": false,
+    "ws": true,
+    "changeOrigin": true
+  }
+}

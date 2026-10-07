@@ -1,0 +1,87 @@
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Back
+    </button>
+    <h1>New Lab Request</h1>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <div class="form-card">
+      <div class="field">
+        <label>Patient *</label>
+        <select formControlName="patientId">
+          <option value="">Select patient...</option>
+          <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
+        </select>
+        <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
+          Patient is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Priority</label>
+        <div class="priority-grid">
+          <button type="button"
+            *ngFor="let p of priorities"
+            class="priority-btn"
+            [class]="'priority-' + p.value.toLowerCase()"
+            [class.selected]="f['priority'].value === p.value"
+            (click)="form.get('priority')?.setValue(p.value)">
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Clinical Notes</label>
+        <textarea formControlName="clinicalNotes" rows="3"
+          placeholder="Reason for testing, relevant clinical history..."></textarea>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2 class="section-title">Select Tests *</h2>
+
+      <div class="tests-grid">
+        <button type="button"
+          *ngFor="let test of availableTests"
+          class="test-card"
+          [class.selected]="isTestSelected(test.id)"
+          (click)="toggleTest(test.id)">
+          <div class="test-check">
+            <svg *ngIf="isTestSelected(test.id)" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="test-info">
+            <span class="test-name">{{ test.name }}</span>
+            <span class="test-meta">{{ test.code }} · {{ test.sampleType }}</span>
+          </div>
+          <span class="test-price" *ngIf="test.price">{{ test.price }} Kz</span>
+        </button>
+      </div>
+
+      <div class="empty-mini" *ngIf="availableTests.length === 0">
+        No tests available in catalog. Add tests first.
+      </div>
+    </div>
+
+    <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="submit" class="btn-primary" [disabled]="saving">
+        <span *ngIf="!saving">Create Request</span>
+        <span *ngIf="saving" class="saving-state"><span class="spinner-sm"></span> Saving...</span>
+      </button>
+    </div>
+
+  </form>
+
+</div>

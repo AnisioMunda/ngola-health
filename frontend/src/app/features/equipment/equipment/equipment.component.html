@@ -1,0 +1,383 @@
+<div class="page">
+
+  <header class="page-header">
+    <div>
+      <h1>Equipamentos</h1>
+      <p>Inventário e manutenção preventiva</p>
+    </div>
+    <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Novo Equipamento
+    </button>
+  </header>
+
+  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+
+  <!-- Stats -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.totalEquipment }}</span>
+      <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value green">{{ stats.activeEquipment }}</span>
+      <span class="stat-label">Activos</span>
+    </div>
+    <div class="stat-card" [class.alert-card]="stats.inMaintenance > 0">
+      <span class="stat-value amber">{{ stats.inMaintenance }}</span>
+      <span class="stat-label">Em Manutenção</span>
+    </div>
+    <div class="stat-card" [class.alert-card]="stats.maintenanceDue > 0">
+      <span class="stat-value red">{{ stats.maintenanceDue }}</span>
+      <span class="stat-label">Manutenção em Atraso</span>
+    </div>
+    <div class="stat-card" [class.alert-card]="stats.calibrationDue > 0">
+      <span class="stat-value red">{{ stats.calibrationDue }}</span>
+      <span class="stat-label">Calibração em Atraso</span>
+    </div>
+  </div>
+
+  <!-- Formulário criação -->
+  <div class="form-card" *ngIf="showCreateForm">
+    <h2 class="form-title">Novo Equipamento</h2>
+    <form [formGroup]="createForm" (ngSubmit)="onCreate()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nome *</label>
+          <input type="text" formControlName="name" placeholder="Ex: Ventilador Mecânico"/>
+          <span class="field-error" *ngIf="f['name'].invalid && f['name'].touched">Obrigatório</span>
+        </div>
+        <div class="field">
+          <label>Código *</label>
+          <input type="text" formControlName="code" placeholder="Ex: EQ-001"/>
+          <span class="field-error" *ngIf="f['code'].invalid && f['code'].touched">Obrigatório</span>
+        </div>
+        <div class="field">
+          <label>Marca</label>
+          <input type="text" formControlName="brand"/>
+        </div>
+        <div class="field">
+          <label>Modelo</label>
+          <input type="text" formControlName="model"/>
+        </div>
+        <div class="field">
+          <label>Número de Série</label>
+          <input type="text" formControlName="serialNumber"/>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <select formControlName="category">
+            <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label>Localização</label>
+          <input type="text" formControlName="location" placeholder="Ex: Bloco A — Sala 3"/>
+        </div>
+        <div class="field">
+          <label>Data de Compra</label>
+          <input type="date" formControlName="purchaseDate"/>
+        </div>
+        <div class="field">
+          <label>Preço de Compra (Kz)</label>
+          <input type="number" formControlName="purchasePrice"/>
+        </div>
+        <div class="field">
+          <label>Validade Garantia</label>
+          <input type="date" formControlName="warrantyExpiry"/>
+        </div>
+        <div class="field">
+          <label>Próxima Manutenção</label>
+          <input type="date" formControlName="nextMaintenanceDate"/>
+        </div>
+        <div class="field">
+          <label>Intervalo Manutenção (dias)</label>
+          <input type="number" formControlName="maintenanceIntervalDays"/>
+        </div>
+        <div class="field">
+          <label>Próxima Calibração</label>
+          <input type="date" formControlName="nextCalibrationDate"/>
+        </div>
+        <div class="field span-2">
+          <label>Notas</label>
+          <input type="text" formControlName="notes"/>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showCreateForm = false">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'A guardar...' : 'Registar Equipamento' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'list'"   (click)="onTabChange('list')">
+      Inventário <span class="tab-badge">{{ totalElements }}</span>
+    </button>
+    <button class="tab" [class.active]="activeTab === 'alerts'" (click)="onTabChange('alerts')">
+      Alertas
+      <span class="tab-badge alert" *ngIf="stats && (stats.maintenanceDue + stats.calibrationDue) > 0">
+        {{ stats!.maintenanceDue + stats!.calibrationDue }}
+      </span>
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading"><div class="spinner-lg"></div></div>
+
+  <!-- ===== INVENTÁRIO ===== -->
+  <ng-container *ngIf="!loading && activeTab === 'list'">
+    <div class="search-bar">
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Pesquisar por nome, código, marca..."
+        (keyup.enter)="onSearch()"/>
+      <button class="btn-search" (click)="onSearch()">🔍</button>
+    </div>
+
+    <div class="empty-state" *ngIf="equipment.length === 0">
+      <svg viewBox="0 0 48 48" fill="none">
+        <rect x="6" y="6" width="36" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M16 24h16M24 16v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Nenhum equipamento registado.</p>
+    </div>
+
+    <div class="table-card" *ngIf="equipment.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Localização</th>
+            <th>Manutenção</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of equipment" [class.due]="e.maintenanceDue">
+            <td class="code">{{ e.code }}</td>
+            <td>
+              <span class="equip-name">{{ e.name }}</span>
+              <span class="equip-brand" *ngIf="e.brand">{{ e.brand }} {{ e.model }}</span>
+            </td>
+            <td>
+              <span class="category-chip">{{ e.categoryLabel }}</span>
+            </td>
+            <td class="location">{{ e.location || '—' }}</td>
+            <td>
+              <span class="maint-date" [class.overdue]="e.maintenanceDue">
+                {{ e.nextMaintenanceDate ? (e.nextMaintenanceDate | date:'dd/MM/yyyy') : '—' }}
+                <span *ngIf="e.maintenanceDue" class="due-tag">ATRASO</span>
+              </span>
+            </td>
+            <td>
+              <span class="status-badge"
+                [style.background]="statusColors[e.status] + '22'"
+                [style.color]="statusColors[e.status]">
+                {{ e.statusLabel }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-detail" (click)="openDetail(e)">Ver</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+        <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
+        <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== ALERTAS ===== -->
+  <ng-container *ngIf="activeTab === 'alerts'">
+    <div class="empty-state" *ngIf="maintenanceDue.length === 0">
+      <p>✓ Sem alertas de manutenção nos próximos 7 dias.</p>
+    </div>
+    <div class="alert-list" *ngIf="maintenanceDue.length > 0">
+      <div class="alert-row" *ngFor="let e of maintenanceDue"
+        [class.overdue]="e.maintenanceDue">
+        <div class="alert-icon">🔧</div>
+        <div class="alert-info">
+          <span class="alert-name">{{ e.name }}</span>
+          <span class="alert-code">{{ e.code }} · {{ e.location }}</span>
+          <span class="alert-date">
+            Manutenção: {{ e.nextMaintenanceDate | date:'dd/MM/yyyy' }}
+            <span *ngIf="e.maintenanceDue" class="due-tag">EM ATRASO</span>
+          </span>
+        </div>
+        <div class="alert-actions">
+          <button class="btn-detail" (click)="openDetail(e)">Ver</button>
+          <select class="status-select" [value]="e.status"
+            (change)="updateStatus(e, $any($event.target).value)">
+            <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== DETALHE ===== -->
+  <ng-container *ngIf="activeTab === 'detail' && selected">
+    <div class="detail-header">
+      <button class="btn-back" (click)="closeDetail()">← Voltar</button>
+      <select class="status-select-lg" [value]="selected.status"
+        (change)="updateStatus(selected, $any($event.target).value)">
+        <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
+      </select>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-grid">
+        <div class="detail-block">
+          <span class="detail-label">Nome</span>
+          <span class="detail-value">{{ selected.name }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Código</span>
+          <span class="detail-value mono">{{ selected.code }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Marca / Modelo</span>
+          <span class="detail-value">{{ selected.brand || '—' }} {{ selected.model }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Nº Série</span>
+          <span class="detail-value mono">{{ selected.serialNumber || '—' }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Categoria</span>
+          <span class="detail-value">{{ selected.categoryLabel }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Localização</span>
+          <span class="detail-value">{{ selected.location || '—' }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Data de Compra</span>
+          <span class="detail-value">{{ selected.purchaseDate ? (selected.purchaseDate | date:'dd/MM/yyyy') : '—' }}</span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Garantia</span>
+          <span class="detail-value" [class.expired-text]="selected.warrantyExpired">
+            {{ selected.warrantyExpiry ? (selected.warrantyExpiry | date:'dd/MM/yyyy') : '—' }}
+            <span *ngIf="selected.warrantyExpired"> (Expirada)</span>
+          </span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Próxima Manutenção</span>
+          <span class="detail-value" [class.overdue-text]="selected.maintenanceDue">
+            {{ selected.nextMaintenanceDate ? (selected.nextMaintenanceDate | date:'dd/MM/yyyy') : '—' }}
+            <span *ngIf="selected.maintenanceDue"> ⚠ Em atraso</span>
+          </span>
+        </div>
+        <div class="detail-block">
+          <span class="detail-label">Próxima Calibração</span>
+          <span class="detail-value">
+            {{ selected.nextCalibrationDate ? (selected.nextCalibrationDate | date:'dd/MM/yyyy') : '—' }}
+          </span>
+        </div>
+        <div class="detail-block span-2" *ngIf="selected.notes">
+          <span class="detail-label">Notas</span>
+          <span class="detail-value">{{ selected.notes }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registo de manutenção -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Histórico de Manutenção</h2>
+        <button class="btn-add-maint"
+          (click)="showMaintenanceForm = !showMaintenanceForm">
+          + Registar
+        </button>
+      </div>
+
+      <form *ngIf="showMaintenanceForm" [formGroup]="maintenanceForm"
+        (ngSubmit)="onAddMaintenance()" novalidate class="maint-form">
+        <div class="form-grid">
+          <div class="field">
+            <label>Tipo *</label>
+            <select formControlName="type">
+              <option *ngFor="let t of maintenanceTypes" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Resultado</label>
+            <select formControlName="result">
+              <option value="OK">OK</option>
+              <option value="REPAIRED">Reparado</option>
+              <option value="REPLACED">Substituído</option>
+              <option value="FAILED">Falhou</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label>Descrição *</label>
+            <input type="text" formControlName="description"
+              placeholder="Descrever o trabalho realizado..."/>
+            <span class="field-error" *ngIf="mf['description'].invalid && mf['description'].touched">
+              Obrigatório
+            </span>
+          </div>
+          <div class="field">
+            <label>Custo (Kz)</label>
+            <input type="number" formControlName="cost"/>
+          </div>
+          <div class="field">
+            <label>Próxima Manutenção</label>
+            <input type="date" formControlName="nextMaintenanceDate"/>
+          </div>
+          <div class="field span-2">
+            <label>Peças Substituídas</label>
+            <input type="text" formControlName="partsReplaced"
+              placeholder="Ex: Filtro HEPA, correa de transmissão..."/>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="showMaintenanceForm = false">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="saving">
+            {{ saving ? 'A guardar...' : 'Registar Manutenção' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="maint-list">
+        <div class="empty-state" *ngIf="selected.maintenanceHistory.length === 0">
+          <p>Sem registos de manutenção.</p>
+        </div>
+        <div class="maint-row" *ngFor="let m of selected.maintenanceHistory">
+          <div class="maint-type" [class]="'type-' + m.type.toLowerCase()">
+            {{ m.typeLabel }}
+          </div>
+          <div class="maint-info">
+            <span class="maint-desc">{{ m.description }}</span>
+            <span class="maint-meta">
+              {{ m.performedAt | date:'dd/MM/yyyy HH:mm' }}
+              · {{ m.performedByName }}
+              <span *ngIf="m.cost"> · {{ m.cost | number:'1.2-2' }} Kz</span>
+            </span>
+            <span class="maint-parts" *ngIf="m.partsReplaced">
+              Peças: {{ m.partsReplaced }}
+            </span>
+          </div>
+          <span class="maint-result" [class]="'result-' + m.result?.toLowerCase()">
+            {{ m.result }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

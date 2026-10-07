@@ -1,0 +1,141 @@
+<div class="login-wrapper">
+
+  <!-- Painel esquerdo — visual -->
+  <aside class="login-panel">
+    <div class="panel-content">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="12" fill="rgba(255,255,255,0.15)"/>
+            <path d="M20 8v24M8 20h24" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="brand-name">HospitalAO</span>
+      </div>
+
+      <div class="panel-text">
+        <h1>Sistema de Gestão<br>Hospitalar</h1>
+        <p>Plataforma integrada para gestão clínica,<br>administrativa e financeira.</p>
+      </div>
+
+      <div class="panel-stats">
+        <div class="stat">
+          <span class="stat-value">24/7</span>
+          <span class="stat-label">Disponibilidade</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">100%</span>
+          <span class="stat-label">Seguro</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">AGT</span>
+          <span class="stat-label">Integrado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decoração geométrica -->
+    <div class="geo geo-1"></div>
+    <div class="geo geo-2"></div>
+    <div class="geo geo-3"></div>
+  </aside>
+
+  <!-- Painel direito — formulário -->
+  <main class="login-form-area">
+    <div class="form-container">
+
+      <div class="form-header">
+        <h2>Bem-vindo</h2>
+        <p>Entre com as suas credenciais para aceder ao sistema.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Email -->
+        <div class="field" [class.field--error]="email.invalid && email.touched">
+          <label for="email">Email</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none">
+              <path d="M3 5h14a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M2 6l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="admin@hospitalao.ao"
+              autocomplete="email"
+            />
+          </div>
+          <span class="field-error" *ngIf="email.errors?.['required'] && email.touched">
+            Email é obrigatório
+          </span>
+          <span class="field-error" *ngIf="email.errors?.['email'] && email.touched">
+            Introduza um email válido
+          </span>
+        </div>
+
+        <!-- Password -->
+        <div class="field" [class.field--error]="password.invalid && password.touched">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="9" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M6.5 9V6.5a3.5 3.5 0 017 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="10" cy="14" r="1.5" fill="currentColor"/>
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            <button type="button" class="toggle-password" (click)="togglePassword()" [attr.aria-label]="showPassword ? 'Ocultar password' : 'Mostrar password'">
+              <svg *ngIf="!showPassword" viewBox="0 0 20 20" fill="none">
+                <path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <svg *ngIf="showPassword" viewBox="0 0 20 20" fill="none">
+                <path d="M3 3l14 14M8.5 8.6A2.5 2.5 0 0013 12M6.3 6.4C4.2 7.6 2.5 9.5 2.5 10c0 .6 2 4 7.5 4a8 8 0 003.7-.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M10 5.5c4.5 0 7 3.9 7.5 4.5-.3.6-1.2 2-3 3.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <span class="field-error" *ngIf="password.errors?.['required'] && password.touched">
+            Password é obrigatória
+          </span>
+          <span class="field-error" *ngIf="password.errors?.['minlength'] && password.touched">
+            Mínimo 6 caracteres
+          </span>
+        </div>
+
+        <!-- Erro geral -->
+        <div class="alert-error" *ngIf="errorMessage">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 6v5M10 14h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Botão de submit -->
+        <button type="submit" class="btn-submit" [disabled]="loading">
+          <span *ngIf="!loading">Entrar no Sistema</span>
+          <span *ngIf="loading" class="loading-state">
+            <span class="spinner"></span>
+            A autenticar...
+          </span>
+        </button>
+
+      </form>
+
+      <p class="form-footer">
+        © {{ currentYear }} HospitalAO · Angola
+      </p>
+    </div>
+  </main>
+
+</div>

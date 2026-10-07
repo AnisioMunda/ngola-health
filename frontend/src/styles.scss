@@ -1,0 +1,225 @@
+// ============================================================
+// HospitalAO — Estilos Globais
+// ============================================================
+
+// Importar Angular Material
+@use '@angular/material' as mat;
+
+// --- Paleta de cores ---
+// Azul escuro profissional — transmite confiança e seriedade,
+// adequado para ambiente hospitalar
+$primary: mat.m2-define-palette(mat.$m2-indigo-palette, 700, 400, 900);
+$accent:  mat.m2-define-palette(mat.$m2-teal-palette, 600, 300, 800);
+$warn:    mat.m2-define-palette(mat.$m2-red-palette, 600);
+
+$tema: mat.m2-define-light-theme((
+  color: (
+    primary: $primary,
+    accent:  $accent,
+    warn:    $warn,
+  ),
+  typography: mat.m2-define-typography-config(
+    $font-family: 'Inter, sans-serif',
+  ),
+  density: 0,
+));
+
+@include mat.all-component-themes($tema);
+
+// --- Reset base ---
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background-color: #f5f6fa;
+  color: #1a1a2e;
+}
+
+// --- Scrollbar discreta ---
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: #f0f0f0; }
+::-webkit-scrollbar-thumb  { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #999; }
+
+// --- Layout de página ---
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a2e;
+  }
+}
+
+// --- Cards ---
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+// --- Formulários ---
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin: 24px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+// --- Badges de estado clínico ---
+// Escala de Manchester (triagem por urgência)
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.badge-vermelho { background: #ffe5e5; color: #c0392b; }
+.badge-laranja  { background: #fff0e0; color: #d35400; }
+.badge-amarelo  { background: #fffde7; color: #b7950b; }
+.badge-verde    { background: #e8f5e9; color: #27ae60; }
+.badge-azul     { background: #e3f2fd; color: #1565c0; }
+
+// Estados gerais
+.badge-success  { background: #e8f5e9; color: #1b5e20; }
+.badge-warning  { background: #fff8e1; color: #e65100; }
+.badge-danger   { background: #ffebee; color: #b71c1c; }
+.badge-info     { background: #e3f2fd; color: #0d47a1; }
+.badge-default  { background: #f5f5f5; color: #616161; }
+
+// --- Tabelas ---
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+table.mat-mdc-table {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  td.mat-mdc-cell {
+    font-size: 13px;
+  }
+}
+
+// --- Estado vazio ---
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: #bbb;
+  text-align: center;
+
+  .mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: .4;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #999;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #bbb;
+  }
+}
+
+// --- Snackbar (notificações) ---
+.snack-success .mdc-snackbar__surface { background: #2e7d32 !important; }
+.snack-error   .mdc-snackbar__surface { background: #c62828 !important; }
+.snack-warning .mdc-snackbar__surface { background: #e65100 !important; }
+
+// --- Utilitários de layout ---
+.flex         { display: flex; }
+.flex-col     { display: flex; flex-direction: column; }
+.flex-center  { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-8        { gap: 8px; }
+.gap-16       { gap: 16px; }
+.gap-24       { gap: 24px; }
+.w-full       { width: 100%; }
+.mt-8         { margin-top: 8px; }
+.mt-16        { margin-top: 16px; }
+.mt-24        { margin-top: 24px; }
+.mb-16        { margin-bottom: 16px; }
+.text-muted   { color: #888; font-size: 13px; }
+
+// --- Loading skeleton ---
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-pulse {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,204 @@
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Back
+    </button>
+    <h1>{{ isEdit ? 'Edit Patient' : 'Register New Patient' }}</h1>
+  </header>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner-lg"></div>
+    <span>Loading...</span>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading" novalidate>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button type="button" class="tab" [class.active]="activeTab === 'personal'"
+        (click)="setTab('personal')">
+        Personal Info
+      </button>
+      <button type="button" class="tab" [class.active]="activeTab === 'contact'"
+        (click)="setTab('contact')">
+        Contact & Address
+      </button>
+      <button type="button" class="tab" [class.active]="activeTab === 'clinical'"
+        (click)="setTab('clinical')">
+        Clinical Info
+      </button>
+    </div>
+
+    <div class="form-card">
+
+      <!-- Tab: Personal -->
+      <div *ngIf="activeTab === 'personal'">
+        <div class="field-row">
+          <div class="field field--full">
+            <label>Full Name *</label>
+            <input type="text" formControlName="fullName" placeholder="Maria João Santos"/>
+            <span class="field-error" *ngIf="f['fullName'].invalid && f['fullName'].touched">
+              Full name is required
+            </span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Date of Birth *</label>
+            <input type="date" formControlName="birthDate"/>
+            <span class="field-error" *ngIf="f['birthDate'].invalid && f['birthDate'].touched">
+              Date of birth is required
+            </span>
+          </div>
+          <div class="field">
+            <label>Gender *</label>
+            <select formControlName="gender">
+              <option value="">Select...</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+            <span class="field-error" *ngIf="f['gender'].invalid && f['gender'].touched">
+              Gender is required
+            </span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>National ID (BI)</label>
+            <input type="text" formControlName="nationalId" placeholder="005123456LA042"/>
+          </div>
+          <div class="field">
+            <label>Health Card Number</label>
+            <input type="text" formControlName="healthCardNumber" placeholder="SNS-2024-00001"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Contact -->
+      <div *ngIf="activeTab === 'contact'">
+        <div class="field-row">
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" formControlName="phone" placeholder="923 456 789"/>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="patient@email.com"/>
+            <span class="field-error" *ngIf="f['email'].invalid && f['email'].touched">
+              Invalid email format
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <input type="text" formControlName="address" placeholder="Street, number, neighborhood"/>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Province</label>
+            <select formControlName="province">
+              <option value="">Select...</option>
+              <option *ngFor="let p of provinces" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Municipality</label>
+            <input type="text" formControlName="municipality" placeholder="Ingombota"/>
+          </div>
+        </div>
+
+        <div class="section-divider">Emergency Contact</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Name</label>
+            <input type="text" formControlName="emergencyContactName" placeholder="Pedro Santos"/>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" formControlName="emergencyContactPhone" placeholder="923 333 444"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Relationship</label>
+          <input type="text" formControlName="emergencyContactRelationship"
+            placeholder="Spouse, Parent, Sibling..."/>
+        </div>
+      </div>
+
+      <!-- Tab: Clinical -->
+      <div *ngIf="activeTab === 'clinical'">
+        <div class="field">
+          <label>Blood Type</label>
+          <div class="blood-type-grid">
+            <button type="button"
+              *ngFor="let bt of bloodTypes"
+              class="blood-btn"
+              [class.selected]="f['bloodType'].value === bt"
+              (click)="form.get('bloodType')?.setValue(bt)">
+              {{ bt }}
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Allergies</label>
+          <textarea formControlName="allergies" rows="3"
+            placeholder="Known allergies to medications, food, etc."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Chronic Conditions</label>
+          <textarea formControlName="chronicConditions" rows="3"
+            placeholder="Diabetes, hypertension, asthma, etc."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <textarea formControlName="notes" rows="3"
+            placeholder="Additional observations..."></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+    <!-- Navigation + Submit -->
+    <div class="form-footer">
+      <div class="tab-nav">
+        <button type="button" class="btn-secondary"
+          *ngIf="activeTab !== 'personal'"
+          (click)="setTab(activeTab === 'clinical' ? 'contact' : 'personal')">
+          ← Back
+        </button>
+        <button type="button" class="btn-secondary"
+          *ngIf="activeTab !== 'clinical'"
+          (click)="setTab(activeTab === 'personal' ? 'contact' : 'clinical')">
+          Next →
+        </button>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          <span *ngIf="!saving">{{ isEdit ? 'Save Changes' : 'Register Patient' }}</span>
+          <span *ngIf="saving" class="saving-state">
+            <span class="spinner-sm"></span> Saving...
+          </span>
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+</div>

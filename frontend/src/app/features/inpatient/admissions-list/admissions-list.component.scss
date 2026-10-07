@@ -1,0 +1,118 @@
+:host { display: block; }
+.page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #1a1f2e; margin: 0; }
+  .header-actions { display: flex; gap: 8px; }
+}
+
+.total-badge {
+  background: #f1f5f9; color: #64748b; font-size: 0.8rem;
+  font-weight: 600; padding: 3px 10px; border-radius: 20px;
+}
+
+.btn-primary {
+  display: flex; align-items: center; gap: 8px; padding: 9px 18px;
+  background: #203a43; color: white; border: none; border-radius: 10px;
+  font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  svg { width: 16px; height: 16px; }
+  &:hover { opacity: 0.88; }
+}
+
+.btn-secondary {
+  display: flex; align-items: center; gap: 8px; padding: 9px 14px;
+  background: white; color: #374151; border: 1.5px solid #e5e7eb;
+  border-radius: 10px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+  svg { width: 15px; height: 15px; }
+  &:hover { background: #f9fafb; }
+}
+
+.filters {
+  display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap;
+  select {
+    height: 40px; padding: 0 12px; border: 1.5px solid #e5e7eb;
+    border-radius: 10px; font-size: 0.875rem; color: #374151;
+    background: white; outline: none; min-width: 180px;
+    &:focus { border-color: #203a43; }
+  }
+}
+
+.btn-clear {
+  padding: 7px 14px; background: #fee2e2; color: #dc2626;
+  border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+
+.alert-error {
+  padding: 12px 16px; background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 10px; color: #dc2626; font-size: 0.875rem; margin-bottom: 1rem;
+}
+
+.loading-state {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 4rem; color: #6b7280;
+}
+
+.spinner-lg {
+  width: 28px; height: 28px; border: 3px solid #e5e7eb;
+  border-top-color: #203a43; border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.table-card { background: white; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  thead tr { background: #f8f9fb; border-bottom: 1px solid #e5e7eb; }
+  th { padding: 11px 14px; font-size: 0.72rem; font-weight: 600; color: #6b7280;
+       text-transform: uppercase; letter-spacing: 0.4px; text-align: left; }
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9; transition: background 0.1s;
+    &:last-child { border-bottom: none; }
+    &.clickable { cursor: pointer; }
+    &.clickable:hover { background: #fafbfc; }
+    &.overdue { background: #fffbeb; }
+  }
+  td { padding: 11px 14px; font-size: 0.875rem; color: #374151; vertical-align: middle; }
+}
+
+.patient-name  { display: block; font-weight: 700; color: #1a1f2e; }
+.patient-phone { display: block; font-size: 0.78rem; color: #9ca3af; }
+.ward-name     { display: block; font-weight: 600; color: #374151; }
+.bed-number    { display: block; font-size: 0.78rem; color: #9ca3af; }
+.doctor-name   { font-weight: 500; }
+.date          { font-family: monospace; font-size: 0.82rem; }
+.days          { font-weight: 700; color: #6b7280; text-align: center; }
+
+.expected-date { display: flex; flex-direction: column; gap: 3px; }
+.overdue-text  { color: #dc2626; font-weight: 700; }
+.overdue-badge {
+  display: inline-block; padding: 1px 6px; background: #fee2e2; color: #dc2626;
+  border-radius: 4px; font-size: 0.65rem; font-weight: 700;
+}
+
+.status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.status-active      { background: #dbeafe; color: #1d4ed8; }
+.status-discharged  { background: #dcfce7; color: #16a34a; }
+.status-transferred { background: #fef3c7; color: #d97706; }
+.status-deceased    { background: #f1f5f9; color: #64748b; }
+
+.empty-state {
+  text-align: center; padding: 4rem !important; color: #9ca3af;
+  svg { width: 48px; height: 48px; margin: 0 auto 16px; display: block; color: #d1d5db; }
+  p { margin: 0 0 16px; font-size: 0.875rem; }
+}
+
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; padding: 14px; border-top: 1px solid #f1f5f9;
+  font-size: 0.875rem; color: #6b7280;
+}
+
+.btn-page {
+  padding: 6px 14px; background: white; border: 1px solid #e5e7eb;
+  border-radius: 8px; font-size: 0.875rem; cursor: pointer; color: #374151;
+  &:hover:not(:disabled) { background: #f9fafb; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}

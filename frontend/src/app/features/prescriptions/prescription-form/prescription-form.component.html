@@ -1,0 +1,157 @@
+<div class="page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Voltar
+    </button>
+    <h1>Nova Prescrição</h1>
+  </header>
+
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <!-- Dados gerais -->
+    <div class="section-card">
+      <h2 class="section-title">Dados Gerais</h2>
+      <div class="form-grid">
+
+        <div class="field span-2">
+          <label>Paciente *</label>
+          <select formControlName="patientId">
+            <option value="">Seleccionar paciente...</option>
+            <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
+          </select>
+          <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
+            Obrigatório
+          </span>
+        </div>
+
+        <div class="field">
+          <label>Diagnóstico</label>
+          <input type="text" formControlName="diagnosis"
+            placeholder="Diagnóstico principal..."/>
+        </div>
+
+        <div class="field">
+          <label>Validade (dias)</label>
+          <input type="number" formControlName="validityDays" min="1" max="365"/>
+        </div>
+
+        <div class="field span-2">
+          <label>Notas</label>
+          <input type="text" formControlName="notes"
+            placeholder="Instruções gerais..."/>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Medicamentos -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2 class="section-title">Medicamentos</h2>
+        <button type="button" class="btn-add-item" (click)="addItem()">
+          + Adicionar Medicamento
+        </button>
+      </div>
+
+      <div class="items-list" formArrayName="items">
+        <div class="item-card"
+          *ngFor="let item of items.controls; let i = index"
+          [formGroupName]="i">
+
+          <div class="item-header">
+            <span class="item-num">Medicamento {{ i + 1 }}</span>
+            <button type="button" class="btn-remove-item"
+              *ngIf="items.length > 1"
+              (click)="removeItem(i)">✕</button>
+          </div>
+
+          <div class="item-grid">
+
+            <div class="field span-2">
+              <label>Medicamento *</label>
+              <select formControlName="medicationId">
+                <option value="">Seleccionar...</option>
+                <option *ngFor="let m of medications" [value]="m.id">
+                  {{ m.name }} (Stock: {{ m.stock }} {{ m.unit }})
+                </option>
+              </select>
+              <span class="field-error"
+                *ngIf="item.get('medicationId')?.invalid && item.get('medicationId')?.touched">
+                Obrigatório
+              </span>
+              <!-- Aviso de stock baixo -->
+              <span class="stock-warning"
+                *ngIf="item.get('medicationId')?.value &&
+                  getMedication(item.get('medicationId')!.value)?.stock === 0">
+                ⚠ Sem stock disponível
+              </span>
+            </div>
+
+            <div class="field">
+              <label>Quantidade *</label>
+              <input type="number" formControlName="quantityPrescribed" min="1"/>
+              <span class="field-error"
+                *ngIf="item.get('quantityPrescribed')?.invalid && item.get('quantityPrescribed')?.touched">
+                Mín. 1
+              </span>
+            </div>
+
+            <div class="field">
+              <label>Via de Administração</label>
+              <select formControlName="route">
+                <option *ngFor="let r of routes" [value]="r">{{ r }}</option>
+              </select>
+            </div>
+
+            <div class="field span-2">
+              <label>Posologia *</label>
+              <input type="text" formControlName="dosage"
+                placeholder="Ex: 1 comprimido 3x ao dia"/>
+              <span class="field-error"
+                *ngIf="item.get('dosage')?.invalid && item.get('dosage')?.touched">
+                Obrigatório
+              </span>
+            </div>
+
+            <div class="field">
+              <label>Frequência (horas)</label>
+              <input type="number" formControlName="frequencyHours" min="1"
+                placeholder="Ex: 8"/>
+            </div>
+
+            <div class="field">
+              <label>Duração (dias)</label>
+              <input type="number" formControlName="durationDays" min="1"
+                placeholder="Ex: 7"/>
+            </div>
+
+            <div class="field span-2">
+              <label>Instruções adicionais</label>
+              <input type="text" formControlName="instructions"
+                placeholder="Ex: Tomar após as refeições"/>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="saving">
+        <span *ngIf="!saving">Emitir Prescrição</span>
+        <span *ngIf="saving" class="saving-state">
+          <span class="spinner-xs"></span> A guardar...
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>
