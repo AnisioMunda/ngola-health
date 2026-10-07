@@ -63,8 +63,9 @@ parceiro:
 - A secção de estrutura descreve JWS Compact Serialization e cabeçalho
   `RS256`/`JWT`, mas a tabela do serviço de registo indica tamanho fixo de
   256 caracteres para `jwsDocumentSignature`.
-- Os exemplos do registo exigem dados SAF-T como `eacCode`, código e unidade
-  do produto/serviço, que ainda não existem no modelo de facturação.
+- Os exemplos do registo incluem dados SAF-T como `eacCode` (assinalado como
+  não obrigatório na tabela do serviço), código e unidade do produto/serviço.
+  O modelo actual ainda não representa todos os campos de classificação SAF-T.
 - A página de registo não mostra `jwsSignature` no exemplo do pedido, enquanto
   a documentação geral descreve a assinatura de requisições com payload
   variável.

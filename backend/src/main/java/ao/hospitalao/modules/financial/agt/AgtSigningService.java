@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 public class AgtSigningService {
 
   private static final byte[] PROTECTED_HEADER =
-      "{\"alg\":\"RS256\"}".getBytes(StandardCharsets.UTF_8);
+      "{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8);
 
   private final AgtProperties properties;
 
@@ -109,11 +109,17 @@ public class AgtSigningService {
   }
 
   static String signPayload(byte[] payload, PrivateKey privateKey) throws GeneralSecurityException {
+    return signPayload(PROTECTED_HEADER, payload, privateKey);
+  }
+
+  static String signPayload(byte[] header, byte[] payload, PrivateKey privateKey)
+      throws GeneralSecurityException {
+    Objects.requireNonNull(header, "header must not be null");
     Objects.requireNonNull(payload, "payload must not be null");
     Objects.requireNonNull(privateKey, "privateKey must not be null");
 
     String signingInput =
-        Base64.getUrlEncoder().withoutPadding().encodeToString(PROTECTED_HEADER)
+        Base64.getUrlEncoder().withoutPadding().encodeToString(header)
             + "."
             + Base64.getUrlEncoder().withoutPadding().encodeToString(payload);
 

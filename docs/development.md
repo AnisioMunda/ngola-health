@@ -164,8 +164,10 @@ O backend fica em `http://localhost:8080`; o health check é
 
 A integração começa desactivada (`AGT_ENABLED=false`). Não a active até o
 contrato técnico aplicável e a homologação estarem confirmados na ADR-0009.
-Quando activada, o perfil `prod` exige `AGT_CLIENT_ID`, `AGT_CLIENT_SECRET` e
-`AGT_PRIVATE_KEY_PATH`. Injecte as credenciais através do gestor de segredos do
+Quando activada, o perfil `prod` exige `AGT_USERNAME`, `AGT_PASSWORD`,
+`AGT_SOFTWARE_VALIDATION` e `AGT_PRIVATE_KEY_PATH`. Configure também
+`AGT_TAX_EXEMPTION_CODE` para submeter facturas com taxa de IVA zero. Injecte
+as credenciais através do gestor de segredos do
 ambiente e monte a chave privada RSA em ficheiro fora da imagem e do
 repositório; a aplicação valida a sua leitura e formato no arranque. Não use
 `AGT_PRIVATE_KEY_CONTENT`, não inclua chaves em `.env` e não reutilize

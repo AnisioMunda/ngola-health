@@ -148,12 +148,13 @@ jwt:
 agt:
   api-url: ${AGT_API_URL}
   enabled: ${AGT_ENABLED:false}
-  client-id: ${AGT_CLIENT_ID:}
-  client-secret: ${AGT_CLIENT_SECRET:}
+  username: ${AGT_USERNAME:}
+  password: ${AGT_PASSWORD:}
   nif: ${AGT_NIF}
   software-id: ${AGT_SOFTWARE_ID}
   software-version: ${AGT_SOFTWARE_VERSION}
   software-validation-number: ${AGT_SOFTWARE_VALIDATION:}
+  tax-exemption-code: ${AGT_TAX_EXEMPTION_CODE:}
   private-key-path: ${AGT_PRIVATE_KEY_PATH:}
   sandbox: ${AGT_SANDBOX:false}
 

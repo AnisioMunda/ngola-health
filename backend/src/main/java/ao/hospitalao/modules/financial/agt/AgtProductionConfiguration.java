@@ -24,14 +24,17 @@ public class AgtProductionConfiguration {
     }
 
     List<String> missing = new ArrayList<>();
-    if (isBlank(properties.getClientId())) {
-      missing.add("AGT_CLIENT_ID");
+    if (isBlank(properties.getUsername())) {
+      missing.add("AGT_USERNAME");
     }
-    if (isBlank(properties.getClientSecret())) {
-      missing.add("AGT_CLIENT_SECRET");
+    if (isBlank(properties.getPassword())) {
+      missing.add("AGT_PASSWORD");
     }
     if (isBlank(properties.getPrivateKeyPath())) {
       missing.add("AGT_PRIVATE_KEY_PATH");
+    }
+    if (isBlank(properties.getSoftwareValidationNumber())) {
+      missing.add("AGT_SOFTWARE_VALIDATION");
     }
     if (!missing.isEmpty()) {
       throw new IllegalStateException(

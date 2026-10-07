@@ -18,24 +18,26 @@ class AgtProductionConfigurationTest {
   @Test
   void refusesProductionWithoutExternalCredentialsAndMountedKeyPath() {
     var properties = validProperties();
-    properties.setClientId("");
+    properties.setUsername("");
     properties.setPrivateKeyPath("");
+    properties.setSoftwareValidationNumber("");
 
     assertThatThrownBy(
             () ->
                 AgtProductionConfiguration.validateProductionConfiguration(
                     properties, mock(AgtSigningService.class)))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("AGT_CLIENT_ID")
-        .hasMessageContaining("AGT_PRIVATE_KEY_PATH");
+        .hasMessageContaining("AGT_USERNAME")
+        .hasMessageContaining("AGT_PRIVATE_KEY_PATH")
+        .hasMessageContaining("AGT_SOFTWARE_VALIDATION");
   }
 
   @Test
   void permitsProductionWhenIntegrationIsExplicitlyDisabled() {
     var properties = validProperties();
     properties.setEnabled(false);
-    properties.setClientId("");
-    properties.setClientSecret("");
+    properties.setUsername("");
+    properties.setPassword("");
     properties.setPrivateKeyPath("");
 
     AgtProductionConfiguration.validateProductionConfiguration(
@@ -78,8 +80,9 @@ class AgtProductionConfigurationTest {
   private AgtProperties validProperties() {
     var properties = new AgtProperties();
     properties.setEnabled(true);
-    properties.setClientId("test-client-id");
-    properties.setClientSecret("test-client-secret");
+    properties.setUsername("test-username");
+    properties.setPassword("test-password");
+    properties.setSoftwareValidationNumber("C_134");
     properties.setPrivateKeyPath("/run/secrets/agt-private-key.pem");
     return properties;
   }

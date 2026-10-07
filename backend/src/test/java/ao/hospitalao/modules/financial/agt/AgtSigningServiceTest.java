@@ -41,13 +41,14 @@ class AgtSigningServiceTest {
 
   @Test
   void signsRfc7515Rs256KnownVector() throws Exception {
+    byte[] header = "{\"alg\":\"RS256\"}".getBytes(StandardCharsets.UTF_8);
     byte[] payload =
         ("{\"iss\":\"joe\",\r\n"
                 + " \"exp\":1300819380,\r\n"
                 + " \"http://example.com/is_root\":true}")
             .getBytes(StandardCharsets.UTF_8);
 
-    String token = AgtSigningService.signPayload(payload, rfc7515PrivateKey());
+    String token = AgtSigningService.signPayload(header, payload, rfc7515PrivateKey());
 
     assertThat(token)
         .isEqualTo(
@@ -96,12 +97,14 @@ class AgtSigningServiceTest {
     verifier.update(signingInput);
 
     assertThat(token).hasSize(3);
-    assertThat(token[0]).isEqualTo("eyJhbGciOiJSUzI1NiJ9");
-    assertThat(String.join(".", token)).isEqualTo(legacyToken);
+    assertThat(new String(Base64.getUrlDecoder().decode(token[0]), StandardCharsets.UTF_8))
+        .isEqualTo("{\"alg\":\"RS256\",\"typ\":\"JWT\"}");
     assertThat(verifier.verify(Base64.getUrlDecoder().decode(token[2]))).isTrue();
     var claims = new ObjectMapper().readTree(Base64.getUrlDecoder().decode(token[1]));
     assertThat(claims.get("taxRegistrationNumber").asText()).isEqualTo("5000000000");
     assertThat(claims.get("requestID").asText()).isEqualTo("request-123");
+
+    assertThat(token[1]).isEqualTo(legacyToken.split("\\.", -1)[1]);
   }
 
   private RSAPrivateKey rfc7515PrivateKey() throws Exception {
