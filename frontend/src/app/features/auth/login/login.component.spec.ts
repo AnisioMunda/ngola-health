@@ -23,6 +23,8 @@ describe('LoginComponent', () => {
           email: 'teste@example.invalid',
           accessToken: 'access-token',
           refreshToken: 'refresh-token',
+          roles: ['DOCTOR'],
+          mustChangePassword: false,
         }),
       ),
     };

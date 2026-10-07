@@ -18,6 +18,7 @@ public class AuthMapper {
     dto.setFullName(user.getFullName());
     dto.setUsername(user.getUsername());
     dto.setEmail(user.getEmail());
+    dto.setRoles(user.getRoles().stream().map(role -> role.getName()).sorted().toList());
     dto.setAccessToken(accessToken);
     dto.setRefreshToken(refreshToken);
     dto.setMustChangePassword(user.isMustChangePassword());

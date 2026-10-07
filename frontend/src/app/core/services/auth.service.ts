@@ -15,8 +15,10 @@ export interface AuthResponse {
   fullName: string;
   username: string;
   email: string;
+  roles: string[];
   accessToken: string;
   refreshToken: string;
+  mustChangePassword: boolean;
 }
 
 export interface AuthUser {
@@ -24,6 +26,8 @@ export interface AuthUser {
   fullName: string;
   username: string;
   email: string;
+  roles: string[];
+  mustChangePassword: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -118,6 +122,8 @@ export class AuthService {
         fullName: response.fullName,
         username: response.username,
         email: response.email,
+        roles: response.roles,
+        mustChangePassword: response.mustChangePassword,
       }),
     );
   }

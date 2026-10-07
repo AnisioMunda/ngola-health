@@ -25,6 +25,8 @@ describe('authInterceptor', () => {
     email: 'teste@example.invalid',
     accessToken: 'access-token-novo',
     refreshToken: 'refresh-token-novo',
+    roles: ['DOCTOR'],
+    mustChangePassword: false,
   };
 
   beforeEach(() => {

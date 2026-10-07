@@ -16,6 +16,8 @@ describe('AuthService', () => {
     email: 'teste@example.invalid',
     accessToken: 'access-token-novo',
     refreshToken: 'refresh-token-novo',
+    roles: ['DOCTOR'],
+    mustChangePassword: false,
   };
 
   beforeEach(() => {
@@ -46,6 +48,13 @@ describe('AuthService', () => {
     expect(responses).toEqual([refreshedSession, refreshedSession]);
     expect(localStorage.getItem('accessToken')).toBe('access-token-novo');
     expect(localStorage.getItem('refreshToken')).toBe('refresh-token-novo');
-    expect(JSON.parse(localStorage.getItem('user') ?? '{}').username).toBe('teste');
+    expect(JSON.parse(localStorage.getItem('user') ?? '{}')).toEqual({
+      id: 'user-id',
+      fullName: 'Utilizador de Teste',
+      username: 'teste',
+      email: 'teste@example.invalid',
+      roles: ['DOCTOR'],
+      mustChangePassword: false,
+    });
   });
 });

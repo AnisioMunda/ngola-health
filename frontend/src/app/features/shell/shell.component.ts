@@ -9,6 +9,7 @@ interface NavItem {
   label: string;
   route: string;
   icon: string;
+  roles: readonly string[];
 }
 
 @Component({
@@ -21,25 +22,110 @@ interface NavItem {
 export class ShellComponent implements OnInit {
   collapsed = false;
   currentRoute = '';
-  currentUser: any = null;
+  currentUser: ReturnType<AuthService['getCurrentUser']> = null;
 
   navItems: NavItem[] = [
-    { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
-    { label: 'Pacientes', route: '/patients', icon: 'patients' },
-    { label: 'Consultas', route: '/episodes', icon: 'episodes' },
-    { label: 'Agendamento', route: '/scheduling', icon: 'scheduling' },
-    { label: 'Internamentos', route: '/inpatient', icon: 'inpatient' },
-    { label: 'Laboratório', route: '/lab', icon: 'lab' },
-    { label: 'Farmácia', route: '/pharmacy', icon: 'pharmacy' },
-    { label: 'Facturação', route: '/financial', icon: 'financial' },
-    { label: 'Relatórios', route: '/reports', icon: 'reports' },
-    { label: 'Utilizadores', route: '/users', icon: 'users' },
-    { label: 'Auditoria', route: '/audit', icon: 'audit' },
-    { label: 'RH', route: '/hr', icon: 'hr' },
-    { label: 'Prescrições', route: '/prescriptions', icon: 'prescriptions' },
-    { label: 'Triagem', route: '/triage', icon: 'triage' },
-    { label: 'Equipamentos', route: '/equipment', icon: 'equipment' },
-    { label: 'Telemedicina', route: '/telemedicine', icon: 'telemedicine' },
+    {
+      label: 'Dashboard',
+      route: '/dashboard',
+      icon: 'dashboard',
+      roles: [
+        'ADMIN',
+        'MANAGER',
+        'DOCTOR',
+        'NURSE',
+        'RECEPTIONIST',
+        'PHARMACIST',
+        'FINANCIAL',
+        'LAB_TECHNICIAN',
+        'SUPER_ADMIN',
+      ],
+    },
+    {
+      label: 'Pacientes',
+      route: '/patients',
+      icon: 'patients',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'],
+    },
+    {
+      label: 'Consultas',
+      route: '/episodes',
+      icon: 'episodes',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'],
+    },
+    {
+      label: 'Agendamento',
+      route: '/scheduling',
+      icon: 'scheduling',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'],
+    },
+    {
+      label: 'Internamentos',
+      route: '/inpatient',
+      icon: 'inpatient',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE'],
+    },
+    {
+      label: 'Laboratório',
+      route: '/lab',
+      icon: 'lab',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN'],
+    },
+    {
+      label: 'Farmácia',
+      route: '/pharmacy',
+      icon: 'pharmacy',
+      roles: ['ADMIN', 'MANAGER', 'PHARMACIST', 'NURSE'],
+    },
+    {
+      label: 'Facturação',
+      route: '/financial',
+      icon: 'financial',
+      roles: ['ADMIN', 'MANAGER', 'FINANCIAL'],
+    },
+    {
+      label: 'Relatórios',
+      route: '/reports',
+      icon: 'reports',
+      roles: ['ADMIN', 'MANAGER'],
+    },
+    {
+      label: 'Utilizadores',
+      route: '/users',
+      icon: 'users',
+      roles: ['ADMIN', 'MANAGER'],
+    },
+    {
+      label: 'Auditoria',
+      route: '/audit',
+      icon: 'audit',
+      roles: ['ADMIN', 'MANAGER'],
+    },
+    { label: 'RH', route: '/hr', icon: 'hr', roles: ['ADMIN', 'MANAGER'] },
+    {
+      label: 'Prescrições',
+      route: '/prescriptions',
+      icon: 'prescriptions',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'PHARMACIST', 'NURSE'],
+    },
+    {
+      label: 'Triagem',
+      route: '/triage',
+      icon: 'triage',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'NURSE', 'RECEPTIONIST'],
+    },
+    {
+      label: 'Equipamentos',
+      route: '/equipment',
+      icon: 'equipment',
+      roles: ['ADMIN', 'MANAGER'],
+    },
+    {
+      label: 'Telemedicina',
+      route: '/telemedicine',
+      icon: 'telemedicine',
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR'],
+    },
   ];
 
   constructor(
@@ -49,13 +135,20 @@ export class ShellComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentRoute = this.router.url;
-    this.currentUser = this.authService.getCurrentUser?.() ?? null;
+    this.currentUser = this.authService.getCurrentUser();
 
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e: any) => {
-      this.currentRoute = e.urlAfterRedirects;
-    });
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.currentRoute = event.urlAfterRedirects;
+      });
 
     if (window.innerWidth < 768) this.collapsed = true;
+  }
+
+  get visibleNavItems(): NavItem[] {
+    const roles = this.currentUser?.roles ?? [];
+    return this.navItems.filter((item) => item.roles.some((role) => roles.includes(role)));
   }
 
   toggle(): void {

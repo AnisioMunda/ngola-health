@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.auth.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 
@@ -22,6 +23,9 @@ public class AuthResponse {
 
   @Schema(description = "User Email", example = "donald.d.trump@hotmail.com")
   private String email;
+
+  @Schema(description = "Role names assigned to the authenticated user")
+  private List<String> roles;
 
   @Schema(description = "Token JWT", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
   private String accessToken;
