@@ -2,6 +2,7 @@ package ao.hospitalao.modules.scheduling.service;
 
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.notifications.event.AppointmentCancelledEvent;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.scheduling.dto.SchedulingDtos.*;
 import ao.hospitalao.modules.scheduling.entity.Appointment;
@@ -21,6 +22,7 @@ import java.time.format.TextStyle;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +40,7 @@ public class SchedulingService {
   private final PatientRepository patientRepository;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private static final Locale PT = new Locale("pt", "AO");
   private static final DateTimeFormatter DATE_LABEL =
@@ -310,11 +313,23 @@ public class SchedulingService {
     if (a.getStatus() == AppointmentStatus.COMPLETED) {
       throw new IllegalStateException("Não é possível cancelar uma consulta já realizada.");
     }
+    boolean wasAlreadyCancelled = a.getStatus() == AppointmentStatus.CANCELLED;
     a.setStatus(AppointmentStatus.CANCELLED);
     a.setCancellationReason(reason);
     a.setCancelledAt(OffsetDateTime.now());
     log.info("Appointment {} cancelled: {}", a.getId(), reason);
-    return toAppointmentResponse(appointmentRepository.save(a));
+    Appointment saved = appointmentRepository.save(a);
+    if (!wasAlreadyCancelled) {
+      eventPublisher.publishEvent(
+          new AppointmentCancelledEvent(
+              a.getHospitalId(),
+              a.getId(),
+              a.getDoctor().getId(),
+              a.getPatient().getFullName(),
+              a.getAppointmentDate(),
+              a.getStartTime()));
+    }
+    return toAppointmentResponse(saved);
   }
 
   @Transactional

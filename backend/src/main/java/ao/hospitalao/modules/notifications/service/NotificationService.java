@@ -14,6 +14,7 @@ import ao.hospitalao.modules.scheduling.entity.Appointment;
 import ao.hospitalao.modules.scheduling.repository.AppointmentRepository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,14 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
+
+  private static final DateTimeFormatter APPOINTMENT_DATE =
+      DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
   private final NotificationRepository notificationRepository;
   private final MedicationRepository medicationRepository;
@@ -60,15 +66,17 @@ public class NotificationService {
   }
 
   @Transactional
-  public void markAsRead(UUID id) {
-    notificationRepository
-        .findById(id)
-        .ifPresent(
-            n -> {
-              n.setRead(true);
-              n.setReadAt(OffsetDateTime.now());
-              notificationRepository.save(n);
-            });
+  public void markAsRead(UUID id, UUID hospitalId, UUID userId) {
+    Notification notification =
+        notificationRepository
+            .findVisibleToUser(id, hospitalId, userId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Notificação não encontrada."));
+    notification.setRead(true);
+    notification.setReadAt(OffsetDateTime.now());
+    notificationRepository.save(notification);
   }
 
   @Transactional
@@ -123,15 +131,14 @@ public class NotificationService {
 
   /** Chamado quando um resultado de exame é submetido */
   @Transactional
-  public void notifyLabResult(
-      UUID hospitalId, UUID labRequestId, String patientName, UUID doctorId) {
+  public void notifyLabResult(UUID hospitalId, UUID labRequestId, UUID recipientUserId) {
     create(
         hospitalId,
-        doctorId,
+        recipientUserId,
         NotificationType.LAB_RESULT,
         Priority.HIGH,
         "Resultado de Exame Disponível",
-        "O resultado do pedido de " + patientName + " está pronto para revisão.",
+        "Os resultados do pedido laboratorial estão disponíveis para revisão.",
         "/lab/" + labRequestId,
         labRequestId,
         "LAB_REQUEST");
@@ -152,7 +159,13 @@ public class NotificationService {
         NotificationType.APPOINTMENT_CANCELLED,
         Priority.HIGH,
         "Consulta Cancelada",
-        patientName + " cancelou a consulta de " + date + " às " + time + ".",
+        "A consulta de "
+            + patientName
+            + " marcada para "
+            + date.format(APPOINTMENT_DATE)
+            + " às "
+            + time
+            + " foi cancelada.",
         "/scheduling/" + appointmentId,
         appointmentId,
         "APPOINTMENT");

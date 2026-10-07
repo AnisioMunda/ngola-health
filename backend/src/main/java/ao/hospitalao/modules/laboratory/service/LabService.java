@@ -12,6 +12,7 @@ import ao.hospitalao.modules.laboratory.entity.LabRequestItem;
 import ao.hospitalao.modules.laboratory.entity.LabTest;
 import ao.hospitalao.modules.laboratory.repository.LabRequestRepository;
 import ao.hospitalao.modules.laboratory.repository.LabTestRepository;
+import ao.hospitalao.modules.notifications.event.LabResultsAvailableEvent;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -43,6 +45,7 @@ public class LabService {
   private final EpisodeRepository episodeRepository;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   // ------------------------------------------------
   // Lab Tests (catálogo)
@@ -219,7 +222,20 @@ public class LabService {
       request.setCompletedAt(OffsetDateTime.now());
     }
 
-    return toRequestResponse(requestRepository.save(request));
+    LabRequest saved = requestRepository.save(request);
+    if (allResulted) {
+      UUID recipientId =
+          request.getRequestedBy() != null
+              ? request.getRequestedBy().getId()
+              : request.getCreatedBy() != null ? request.getCreatedBy().getId() : null;
+      if (recipientId == null) {
+        log.warn("Completed lab request {} has no notification recipient", request.getId());
+      } else {
+        eventPublisher.publishEvent(
+            new LabResultsAvailableEvent(request.getHospitalId(), request.getId(), recipientId));
+      }
+    }
+    return toRequestResponse(saved);
   }
 
   @Transactional

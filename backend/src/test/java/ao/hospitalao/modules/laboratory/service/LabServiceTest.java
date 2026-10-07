@@ -23,6 +23,7 @@ import ao.hospitalao.modules.laboratory.entity.LabTest;
 import ao.hospitalao.modules.laboratory.entity.LabTest.TestCategory;
 import ao.hospitalao.modules.laboratory.repository.LabRequestRepository;
 import ao.hospitalao.modules.laboratory.repository.LabTestRepository;
+import ao.hospitalao.modules.notifications.event.LabResultsAvailableEvent;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -51,6 +53,7 @@ class LabServiceTest {
   @Mock private EpisodeRepository episodeRepository;
   @Mock private UserRepository userRepository;
   @Mock private HospitalRepository hospitalRepository;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private LabService labService;
 
@@ -231,6 +234,8 @@ class LabServiceTest {
     assertThat(response.getStatus()).isEqualTo(RequestStatus.COMPLETED);
     assertThat(response.getCompletedAt()).isNotNull();
     assertThat(item.getResultedBy()).isEqualTo(currentUser);
+    verify(eventPublisher)
+        .publishEvent(new LabResultsAvailableEvent(hospitalId, requestId, currentUser.getId()));
   }
 
   @Test
@@ -259,11 +264,16 @@ class LabServiceTest {
   }
 
   private LabRequest requestWithStatus(RequestStatus status) {
-    return LabRequest.builder()
-        .id(requestId)
-        .patient(patient)
-        .status(status)
-        .items(new ArrayList<>())
-        .build();
+    LabRequest request =
+        LabRequest.builder()
+            .id(requestId)
+            .patient(patient)
+            .requestedBy(currentUser)
+            .createdBy(currentUser)
+            .status(status)
+            .items(new ArrayList<>())
+            .build();
+    request.setHospitalId(hospitalId);
+    return request;
   }
 }
