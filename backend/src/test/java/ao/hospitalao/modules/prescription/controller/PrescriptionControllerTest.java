@@ -245,6 +245,58 @@ class PrescriptionControllerTest {
     mockMvc.perform(api(get("/api/prescriptions"))).andExpect(status().isUnauthorized());
   }
 
+  @Test
+  @DisplayName("GET / — deve rejeitar paciente em endpoint interno")
+  void shouldRejectPatientRoleFromInternalEndpoint() throws Exception {
+    mockMvc
+        .perform(api(get("/api/prescriptions"), "patient", "PATIENT"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("GET /portal/dashboard — deve rejeitar papel interno no portal")
+  void shouldRejectInternalRoleFromPatientPortal() throws Exception {
+    mockMvc
+        .perform(api(get("/api/portal/dashboard"), "doctor", "DOCTOR"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("Actuator e Swagger — devem exigir papel administrativo")
+  void shouldProtectActuatorAndApiDocumentation() throws Exception {
+    mockMvc.perform(api(get("/api/actuator/health"))).andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(api(get("/api/v3/api-docs"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/health"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("CORS — deve aceitar apenas a origem configurada")
+  void shouldAllowConfiguredCorsOrigin() throws Exception {
+    mockMvc
+        .perform(
+            api(options("/api/prescriptions"))
+                .header("Origin", "http://localhost:4200")
+                .header("Access-Control-Request-Method", "GET")
+                .header("Access-Control-Request-Headers", "authorization,content-type"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:4200"));
+  }
+
+  @Test
+  @DisplayName("CORS — deve rejeitar origens não configuradas")
+  void shouldRejectUnconfiguredCorsOrigin() throws Exception {
+    mockMvc
+        .perform(
+            api(options("/api/prescriptions"))
+                .header("Origin", "https://untrusted.example")
+                .header("Access-Control-Request-Method", "GET"))
+        .andExpect(status().isForbidden());
+  }
+
   // ------------------------------------------------
   // Builder
   // ------------------------------------------------

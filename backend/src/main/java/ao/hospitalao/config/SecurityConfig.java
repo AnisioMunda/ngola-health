@@ -1,8 +1,13 @@
 package ao.hospitalao.config;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.UserDetailsServiceImpl;
 import ao.hospitalao.security.jwt.JwtAuthFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -20,6 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -30,37 +38,47 @@ public class SecurityConfig {
   private final JwtAuthFilter jwtAuthFilter;
   private final UserDetailsServiceImpl userDetailsService;
 
+  @Value("${app.base-url}")
+  private String appBaseUrl;
+
   @SuppressWarnings("null")
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
+        .cors(withDefaults())
         .authorizeHttpRequests(
             auth ->
-                auth
-                    // ── Públicos ──────────────────────────────────────────
-                    .requestMatchers(
+                auth.requestMatchers(
                         "/auth/login",
                         "/auth/refresh",
                         "/auth/logout",
                         "/portal/register",
                         "/portal/login",
+                        "/error",
+                        "/error/**")
+                    .permitAll()
+                    .requestMatchers("/portal/**")
+                    .hasRole(RoleName.PATIENT.name())
+                    .requestMatchers(
                         "/actuator/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/api-docs/**",
                         "/v3/api-docs/**",
-                        "/webjars/**",
-                        "/error/**")
-                    .permitAll()
-
-                    // ── Portal do paciente ────────────────────────────────
-                    // Endpoints do portal aplicam adicionalmente o papel de paciente por método.
-                    .requestMatchers("/portal/**")
-                    .authenticated()
-
-                    // ── Sistema interno ───────────────────────────────────
+                        "/webjars/**")
+                    .hasAnyRole(
+                        RoleName.ADMIN.name(), RoleName.MANAGER.name(), RoleName.SUPER_ADMIN.name())
                     .anyRequest()
-                    .authenticated())
+                    .hasAnyRole(
+                        RoleName.ADMIN.name(),
+                        RoleName.MANAGER.name(),
+                        RoleName.DOCTOR.name(),
+                        RoleName.NURSE.name(),
+                        RoleName.RECEPTIONIST.name(),
+                        RoleName.PHARMACIST.name(),
+                        RoleName.FINANCIAL.name(),
+                        RoleName.LAB_TECHNICIAN.name(),
+                        RoleName.SUPER_ADMIN.name()))
         .exceptionHandling(
             exceptions ->
                 exceptions.authenticationEntryPoint(
@@ -71,6 +89,20 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of(appBaseUrl));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 
   @Bean
