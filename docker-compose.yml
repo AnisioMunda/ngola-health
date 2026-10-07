@@ -77,6 +77,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
       RABBITMQ_VHOST: /hospitalao
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no ficheiro .env}
+      DEV_ADMIN_INITIAL_PASSWORD_BASE64: ${DEV_ADMIN_INITIAL_PASSWORD_BASE64:?Define DEV_ADMIN_INITIAL_PASSWORD_BASE64 no ficheiro .env}
       APP_BASE_URL: http://localhost:4200
     ports:
       - "127.0.0.1:8080:8080"

@@ -224,6 +224,8 @@ spring:
     show-sql: true  # Ver as queries SQL no terminal em dev
   liquibase:
     contexts: dev
+    parameters:
+      devAdminPasswordBase64: ${DEV_ADMIN_INITIAL_PASSWORD_BASE64}
   web:
     error:
       include-message: always

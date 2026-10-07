@@ -36,6 +36,19 @@ Preencha o ficheiro `.env`, que é ignorado pelo Git:
 | `REDIS_PASSWORD`    | Palavra-passe local do Redis                        |
 | `RABBITMQ_USER`     | Utilizador RabbitMQ; pode usar `hospitalao`         |
 | `RABBITMQ_PASSWORD` | Palavra-passe local do RabbitMQ                     |
+| `DEV_ADMIN_INITIAL_PASSWORD_BASE64` | Senha temporária do `platform-admin`, codificada em Base64 |
+
+Escolha uma senha temporária com pelo menos 12 caracteres e codifique-a para o
+valor `DEV_ADMIN_INITIAL_PASSWORD_BASE64`:
+
+```sh
+printf '%s' 'a-sua-senha-temporaria' | base64 | tr -d '\n'
+```
+
+O utilizador `platform-admin` é criado apenas no perfil `dev`, recebe o papel
+`SUPER_ADMIN` e tem de trocar a senha no primeiro acesso. A senha Base64 é
+apenas uma codificação, não uma forma de encriptação; proteja o `.env` como
+protegeria a senha original.
 
 Gere valores novos para cada ambiente; não reutilize credenciais de produção:
 

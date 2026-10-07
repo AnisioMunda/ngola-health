@@ -30,4 +30,5 @@
     <include file="changes/equipment/001-equipment.sql" relativeToChangelogFile="true"/>
     <include file="changes/hospitals/002-tenant-scoped-records.sql" relativeToChangelogFile="true"/>
     <include file="changes/users/003-account-lockout.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/004-dev-seed.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
