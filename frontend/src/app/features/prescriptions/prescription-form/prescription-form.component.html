@@ -18,10 +18,17 @@
       <div class="form-grid">
         <div class="field span-2">
           <label>Paciente *</label>
-          <select formControlName="patientId">
+          <select formControlName="patientId" [disabled]="loadingPatients || !!patientsError">
             <option value="">Seleccionar paciente...</option>
             <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
           </select>
+          <span class="field-error" *ngIf="loadingPatients">A carregar pacientes...</span>
+          <span class="field-error" *ngIf="patientsError">
+            {{ patientsError }}
+            <button type="button" class="btn-page" (click)="loadPatients()">
+              Tentar novamente
+            </button>
+          </span>
           <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
             Obrigatório
           </span>
@@ -35,6 +42,9 @@
         <div class="field">
           <label>Validade (dias)</label>
           <input type="number" formControlName="validityDays" min="1" max="365" />
+          <span class="field-error" *ngIf="f.validityDays.invalid && f.validityDays.touched">
+            A validade deve estar entre 1 e 365 dias.
+          </span>
         </div>
 
         <div class="field span-2">
@@ -48,7 +58,12 @@
     <div class="section-card">
       <div class="section-header">
         <h2 class="section-title">Medicamentos</h2>
-        <button type="button" class="btn-add-item" (click)="addItem()">
+        <button
+          type="button"
+          class="btn-add-item"
+          (click)="addItem()"
+          [disabled]="loadingMedications || !!medicationsError"
+        >
           + Adicionar Medicamento
         </button>
       </div>
@@ -80,6 +95,13 @@
                   {{ m.name }} (Stock: {{ m.stock }} {{ m.unit }})
                 </option>
               </select>
+              <span class="field-error" *ngIf="loadingMedications">A carregar medicamentos...</span>
+              <span class="field-error" *ngIf="medicationsError">
+                {{ medicationsError }}
+                <button type="button" class="btn-page" (click)="loadMedications()">
+                  Tentar novamente
+                </button>
+              </span>
               <span
                 class="field-error"
                 *ngIf="item.get('medicationId')?.invalid && item.get('medicationId')?.touched"
@@ -158,7 +180,13 @@
 
     <div class="form-actions">
       <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="saving">
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="
+          saving || loadingPatients || loadingMedications || !!patientsError || !!medicationsError
+        "
+      >
         <span *ngIf="!saving">Emitir Prescrição</span>
         <span *ngIf="saving" class="saving-state">
           <span class="spinner-xs"></span> A guardar...

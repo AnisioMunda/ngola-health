@@ -112,7 +112,7 @@ export class ShellComponent implements OnInit {
       label: 'Prescrições',
       route: '/prescriptions',
       icon: 'prescriptions',
-      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'PHARMACIST', 'NURSE'],
+      roles: ['ADMIN', 'MANAGER', 'DOCTOR', 'PHARMACIST'],
     },
     {
       label: 'Triagem',

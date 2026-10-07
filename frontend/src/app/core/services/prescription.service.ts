@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -17,10 +17,10 @@ export interface PrescriptionItemResponse {
   quantityDispensed: number;
   remainingQuantity: number;
   dosage: string;
-  frequencyHours: number;
-  durationDays: number;
-  route: string;
-  instructions: string;
+  frequencyHours: number | null;
+  durationDays: number | null;
+  route: string | null;
+  instructions: string | null;
   status: ItemStatus;
   statusLabel: string;
   stockAvailable: number;
@@ -34,7 +34,7 @@ export interface DispensationResponse {
   dispensedByName: string;
   quantityDispensed: number;
   dispensedAt: string;
-  notes: string;
+  notes: string | null;
 }
 
 export interface PrescriptionResponse {
@@ -44,19 +44,45 @@ export interface PrescriptionResponse {
   patientName: string;
   doctorId: string;
   doctorName: string;
-  episodeId: string;
-  admissionId: string;
+  episodeId: string | null;
+  admissionId: string | null;
   status: PrescriptionStatus;
   statusLabel: string;
   prescriptionDate: string;
   expiryDate: string;
   expired: boolean;
-  diagnosis: string;
-  notes: string;
-  cancelledReason: string;
+  diagnosis: string | null;
+  notes: string | null;
+  cancelledReason: string | null;
   items: PrescriptionItemResponse[];
   dispensations: DispensationResponse[];
-  createdAt: string;
+  createdAt: string | null;
+}
+
+export interface CreatePrescriptionItemRequest {
+  medicationId: string;
+  quantityPrescribed: number;
+  dosage: string;
+  frequencyHours?: number | null;
+  durationDays?: number | null;
+  route?: string | null;
+  instructions?: string | null;
+}
+
+export interface CreatePrescriptionRequest {
+  patientId: string;
+  episodeId?: string | null;
+  admissionId?: string | null;
+  diagnosis?: string | null;
+  notes?: string | null;
+  validityDays: number;
+  items: CreatePrescriptionItemRequest[];
+}
+
+export interface DispensePrescriptionRequest {
+  prescriptionItemId: string;
+  quantityToDispense: number;
+  notes?: string | null;
 }
 
 export interface PrescriptionStatsDto {
@@ -71,6 +97,7 @@ export interface Page<T> {
   totalElements: number;
   totalPages: number;
   number: number;
+  size: number;
 }
 
 export const PRESCRIPTION_STATUS_LABELS: Record<PrescriptionStatus, string> = {
@@ -108,6 +135,15 @@ export const ROUTES = [
   'Oftálmica',
 ];
 
+export function prescriptionErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+    const body = error.error as Record<string, unknown>;
+    if (typeof body['detail'] === 'string' && body['detail']) return body['detail'];
+    if (typeof body['message'] === 'string' && body['message']) return body['message'];
+  }
+  return fallback;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PrescriptionService {
   private http = inject(HttpClient);
@@ -143,11 +179,11 @@ export class PrescriptionService {
     return this.http.get<PrescriptionResponse[]>(`${this.apiUrl}/admission/${admissionId}`);
   }
 
-  create(req: any): Observable<PrescriptionResponse> {
+  create(req: CreatePrescriptionRequest): Observable<PrescriptionResponse> {
     return this.http.post<PrescriptionResponse>(this.apiUrl, req);
   }
 
-  dispense(id: string, req: any): Observable<PrescriptionResponse> {
+  dispense(id: string, req: DispensePrescriptionRequest): Observable<PrescriptionResponse> {
     return this.http.post<PrescriptionResponse>(`${this.apiUrl}/${id}/dispense`, req);
   }
 

@@ -4,13 +4,18 @@
       <h1>Prescrições</h1>
       <span class="total-badge">{{ totalElements }} registos</span>
     </div>
-    <button class="btn-primary" (click)="goToNew()">
+    <button class="btn-primary" *ngIf="canCreate" (click)="goToNew()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Nova Prescrição
     </button>
   </header>
+
+  <div class="alert-error" *ngIf="statsError">
+    {{ statsError }}
+    <button type="button" class="btn-page" (click)="loadStats()">Tentar novamente</button>
+  </div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -41,7 +46,12 @@
     </div>
   </div>
 
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">
+    {{ error }}
+    <button type="button" class="btn-page" *ngIf="canViewList && !loading" (click)="load()">
+      Tentar novamente
+    </button>
+  </div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
@@ -61,7 +71,7 @@
         <path d="M28 32l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       <p>Nenhuma prescrição encontrada.</p>
-      <button class="btn-primary" (click)="goToNew()">Criar prescrição</button>
+      <button class="btn-primary" *ngIf="canCreate" (click)="goToNew()">Criar prescrição</button>
     </div>
 
     <table *ngIf="prescriptions.length > 0">
@@ -88,14 +98,14 @@
             <span class="patient-name">{{ p.patientName }}</span>
           </td>
           <td class="doctor-name">{{ p.doctorName }}</td>
-          <td class="date">{{ p.prescriptionDate | date: 'dd/MM/yyyy' }}</td>
+          <td class="date">{{ p.prescriptionDate | date: 'dd/MM/yyyy' : 'Africa/Luanda' }}</td>
           <td>
             <span
               class="expiry"
               [class.expiring-soon]="daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'"
               [class.expired]="p.expired"
             >
-              {{ p.expiryDate | date: 'dd/MM/yyyy' }}
+              {{ p.expiryDate | date: 'dd/MM/yyyy' : 'Africa/Luanda' }}
               <span
                 *ngIf="!p.expired && daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'"
               >

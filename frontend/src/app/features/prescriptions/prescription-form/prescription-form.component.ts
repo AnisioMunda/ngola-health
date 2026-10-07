@@ -1,10 +1,43 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  FormArray,
+  FormControl,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PrescriptionService, ROUTES } from '../../../core/services/prescription.service';
+import {
+  CreatePrescriptionRequest,
+  PrescriptionService,
+  ROUTES,
+  prescriptionErrorMessage,
+} from '../../../core/services/prescription.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
+import { AuthService } from '../../../core/services/auth.service';
+
+type PrescriptionItemControls = {
+  medicationId: FormControl<string>;
+  quantityPrescribed: FormControl<number | null>;
+  dosage: FormControl<string>;
+  frequencyHours: FormControl<number | null>;
+  durationDays: FormControl<number | null>;
+  route: FormControl<string>;
+  instructions: FormControl<string>;
+};
+
+type PrescriptionControls = {
+  patientId: FormControl<string>;
+  episodeId: FormControl<string>;
+  admissionId: FormControl<string>;
+  diagnosis: FormControl<string>;
+  notes: FormControl<string>;
+  validityDays: FormControl<number | null>;
+  items: FormArray<FormGroup<PrescriptionItemControls>>;
+};
 
 @Component({
   selector: 'app-prescription-form',
@@ -14,9 +47,13 @@ import { PharmacyService } from '../../../core/services/pharmacy.service';
   styleUrls: ['./prescription-form.component.scss'],
 })
 export class PrescriptionFormComponent implements OnInit {
-  form!: FormGroup;
+  form!: FormGroup<PrescriptionControls>;
   saving = false;
   error = '';
+  loadingPatients = true;
+  loadingMedications = true;
+  patientsError = '';
+  medicationsError = '';
 
   patients: { id: string; fullName: string }[] = [];
   medications: { id: string; name: string; unit: string; stock: number }[] = [];
@@ -35,9 +72,16 @@ export class PrescriptionFormComponent implements OnInit {
     private prescriptionService: PrescriptionService,
     private patientService: PatientService,
     private pharmacyService: PharmacyService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    if (!roles.includes('ADMIN') && !roles.includes('DOCTOR')) {
+      void this.router.navigate(['/prescriptions']);
+      return;
+    }
+
     this.prePatientId = this.route.snapshot.queryParamMap.get('patientId');
     this.preEpisodeId = this.route.snapshot.queryParamMap.get('episodeId');
     this.preAdmissionId = this.route.snapshot.queryParamMap.get('admissionId');
@@ -49,13 +93,17 @@ export class PrescriptionFormComponent implements OnInit {
 
   buildForm(): void {
     this.form = this.fb.group({
-      patientId: [this.prePatientId ?? '', Validators.required],
-      episodeId: [this.preEpisodeId ?? ''],
-      admissionId: [this.preAdmissionId ?? ''],
-      diagnosis: [''],
-      notes: [''],
-      validityDays: [30],
-      items: this.fb.array([]),
+      patientId: this.fb.nonNullable.control(this.prePatientId ?? '', Validators.required),
+      episodeId: this.fb.nonNullable.control(this.preEpisodeId ?? ''),
+      admissionId: this.fb.nonNullable.control(this.preAdmissionId ?? ''),
+      diagnosis: this.fb.nonNullable.control('', Validators.maxLength(500)),
+      notes: this.fb.nonNullable.control('', Validators.maxLength(2000)),
+      validityDays: this.fb.control(30, [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(365),
+      ]),
+      items: this.fb.array<FormGroup<PrescriptionItemControls>>([]),
     });
 
     // Adicionar pelo menos um item
@@ -63,40 +111,62 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   loadPatients(): void {
+    this.loadingPatients = true;
+    this.patientsError = '';
     this.patientService.findAll('', 0, 200).subscribe({
       next: (p) => {
         this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
+        this.loadingPatients = false;
+      },
+      error: (error: unknown) => {
+        this.patientsError = prescriptionErrorMessage(
+          error,
+          'Não foi possível carregar os pacientes.',
+        );
+        this.loadingPatients = false;
       },
     });
   }
 
   loadMedications(): void {
+    this.loadingMedications = true;
+    this.medicationsError = '';
     this.pharmacyService.findAllMedications('', 0, 200).subscribe({
       next: (p) => {
-        this.medications = p.content.map((m) => ({
-          id: m.id,
-          name: m.name,
-          unit: m.unit,
-          stock: m.totalAvailable ?? 0,
-        }));
+        this.medications = p.content
+          .filter((medication) => medication.active)
+          .map((medication) => ({
+            id: medication.id,
+            name: medication.name,
+            unit: medication.unit,
+            stock: medication.totalAvailable,
+          }));
+        this.loadingMedications = false;
+      },
+      error: (error: unknown) => {
+        this.medicationsError = prescriptionErrorMessage(
+          error,
+          'Não foi possível carregar os medicamentos.',
+        );
+        this.loadingMedications = false;
       },
     });
   }
 
-  get items(): FormArray {
-    return this.form.get('items') as FormArray;
+  get items(): FormArray<FormGroup<PrescriptionItemControls>> {
+    return this.form.controls.items;
   }
 
   addItem(): void {
     this.items.push(
-      this.fb.group({
-        medicationId: ['', Validators.required],
-        quantityPrescribed: [1, [Validators.required, Validators.min(1)]],
-        dosage: ['', Validators.required],
-        frequencyHours: [8],
-        durationDays: [7],
-        route: ['Oral'],
-        instructions: [''],
+      new FormGroup<PrescriptionItemControls>({
+        medicationId: this.fb.nonNullable.control('', Validators.required),
+        quantityPrescribed: this.fb.control(1, [Validators.required, Validators.min(1)]),
+        dosage: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(200)]),
+        frequencyHours: this.fb.control(8, Validators.min(1)),
+        durationDays: this.fb.control(7, Validators.min(1)),
+        route: this.fb.nonNullable.control('Oral', Validators.maxLength(50)),
+        instructions: this.fb.nonNullable.control('', Validators.maxLength(300)),
       }),
     );
   }
@@ -110,6 +180,14 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (
+      this.loadingPatients ||
+      this.loadingMedications ||
+      this.patientsError ||
+      this.medicationsError
+    ) {
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -117,38 +195,39 @@ export class PrescriptionFormComponent implements OnInit {
     this.saving = true;
     this.error = '';
 
-    const v = this.form.getRawValue();
-    this.prescriptionService
-      .create({
-        patientId: v.patientId,
-        episodeId: v.episodeId || null,
-        admissionId: v.admissionId || null,
-        diagnosis: v.diagnosis || null,
-        notes: v.notes || null,
-        validityDays: v.validityDays,
-        items: v.items.map((i: any) => ({
-          medicationId: i.medicationId,
-          quantityPrescribed: i.quantityPrescribed,
-          dosage: i.dosage,
-          frequencyHours: i.frequencyHours || null,
-          durationDays: i.durationDays || null,
-          route: i.route || null,
-          instructions: i.instructions || null,
-        })),
-      })
-      .subscribe({
-        next: (p) => this.router.navigate(['/prescriptions', p.id]),
-        error: (err) => {
-          this.error = err.error?.message ?? 'Erro ao criar prescrição.';
-          this.saving = false;
-        },
-      });
+    const value = this.form.getRawValue();
+    const request: CreatePrescriptionRequest = {
+      patientId: value.patientId,
+      episodeId: value.episodeId || null,
+      admissionId: value.admissionId || null,
+      diagnosis: value.diagnosis.trim() || null,
+      notes: value.notes.trim() || null,
+      validityDays: value.validityDays ?? 30,
+      items: value.items.map((item) => ({
+        medicationId: item.medicationId,
+        quantityPrescribed: item.quantityPrescribed ?? 0,
+        dosage: item.dosage.trim(),
+        frequencyHours: item.frequencyHours,
+        durationDays: item.durationDays,
+        route: item.route || null,
+        instructions: item.instructions.trim() || null,
+      })),
+    };
+    this.prescriptionService.create(request).subscribe({
+      next: (p) => {
+        void this.router.navigate(['/prescriptions', p.id]);
+      },
+      error: (error: unknown) => {
+        this.error = prescriptionErrorMessage(error, 'Não foi possível criar a prescrição.');
+        this.saving = false;
+      },
+    });
   }
 
   goBack(): void {
     this.router.navigate(['/prescriptions']);
   }
-  get f() {
+  get f(): PrescriptionControls {
     return this.form.controls;
   }
 }
