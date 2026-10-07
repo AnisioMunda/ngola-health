@@ -14,6 +14,7 @@ import ao.hospitalao.modules.scheduling.entity.Appointment;
 import ao.hospitalao.modules.scheduling.repository.AppointmentRepository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class NotificationService {
 
   private static final DateTimeFormatter APPOINTMENT_DATE =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
 
   private final NotificationRepository notificationRepository;
   private final MedicationRepository medicationRepository;
@@ -318,11 +320,11 @@ public class NotificationService {
   }
 
   /** Lembrete de consultas do dia seguinte — executa todos os dias às 18h00. */
-  @Scheduled(cron = "0 0 18 * * *")
+  @Scheduled(cron = "0 0 18 * * *", zone = "Africa/Luanda")
   @Transactional
   public void checkTomorrowAppointments() {
     log.info("Running tomorrow appointments reminder check...");
-    LocalDate tomorrow = LocalDate.now().plusDays(1);
+    LocalDate tomorrow = LocalDate.now(ANGOLA_ZONE).plusDays(1);
 
     hospitalRepository
         .findAll()
