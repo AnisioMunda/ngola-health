@@ -286,7 +286,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 3.19 | `feat(bd): criar tabelas de pedidos e resultados de laboratório` | |
 | 3.20 | `feat(laboratorio): adicionar API de pedidos e resultados` | Anexos de ficheiros ficam fora; só entram com ADR de armazenamento |
 | 3.21 | `feat(laboratorio): adicionar ecrãs de pedidos e resultados` | |
-| 3.22 | `docs(pacientes): documentar fluxo clínico e regras de negócio` | |
+| 3.22 | `docs(pacientes): documentar fluxo clínico e regras de negócio` | Fluxo recomendado, regras implementadas e decisões clínicas pendentes descritos em `docs/clinical-workflow.md` |
 
 ### Fase 4 — Notificações, agendamento e internamento → `v0.5.0`
 

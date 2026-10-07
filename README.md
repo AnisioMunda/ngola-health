@@ -51,4 +51,5 @@ projecto.
 
 - [Guia de desenvolvimento: instalar, executar, testar e depurar](docs/development.md)
 - [Segurança, autenticação, perfis e isolamento multi-hospital](docs/security.md)
+- [Fluxo clínico e regras de negócio implementadas](docs/clinical-workflow.md)
 - [Roadmap, arquitectura e convenções de desenvolvimento](docs/ROADMAP.md)
