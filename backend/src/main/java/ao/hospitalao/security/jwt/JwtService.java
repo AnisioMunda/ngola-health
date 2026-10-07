@@ -24,6 +24,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JwtService {
 
+  private static final String TOKEN_TYPE_CLAIM = "token_type";
+  private static final String ACCESS_TOKEN_TYPE = "ACCESS";
+  private static final String REFRESH_TOKEN_TYPE = "REFRESH";
+  private static final String PATIENT_PORTAL_TOKEN_TYPE = "PATIENT_PORTAL";
+
   private final JwtProperties properties;
 
   public String extractUsername(String token) {
@@ -40,6 +45,14 @@ public class JwtService {
         extractClaim(token, claims -> claims.get("platform_admin", Boolean.class)));
   }
 
+  public boolean isAccessToken(String token) {
+    return hasTokenType(token, ACCESS_TOKEN_TYPE);
+  }
+
+  public boolean isRefreshToken(String token) {
+    return hasTokenType(token, REFRESH_TOKEN_TYPE);
+  }
+
   public Date extractExpiration(String token) {
     return extractClaim(token, Claims::getExpiration);
   }
@@ -54,18 +67,37 @@ public class JwtService {
   }
 
   public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    Map<String, Object> claims = new HashMap<>(extraClaims);
+    addIdentityClaims(claims, userDetails);
+    claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+    return buildToken(claims, userDetails, properties.expirationMs());
+  }
+
+  public String generateRefreshToken(UserDetails userDetails) {
+    Map<String, Object> claims = new HashMap<>();
+    addIdentityClaims(claims, userDetails);
+    claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
+    return buildToken(claims, userDetails, properties.refreshExpirationMs());
+  }
+
+  private void addIdentityClaims(Map<String, Object> claims, UserDetails userDetails) {
     if (userDetails instanceof User user) {
       boolean platformAdmin =
           user.getAuthorities().stream()
               .anyMatch(
                   authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
       if (platformAdmin) {
-        extraClaims.put("platform_admin", true);
-      } else if (user.getHospitalId() != null) {
-        extraClaims.put("hospital_id", user.getHospitalId().toString());
+        claims.put("platform_admin", true);
+        claims.remove("hospital_id");
+      } else {
+        claims.remove("platform_admin");
+        if (user.getHospitalId() != null) {
+          claims.put("hospital_id", user.getHospitalId().toString());
+        } else {
+          claims.remove("hospital_id");
+        }
       }
     }
-    return buildToken(extraClaims, userDetails, properties.expirationMs());
   }
 
   private String buildToken(
@@ -73,6 +105,7 @@ public class JwtService {
     return Jwts.builder()
         .setClaims(extraClaims)
         .setSubject(userDetails.getUsername())
+        .setId(UUID.randomUUID().toString())
         .setIssuedAt(new Date(System.currentTimeMillis()))
         .setExpiration(new Date(System.currentTimeMillis() + expiration))
         .signWith(getSignInKey(), SignatureAlgorithm.HS256)
@@ -86,6 +119,11 @@ public class JwtService {
 
   private boolean isTokenExpired(String token) {
     return extractExpiration(token).before(new Date());
+  }
+
+  private boolean hasTokenType(String token, String expectedType) {
+    return expectedType.equals(
+        extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class)));
   }
 
   private Claims extractAllClaims(String token) {
@@ -112,7 +150,7 @@ public class JwtService {
 
     Map<String, Object> claims = new HashMap<>();
     claims.put("patient_id", patientId.toString());
-    claims.put("token_type", "PATIENT_PORTAL");
+    claims.put(TOKEN_TYPE_CLAIM, PATIENT_PORTAL_TOKEN_TYPE);
     claims.put("email", email);
     claims.put("hospital_id", hospitalId.toString());
 
@@ -127,12 +165,7 @@ public class JwtService {
 
   /** Verifica se um token é do portal do paciente. */
   public boolean isPatientPortalToken(String token) {
-    try {
-      String tokenType = extractClaim(token, claims -> claims.get("token_type", String.class));
-      return "PATIENT_PORTAL".equals(tokenType);
-    } catch (Exception e) {
-      return false;
-    }
+    return hasTokenType(token, PATIENT_PORTAL_TOKEN_TYPE);
   }
 
   /** Extrai o patient_id do token do portal. */

@@ -1,8 +1,6 @@
 package ao.hospitalao.exceptions;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
+import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
@@ -103,12 +101,8 @@ public class GlobalExceptionHandler {
         HttpStatus.UNAUTHORIZED, "Não autenticado", "As credenciais informadas são inválidas.");
   }
 
-  @ExceptionHandler({
-    ExpiredJwtException.class,
-    MalformedJwtException.class,
-    SignatureException.class
-  })
-  public ProblemDetail handleInvalidToken(Exception exception) {
+  @ExceptionHandler(JwtException.class)
+  public ProblemDetail handleInvalidToken(JwtException exception) {
     return problem(
         HttpStatus.UNAUTHORIZED,
         "Não autenticado",

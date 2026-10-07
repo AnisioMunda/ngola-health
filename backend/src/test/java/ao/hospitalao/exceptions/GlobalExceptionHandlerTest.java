@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -84,6 +85,17 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void returnsUnauthorizedForJwtErrors() throws Exception {
+    mockMvc
+        .perform(get("/invalid-token"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.title").value("Não autenticado"))
+        .andExpect(
+            jsonPath("$.detail").value("O token é inválido ou expirou. Inicie sessão novamente."));
+  }
+
+  @Test
   void hidesUnexpectedExceptionDetailsFromProblemDetail() throws Exception {
     mockMvc
         .perform(get("/unexpected"))
@@ -114,6 +126,11 @@ class GlobalExceptionHandlerTest {
     @GetMapping("/unexpected")
     void unexpected() {
       throw new IllegalStateException("database credentials");
+    }
+
+    @GetMapping("/invalid-token")
+    void invalidToken() {
+      throw new JwtException("internal token validation details");
     }
   }
 

@@ -69,7 +69,7 @@ public class AuthService {
     User savedUser = userRepository.save(user);
 
     String accessToken = jwtService.generateToken(savedUser);
-    String refreshToken = jwtService.generateToken(new java.util.HashMap<>(), savedUser);
+    String refreshToken = jwtService.generateRefreshToken(savedUser);
 
     log.info("User registered successfully: {}", savedUser.getEmail());
     return authMapper.toAuthResponse(savedUser, accessToken, refreshToken);
@@ -105,7 +105,7 @@ public class AuthService {
       userRepository.save(user);
 
       String accessToken = jwtService.generateToken(user);
-      String refreshToken = jwtService.generateToken(new java.util.HashMap<>(), user);
+      String refreshToken = jwtService.generateRefreshToken(user);
 
       log.info("Authentication successful for: {}", user.getEmail());
       return authMapper.toAuthResponse(user, accessToken, refreshToken);
@@ -114,12 +114,18 @@ public class AuthService {
     }
   }
 
+  @Transactional
   public AuthResponse refreshToken(String authHeader) {
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      throw new IllegalArgumentException("Invalid token");
+      throw new BadCredentialsException("Invalid refresh token");
     }
 
     String refreshToken = authHeader.substring(7);
+    if (!jwtService.isRefreshToken(refreshToken)
+        || tokenBlackListService.isBlacklisted(refreshToken)) {
+      throw new BadCredentialsException("Invalid refresh token");
+    }
+
     TenantContext.setPlatformAccess();
     try {
       String username = jwtService.extractUsername(refreshToken);
@@ -143,11 +149,14 @@ public class AuthService {
       if (!jwtService.isTokenValid(refreshToken, user)
           || tokenPlatformAdmin != platformAdmin
           || !hospitalMatches) {
-        throw new IllegalArgumentException("Token expired or invalid");
+        throw new BadCredentialsException("Invalid refresh token");
       }
 
+      tokenBlackListService.addToBlacklist(
+          refreshToken, jwtService.extractExpiration(refreshToken));
       String newAccessToken = jwtService.generateToken(user);
-      return authMapper.toAuthResponse(user, newAccessToken, refreshToken);
+      String newRefreshToken = jwtService.generateRefreshToken(user);
+      return authMapper.toAuthResponse(user, newAccessToken, newRefreshToken);
     } finally {
       TenantContext.clear();
     }

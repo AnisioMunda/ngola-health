@@ -108,13 +108,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   // ----------------------------------------------------------------
 
   private boolean isPatientPortalToken(String token) {
-    try {
-      String tokenType =
-          jwtService.extractClaim(token, claims -> claims.get("token_type", String.class));
-      return "PATIENT_PORTAL".equals(tokenType);
-    } catch (Exception e) {
-      return false;
-    }
+    return jwtService.isPatientPortalToken(token);
   }
 
   private void authenticatePatientPortal(String jwt, String email, HttpServletRequest request) {
@@ -155,6 +149,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   // ----------------------------------------------------------------
 
   private void authenticateInternalUser(String jwt, String username, HttpServletRequest request) {
+
+    if (!jwtService.isAccessToken(jwt)) {
+      throw new UsernameNotFoundException("Expected an access token");
+    }
 
     UUID hospitalId = jwtService.extractHospitalId(jwt);
     boolean platformAdmin = jwtService.isPlatformAdminToken(jwt);
