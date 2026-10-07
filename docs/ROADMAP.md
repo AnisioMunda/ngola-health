@@ -42,7 +42,7 @@ Valem para **todos** os PRs e são referenciados nas tarefas pelo código `R<n>`
 | R13 | Papéis são constantes, nunca texto solto | Enum de papéis e meta-anotações | 2.5 |
 | R14 | Migrações SQL ordenadas e imutáveis | Secção 4.6 | 1.4, 3.1 |
 | R15 | Tipos da API gerados; componentes pequenos | ADR-0007 | 7.6 |
-| R16 | Dependências com licença compatível | Bibliotecas permissivas (ADR-0010) | 3.4 |
+| R16 | Dependências com licença compatível | Bibliotecas permissivas (ADR-0010) | 1.1, 3.4 |
 | R17 | Operações concorrentes são seguras (stock, slots, camas) | Restrições na BD + testes concorrentes | 3.13, 4.6, 4.12 |
 
 ---
@@ -54,7 +54,7 @@ Cada decisão vira um ficheiro em `docs/adr/` nas Tarefas 0.9 e 0.10. As ADR-000
 | ADR | Tema | Proposta | Alternativa |
 |-----|------|----------|-------------|
 | 0001 | Idioma | **Confirmado.** Português em: documentação, commits, comentários, interface e mensagens de erro mostradas ao utilizador. Inglês em: domínio e código (classes, tabelas, colunas, rotas, DTOs, papéis, SQL, ficheiros e pastas). Erros da API levam um `code` estável em inglês e a `message` em português | Tudo em português, incluindo o domínio (rejeitada) |
-| 0002 | Stack e versões | Java 21 LTS · **Spring Boot 4.1.x** · Maven Wrapper · **Angular 22** · PostgreSQL 16+ · Liquibase. A Tarefa 1.1 faz uma verificação de compatibilidade (springdoc, jjwt, MapStruct, Lombok, biblioteca de PDF); se houver bloqueio, recuar para 3.5.x com plano de migração documentado | Ficar em 3.5.x / Angular 20 |
+| 0002 | Stack e versões | Java 25 LTS · **Spring Boot 4.1.1** · Maven Wrapper · **Angular 22** · PostgreSQL 16+ · Liquibase. Dependências e plugins acompanham as versões estáveis mais recentes compatíveis, validadas pelo build completo; PDFBox usa licença Apache | Ficar em versões anteriores apenas perante incompatibilidade comprovada |
 | 0003 | Multi-hospital | Coluna `hospital_id` + filtro automático do Hibernate (`@TenantId` ou `@Filter`) + testes de isolamento. Existe desde a Fase 2 | Schema por hospital |
 | 0004 | Autenticação | JWT de acesso curto + refresh com rotação; revogação em PostgreSQL; portal do paciente com papel e *audience* próprios | Sessão com Redis |
 | 0005 | Migrações | **Confirmado.** Liquibase com **SQL formatado**; o XML existe só como master de `<include>`. Um directório por módulo, ficheiros `NNN-descricao.sql`; dados de demonstração com `context:dev`. Detalhe na secção 4.6 | Changelogs em XML/YAML ou Flyway |
@@ -268,7 +268,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 3.1 | `feat(bd): criar tabela de pacientes` | Género, contactos e contacto de emergência; índice por hospital + BI/NIF; migração única e definitiva por tabela (R14) |
 | 3.2 | `feat(pacientes): adicionar API de cadastro e pesquisa de pacientes` | CRUD, pesquisa paginada, validação de BI/NIF, aviso de possível duplicado |
 | 3.3 | `feat(pacientes): adicionar listagem, pesquisa e formulário por tabs` | |
-| 3.4 | `chore(deps): adicionar biblioteca de PDF conforme a ADR-0010` | PDF de teste gerado em teste automático (R16) |
+| 3.4 | `test(pdf): validar geração dos documentos e apresentação` | Testes cobrem relatórios, acentos e QR Code; PDFBox 3.0.8 já está integrado (R16) |
 | 3.5 | `feat(pacientes): gerar ficha do paciente em PDF` | Acentos e logótipo correctos |
 | 3.6 | `feat(bd): criar tabela de episódios` | |
 | 3.7 | `feat(episodios): adicionar API de episódios clínicos` | Abrir, actualizar, fechar; transições de estado validadas |

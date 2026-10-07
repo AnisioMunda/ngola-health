@@ -1,6 +1,6 @@
 # ADR-0010: Biblioteca para geração de PDF
 
-- **Estado:** Proposta
+- **Estado:** Aceite
 - **Data:** 2026-10-07
 
 ## Contexto
@@ -10,34 +10,22 @@ inventários e facturas. A biblioteca escolhida tem de ter uma licença
 compatível com o projecto e suportar os caracteres e a apresentação em
 português necessários.
 
-## Proposta
+## Decisão
 
-Avaliar Apache PDFBox e OpenPDF e escolher uma biblioteca com licença
-permissiva, compatível com a distribuição e utilização previstas para o
-projecto. Não adoptar bibliotecas AGPL sem uma decisão explícita e uma revisão
-das implicações de licença.
-
-A escolha deve incluir um teste automatizado que gere e valide um PDF de
-exemplo, incluindo texto com acentos e a apresentação correcta do logótipo
-quando aplicável.
+Usar Apache PDFBox 3.0.8, sob licença Apache 2.0. Os geradores de relatórios e
+facturas usam esta biblioteca; um teste automatizado verifica a geração,
+leitura e extracção de texto português com acentos.
 
 ## Alternativas consideradas
 
 - Uma biblioteca AGPL sem avaliação de impacto. Não recomendada devido às
   obrigações de licença que podem não corresponder ao modelo de distribuição.
-- Uma biblioteca comercial com licença proprietária. Possível apenas após
-  avaliação de custo, licença e compatibilidade.
+- iText 9.8.0 sob AGPL ou licença comercial. Não adoptada para evitar as
+  obrigações AGPL e a dependência de licença comercial.
 
 ## Consequências esperadas
 
-- Confirmar licença, versão, manutenção e capacidades da biblioteca antes de
-  a adicionar como dependência.
-- A dependência deve ser adicionada na tarefa 3.4, com teste automatizado de
-  geração de PDF.
+- A dependência deve permanecer numa versão estável recente e ser verificada
+  com testes de geração de PDF.
 - Os documentos devem ser verificados quanto a acentos, fontes e
-  identificadores visuais.
-
-## Decisão pendente
-
-Escolher entre as opções avaliadas na Tarefa 3.4 e actualizar esta ADR com a
-biblioteca, versão, licença e justificação.
+  identificadores visuais antes de produção.

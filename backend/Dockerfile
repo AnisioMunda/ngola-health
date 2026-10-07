@@ -5,7 +5,7 @@
 # ==============================================================
 # STAGE 1 — development
 # ==============================================================
-FROM maven:3.9-eclipse-temurin-21-alpine AS development
+FROM maven:3.10-eclipse-temurin-25-alpine AS development
 
 WORKDIR /workspace
 
@@ -32,7 +32,7 @@ CMD ["java", \
 # ==============================================================
 # STAGE 2 — builder
 # ==============================================================
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+FROM maven:3.10-eclipse-temurin-25-alpine AS builder
 
 WORKDIR /build
 
@@ -51,7 +51,7 @@ RUN java -Djarmode=layertools \
 # ==============================================================
 # STAGE 3 — production
 # ==============================================================
-FROM eclipse-temurin:21-jre-alpine AS production
+FROM eclipse-temurin:25-jre-alpine AS production
 
 WORKDIR /app
 

@@ -17,23 +17,23 @@ os módulos já estejam completos ou prontos para produção. O desenvolvimento
 segue as tarefas e os critérios de conclusão descritos no
 [roadmap](docs/ROADMAP.md).
 
-## Stack prevista
+## Stack adoptada
 
-As versões-alvo estão registadas na ADR-0002 do roadmap. A compatibilidade das
-bibliotecas e ferramentas ainda será verificada antes da implementação da
-fundação técnica.
+As versões adoptadas e as regras de actualização estão registadas na
+[ADR-0002](docs/adr/0002-stack-and-versions.md). As dependências e ferramentas
+do backend são mantidas nas versões estáveis mais recentes compatíveis e
+validadas pelo build completo.
 
 | Área | Tecnologia prevista |
 | --- | --- |
-| Backend | Java 21 LTS, Spring Boot 4.1.x e Maven Wrapper |
+| Backend | Java 25 LTS, Spring Boot 4.1.1 e Maven Wrapper |
 | Frontend | Angular 22 |
 | Base de dados | PostgreSQL 16 ou superior e Liquibase |
 | Execução local | Docker Compose |
 
-O protótipo actualmente existente no repositório declara versões diferentes em
-algumas áreas, incluindo Spring Boot 3.2.5 e Angular 17. Esse código será
-avaliado e alinhado com as decisões do roadmap; as versões previstas acima não
-significam que essa migração já esteja concluída.
+O backend foi alinhado com Java 25 e Spring Boot 4.1.1. O frontend e outros
+componentes do protótipo ainda serão alinhados com as versões adoptadas nas
+respectivas tarefas do roadmap.
 
 ## Estado do projecto
 

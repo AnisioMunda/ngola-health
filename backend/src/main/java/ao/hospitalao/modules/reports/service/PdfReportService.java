@@ -2,37 +2,25 @@ package ao.hospitalao.modules.reports.service;
 
 import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
-import ao.hospitalao.modules.laboratory.entity.LabRequest;
-import ao.hospitalao.modules.laboratory.repository.LabRequestRepository;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.pharmacy.entity.Medication;
 import ao.hospitalao.modules.pharmacy.repository.MedicationRepository;
 import ao.hospitalao.modules.pharmacy.repository.StockBatchRepository;
 import ao.hospitalao.security.tenant.TenantContext;
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.*;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
+import ao.hospitalao.shared.pdf.PdfDocumentBuilder;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
+import java.awt.Color;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,228 +29,127 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PdfReportService {
 
+    private static final Color PRIMARY = new Color(32, 58, 67);
+    private static final Color ACCENT = new Color(94, 231, 223);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     private final PatientRepository patientRepository;
-    private final LabRequestRepository labRequestRepository;
     private final MedicationRepository medicationRepository;
     private final StockBatchRepository stockBatchRepository;
     private final HospitalRepository hospitalRepository;
-
-    private static final DeviceRgb PRIMARY   = new DeviceRgb(32, 58, 67);
-    private static final DeviceRgb ACCENT    = new DeviceRgb(94, 231, 223);
-    private static final DeviceRgb LIGHT_BG  = new DeviceRgb(248, 249, 251);
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter DT_FMT   = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-    // ------------------------------------------------
-    // Patient Report — ficha clínica
-    // ------------------------------------------------
 
     @Transactional(readOnly = true)
     public byte[] generatePatientReport(UUID patientId) throws IOException {
         Patient patient = patientRepository.findById(patientId)
             .orElseThrow(() -> new EntityNotFoundException("Patient not found: " + patientId));
-
         Hospital hospital = getHospital();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PdfWriter writer = new PdfWriter(baos);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document doc = new Document(pdf, PageSize.A4);
-        doc.setMargins(40, 40, 40, 40);
+        try (PdfDocumentBuilder pdf = new PdfDocumentBuilder(40)) {
+            pdf.addBanner(hospital != null ? hospital.getName() : "HospitalAO",
+                hospital != null ? nvl(hospital.getProvince()) : "Angola",
+                PRIMARY, ACCENT);
+            pdf.addTitle("PATIENT RECORD", 13, PRIMARY);
 
-        PdfFont bold    = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA_BOLD);
-        PdfFont regular = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
+            pdf.addSection("PERSONAL INFORMATION");
+            pdf.addTable(new String[]{"Field", "Value", "Field", "Value"},
+                rows(
+                    "Full Name", patient.getFullName(),
+                    "Date of Birth", patient.getBirthDate() != null
+                        ? patient.getBirthDate().format(DATE_FMT) : "-",
+                    "Gender", patient.getGender() != null ? patient.getGender().name() : "-",
+                    "Age", patient.getBirthDate() != null
+                        ? java.time.Period.between(patient.getBirthDate(), LocalDate.now()).getYears()
+                            + " years" : "-",
+                    "National ID", nvl(patient.getNationalId()),
+                    "Health Card", nvl(patient.getHealthCardNumber()),
+                    "Phone", nvl(patient.getPhone()),
+                    "Email", nvl(patient.getEmail()),
+                    "Province", nvl(patient.getProvince()),
+                    "Municipality", nvl(patient.getMunicipality())
+                ), new float[]{1, 2, 1, 2}, 8, new Color(235, 240, 242), Color.DARK_GRAY);
 
-        // Header
-        addHeader(doc, hospital, "PATIENT RECORD", bold, regular);
+            pdf.addSection("CLINICAL INFORMATION");
+            pdf.addTable(new String[]{"Field", "Value", "Field", "Value"},
+                rows(
+                    "Blood Type", nvl(patient.getBloodType()),
+                    "Allergies", nvl(patient.getAllergies()),
+                    "Chronic Conditions", nvl(patient.getChronicConditions()),
+                    "Notes", nvl(patient.getNotes())
+                ), new float[]{1, 2, 1, 2}, 8, new Color(235, 240, 242), Color.DARK_GRAY);
 
-        // Patient info table
-        doc.add(new Paragraph("PERSONAL INFORMATION")
-            .setFont(bold).setFontSize(10).setFontColor(PRIMARY)
-            .setMarginTop(16).setMarginBottom(6));
+            if (patient.getEmergencyContactName() != null) {
+                pdf.addSection("EMERGENCY CONTACT");
+                pdf.addTable(new String[]{"Field", "Value", "Field", "Value"},
+                    rows(
+                        "Name", nvl(patient.getEmergencyContactName()),
+                        "Phone", nvl(patient.getEmergencyContactPhone()),
+                        "Relationship", nvl(patient.getEmergencyContactRelationship()),
+                        "", ""
+                    ), new float[]{1, 2, 1, 2}, 8, new Color(235, 240, 242), Color.DARK_GRAY);
+            }
 
-        Table infoTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1, 2}))
-            .useAllAvailableWidth();
-
-        addRow(infoTable, bold, regular,
-            "Full Name", patient.getFullName(),
-            "Date of Birth", patient.getBirthDate() != null ? patient.getBirthDate().format(DATE_FMT) : "—");
-        addRow(infoTable, bold, regular,
-            "Gender", patient.getGender() != null ? patient.getGender().name() : "—",
-            "Age", patient.getBirthDate() != null
-                ? java.time.Period.between(patient.getBirthDate(), LocalDate.now()).getYears() + " years" : "—");
-        addRow(infoTable, bold, regular,
-            "National ID", nvl(patient.getNationalId()),
-            "Health Card", nvl(patient.getHealthCardNumber()));
-        addRow(infoTable, bold, regular,
-            "Phone", nvl(patient.getPhone()),
-            "Email", nvl(patient.getEmail()));
-        addRow(infoTable, bold, regular,
-            "Province", nvl(patient.getProvince()),
-            "Municipality", nvl(patient.getMunicipality()));
-
-        doc.add(infoTable);
-
-        // Clinical info
-        doc.add(new Paragraph("CLINICAL INFORMATION")
-            .setFont(bold).setFontSize(10).setFontColor(PRIMARY)
-            .setMarginTop(14).setMarginBottom(6));
-
-        Table clinTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1, 2}))
-            .useAllAvailableWidth();
-
-        addRow(clinTable, bold, regular,
-            "Blood Type", nvl(patient.getBloodType()),
-            "Allergies", nvl(patient.getAllergies()));
-        addRow(clinTable, bold, regular,
-            "Chronic Conditions", nvl(patient.getChronicConditions()),
-            "Notes", nvl(patient.getNotes()));
-
-        doc.add(clinTable);
-
-        // Emergency contact
-        if (patient.getEmergencyContactName() != null) {
-            doc.add(new Paragraph("EMERGENCY CONTACT")
-                .setFont(bold).setFontSize(10).setFontColor(PRIMARY)
-                .setMarginTop(14).setMarginBottom(6));
-
-            Table emgTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1, 2}))
-                .useAllAvailableWidth();
-            addRow(emgTable, bold, regular,
-                "Name", nvl(patient.getEmergencyContactName()),
-                "Phone", nvl(patient.getEmergencyContactPhone()));
-            addRow(emgTable, bold, regular,
-                "Relationship", nvl(patient.getEmergencyContactRelationship()),
-                "", "");
-            doc.add(emgTable);
+            addFooter(pdf);
+            return pdf.toByteArray();
+        } finally {
+            log.info("Patient report generated for: {}", patient.getFullName());
         }
-
-        addFooter(doc, regular);
-        doc.close();
-
-        log.info("Patient report generated for: {}", patient.getFullName());
-        return baos.toByteArray();
     }
-
-    // ------------------------------------------------
-    // Stock Report — inventário de medicamentos
-    // ------------------------------------------------
 
     @Transactional(readOnly = true)
     public byte[] generateStockReport() throws IOException {
         UUID hospitalId = TenantContext.getCurrentHospital();
         Hospital hospital = getHospital();
-        List<Medication> medications = medicationRepository.findByHospitalIdAndActiveTrue(hospitalId);
+        List<Medication> medications =
+            medicationRepository.findByHospitalIdAndActiveTrue(hospitalId);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PdfDocument pdf = new PdfDocument(new PdfWriter(baos));
-        Document doc = new Document(pdf, PageSize.A4);
-        doc.setMargins(40, 40, 40, 40);
+        try (PdfDocumentBuilder pdf = new PdfDocumentBuilder(40)) {
+            pdf.addBanner(hospital != null ? hospital.getName() : "HospitalAO",
+                hospital != null ? nvl(hospital.getProvince()) : "Angola",
+                PRIMARY, ACCENT);
+            pdf.addTitle("PHARMACY STOCK REPORT", 13, PRIMARY);
+            pdf.addText("Generated: " + OffsetDateTime.now().format(DT_FMT),
+                9, Color.GRAY, false, 4);
 
-        PdfFont bold    = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA_BOLD);
-        PdfFont regular = PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
+            List<String[]> rows = new ArrayList<>();
+            for (Medication medication : medications) {
+                int total = stockBatchRepository.getTotalAvailableQuantity(
+                    medication.getId(), LocalDate.now());
+                boolean low = total <= medication.getMinStockLevel();
+                rows.add(new String[]{
+                    medication.getName(),
+                    medication.getDosageForm().name(),
+                    medication.getUnit(),
+                    String.valueOf(total) + (low ? " (LOW)" : ""),
+                    String.valueOf(medication.getMinStockLevel())
+                });
+            }
+            pdf.addTable(new String[]{"Medication", "Form", "Unit", "Total Stock", "Min Level"},
+                rows, new float[]{3, 1.5f, 1, 1.5f, 1.5f}, 8,
+                PRIMARY, Color.WHITE);
 
-        addHeader(doc, hospital, "PHARMACY STOCK REPORT", bold, regular);
+            if (medications.isEmpty()) {
+                pdf.addText("No medications in catalog.", 10, Color.GRAY, false, 4);
+            }
 
-        doc.add(new Paragraph("Generated: " + OffsetDateTime.now().format(DT_FMT))
-            .setFont(regular).setFontSize(9).setFontColor(ColorConstants.GRAY)
-            .setMarginBottom(12));
-
-        // Stock table
-        Table table = new Table(UnitValue.createPercentArray(new float[]{3, 1.5f, 1, 1.5f, 1.5f}))
-            .useAllAvailableWidth();
-
-        // Header row
-        String[] headers = {"Medication", "Form", "Unit", "Total Stock", "Min Level"};
-        for (String h : headers) {
-            table.addHeaderCell(new Cell()
-                .add(new Paragraph(h).setFont(bold).setFontSize(9))
-                .setBackgroundColor(PRIMARY).setFontColor(ColorConstants.WHITE)
-                .setPadding(6));
+            addFooter(pdf);
+            byte[] result = pdf.toByteArray();
+            log.info("Stock report generated: {} medications", medications.size());
+            return result;
         }
-
-        boolean alt = false;
-        for (Medication med : medications) {
-            int total = stockBatchRepository.getTotalAvailableQuantity(med.getId(), LocalDate.now());
-            boolean low = total <= med.getMinStockLevel();
-            DeviceRgb rowBg = alt ? LIGHT_BG : new DeviceRgb(255, 255, 255);
-
-            table.addCell(new Cell().add(new Paragraph(med.getName()).setFont(bold).setFontSize(9)).setBackgroundColor(rowBg).setPadding(5));
-            table.addCell(new Cell().add(new Paragraph(med.getDosageForm().name()).setFont(regular).setFontSize(9)).setBackgroundColor(rowBg).setPadding(5));
-            table.addCell(new Cell().add(new Paragraph(med.getUnit()).setFont(regular).setFontSize(9)).setBackgroundColor(rowBg).setPadding(5));
-
-            Paragraph stockPara = new Paragraph(String.valueOf(total)).setFont(bold).setFontSize(9);
-            if (low) stockPara.setFontColor(new DeviceRgb(220, 38, 38));
-            table.addCell(new Cell().add(stockPara).setBackgroundColor(rowBg).setPadding(5));
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(med.getMinStockLevel())).setFont(regular).setFontSize(9)).setBackgroundColor(rowBg).setPadding(5));
-
-            alt = !alt;
-        }
-
-        doc.add(table);
-
-        if (medications.isEmpty()) {
-            doc.add(new Paragraph("No medications in catalog.")
-                .setFont(regular).setFontSize(10).setFontColor(ColorConstants.GRAY));
-        }
-
-        addFooter(doc, regular);
-        doc.close();
-
-        log.info("Stock report generated: {} medications", medications.size());
-        return baos.toByteArray();
     }
 
-    // ------------------------------------------------
-    // Helpers
-    // ------------------------------------------------
-
-    private void addHeader(Document doc, Hospital hospital, String title,
-                           PdfFont bold, PdfFont regular) throws IOException {
-        // Banner
-        Table header = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
-            .useAllAvailableWidth()
-            .setBackgroundColor(PRIMARY);
-
-        // Left: hospital name
-        String hospitalName = hospital != null ? hospital.getName() : "HospitalAO";
-        header.addCell(new Cell()
-            .add(new Paragraph(hospitalName)
-                .setFont(bold).setFontSize(14).setFontColor(ColorConstants.WHITE))
-            .add(new Paragraph(hospital != null ? hospital.getProvince() : "Angola")
-                .setFont(regular).setFontSize(9).setFontColor(ACCENT))
-            .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-            .setPadding(12));
-
-        // Right: report title
-        header.addCell(new Cell()
-            .add(new Paragraph(title)
-                .setFont(bold).setFontSize(11).setFontColor(ColorConstants.WHITE)
-                .setTextAlignment(TextAlignment.RIGHT))
-            .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-            .setPadding(12));
-
-        doc.add(header);
+    private void addFooter(PdfDocumentBuilder pdf) throws IOException {
+        pdf.addText("Generated by HospitalAO - " + LocalDate.now().format(DATE_FMT),
+            8, Color.GRAY, false, 4);
     }
 
-    private void addRow(Table table, PdfFont bold, PdfFont regular,
-                        String k1, String v1, String k2, String v2) {
-        table.addCell(new Cell().add(new Paragraph(k1).setFont(bold).setFontSize(9))
-            .setBackgroundColor(LIGHT_BG).setPadding(5));
-        table.addCell(new Cell().add(new Paragraph(v1).setFont(regular).setFontSize(9))
-            .setPadding(5));
-        table.addCell(new Cell().add(new Paragraph(k2).setFont(bold).setFontSize(9))
-            .setBackgroundColor(LIGHT_BG).setPadding(5));
-        table.addCell(new Cell().add(new Paragraph(v2).setFont(regular).setFontSize(9))
-            .setPadding(5));
-    }
-
-    private void addFooter(Document doc, PdfFont regular) {
-        doc.add(new Paragraph("\nGenerated by HospitalAO · " + LocalDate.now().format(DATE_FMT))
-            .setFont(regular).setFontSize(8)
-            .setFontColor(ColorConstants.GRAY)
-            .setTextAlignment(TextAlignment.CENTER)
-            .setMarginTop(20));
+    private List<String[]> rows(String... values) {
+        List<String[]> rows = new ArrayList<>();
+        for (int i = 0; i < values.length; i += 4) {
+            rows.add(new String[]{values[i], values[i + 1], values[i + 2], values[i + 3]});
+        }
+        return rows;
     }
 
     private Hospital getHospital() {
@@ -271,5 +158,7 @@ public class PdfReportService {
         return hospitalRepository.findById(hospitalId).orElse(null);
     }
 
-    private String nvl(String s) { return s != null && !s.isBlank() ? s : "—"; }
+    private String nvl(String value) {
+        return value != null && !value.isBlank() ? value : "-";
+    }
 }

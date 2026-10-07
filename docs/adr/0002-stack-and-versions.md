@@ -1,6 +1,6 @@
 # ADR-0002: Stack e versões
 
-- **Estado:** Proposta
+- **Estado:** Aceite
 - **Data:** 2026-10-07
 
 ## Contexto
@@ -10,36 +10,40 @@ base de dados e migrações. A escolha deve permitir manter o sistema,
 automatizar testes e validar as bibliotecas necessárias antes de consolidar
 o esqueleto técnico.
 
-## Proposta
+## Decisão aceite
 
-- Java 21 LTS para o backend.
-- Spring Boot 4.1.x para a aplicação backend.
+- Java 25 LTS para o backend.
+- Spring Boot 4.1.1 para a aplicação backend, a versão estável mais recente
+  confirmada na implementação da Tarefa 1.1.
 - Maven Wrapper para builds reproduzíveis.
 - Angular 22 para o frontend.
 - PostgreSQL 16 ou superior como base de dados relacional.
 - Liquibase para migrações, seguindo a convenção da ADR-0005.
+- Apache PDFBox 3.0.8 para geração de PDF, sob licença Apache 2.0.
 
-Na Tarefa 1.1, confirmar a compatibilidade destas versões com as bibliotecas
-necessárias, incluindo springdoc, jjwt, MapStruct, Lombok e a biblioteca de
-PDF. Se houver um bloqueio, avaliar Spring Boot 3.5.x e registar um plano de
-migração e a versão escolhida antes de iniciar a implementação dependente.
+As versões efectivamente usadas no backend são verificadas e fixadas no
+`pom.xml`. Dependências e plugins devem acompanhar as versões estáveis mais
+recentes compatíveis, com o build e os testes completos a validar cada
+actualização. A matriz de versões deve ser revista antes de novas tarefas que
+acrescentem dependências.
 
 ## Alternativas consideradas
 
-- Manter Spring Boot 3.5.x e Angular 20. Não é a proposta inicial; pode ser
-  adoptada se a verificação de compatibilidade revelar um bloqueio nas versões
-  propostas.
+- Usar uma versão anterior de Spring Boot ou Java. Só deve ser considerada se
+  uma incompatibilidade comprovada impedir o uso das versões estáveis actuais,
+  ficando a excepção documentada nesta ADR.
 
 ## Consequências esperadas
 
-- A fundação técnica não deve considerar estas versões confirmadas até a
-  compatibilidade ser verificada.
-- As versões efectivamente escolhidas devem ser fixadas nos manifestos e
-  documentadas quando a Tarefa 1.1 for concluída.
-- Actualizações de versão posteriores devem ser avaliadas quanto a
-  compatibilidade e impacto nos módulos.
+- Java 25 é a linha LTS adoptada; imagens Docker, CI e builds locais usam a
+  mesma versão principal.
+- Actualizações estáveis de dependências e plugins são validadas por
+  `clean verify` antes de serem aceites.
+- Dependências geridas pelo Spring Boot mantêm as versões coerentes do BOM;
+  versões explícitas só são usadas quando necessárias.
 
-## Decisão pendente
+## Decisão
 
-Validar as versões e bibliotecas na Tarefa 1.1. Se for necessária uma
-alternativa, actualizar esta ADR e documentar o plano de migração.
+Adoptar Java 25 LTS, a versão estável mais recente de Spring Boot compatível
+com o backend, e manter as dependências e plugins nas versões estáveis mais
+recentes que passam a validação completa do projecto.
