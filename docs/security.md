@@ -61,6 +61,11 @@ detalhe, criação e alteração de estado/prioridade — exigem `ADMIN`, `DOCTO
 ou `NURSE`. `MANAGER` só pode consultar estatísticas agregadas; `RECEPTIONIST`
 não recebe acesso à triagem clínica.
 
+Na farmácia, `ADMIN` e `PHARMACIST` podem criar medicamentos, receber stock e
+dispensar. `MANAGER` tem acesso apenas de leitura a medicamentos, lotes e
+alertas de validade; `DOCTOR` e `NURSE` podem consultar apenas o catálogo de
+medicamentos.
+
 ## Isolamento entre hospitais
 
 As entidades pertencentes a um hospital que estendem `TenantScopedEntity` usam
