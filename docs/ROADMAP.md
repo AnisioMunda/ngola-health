@@ -318,7 +318,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 5.2 | `feat(financeiro): adicionar API de facturas, itens e pagamentos` | Valores em AOA arredondados a 2 casas com `HALF_UP`; entradas validadas, recursos limitados ao hospital e totais/IVA/pagamentos testados |
 | 5.3 | `feat(financeiro): adicionar ecrãs de facturas` | Formulário, lista com filtros/paginação e detalhe com emissão, pagamentos, anulação e PDF; estados, erros, moeda e validações apresentados de forma acessível |
 | 5.4 | `chore(agt): carregar chave privada e credenciais de segredo externo` | Chave apenas por ficheiro externo; credenciais fornecidas pelo gestor de segredos; arranque em `prod` falha sem credenciais ou chave válida (R1) |
-| 5.5 | `feat(bd): adicionar campos de facturação electrónica AGT` | |
+| 5.5 | `feat(bd): adicionar campos de facturação electrónica AGT` | Metadados internos `agt_*` já persistidos na factura desde a migração financeira; não os tratar como contrato oficial da AGT sem validar a ADR-0009 |
 | 5.6 | `feat(agt): assinar documentos com RSA` | Testes com vectores conhecidos |
 | 5.7 | `feat(agt): integrar a API sandbox da AGT com RestClient` | Falhas de rede tratadas com repetição e erro claro |
 | 5.8 | `feat(agt): consultar estado das submissões por tarefa agendada` | |
