@@ -32,4 +32,19 @@ public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, 
 
   boolean existsByDoctorIdAndDayOfWeekAndStartTime(
       UUID doctorId, Integer dayOfWeek, java.time.LocalTime startTime);
+
+  @Query(
+      """
+        SELECT COUNT(ds) > 0 FROM DoctorSchedule ds
+        WHERE ds.doctor.id = :doctorId
+        AND ds.dayOfWeek = :dayOfWeek
+        AND ds.active = true
+        AND ds.startTime < :endTime
+        AND ds.endTime > :startTime
+    """)
+  boolean existsOverlappingSchedule(
+      @Param("doctorId") UUID doctorId,
+      @Param("dayOfWeek") int dayOfWeek,
+      @Param("startTime") java.time.LocalTime startTime,
+      @Param("endTime") java.time.LocalTime endTime);
 }

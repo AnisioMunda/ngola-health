@@ -19,15 +19,18 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -72,11 +75,42 @@ public class SchedulingService {
 
   @Transactional
   public DoctorScheduleResponse createSchedule(CreateScheduleRequest req) {
+    if (req.getDoctorId() == null
+        || req.getDayOfWeek() == null
+        || req.getDayOfWeek() < 0
+        || req.getDayOfWeek() > 6
+        || req.getStartTime() == null
+        || req.getEndTime() == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Médico, dia da semana e horas são obrigatórios.");
+    }
+    if (!req.getStartTime().isBefore(req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A hora de início deve ser anterior à hora de fim.");
+    }
+    if ((req.getSlotDurationMinutes() != null && req.getSlotDurationMinutes() < 1)
+        || (req.getMaxPatientsPerSlot() != null && req.getMaxPatientsPerSlot() < 1)) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A duração e a capacidade dos slots devem ser positivas.");
+    }
+    int slotDurationMinutes =
+        req.getSlotDurationMinutes() != null ? req.getSlotDurationMinutes() : 30;
+    if (slotDurationMinutes > ChronoUnit.MINUTES.between(req.getStartTime(), req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A duração do slot não pode exceder o horário definido.");
+    }
+
     UUID hospitalId = TenantContext.getCurrentHospital();
     var doctor =
         userRepository
             .findById(req.getDoctorId())
             .orElseThrow(() -> new EntityNotFoundException("Médico não encontrado"));
+
+    if (scheduleRepository.existsOverlappingSchedule(
+        req.getDoctorId(), req.getDayOfWeek(), req.getStartTime(), req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O horário sobrepõe-se a outro horário activo do médico.");
+    }
 
     DoctorSchedule schedule =
         DoctorSchedule.builder()
@@ -85,9 +119,9 @@ public class SchedulingService {
             .dayOfWeek(req.getDayOfWeek())
             .startTime(req.getStartTime())
             .endTime(req.getEndTime())
-            .slotDurationMinutes(
-                req.getSlotDurationMinutes() > 0 ? req.getSlotDurationMinutes() : 30)
-            .maxPatientsPerSlot(req.getMaxPatientsPerSlot() > 0 ? req.getMaxPatientsPerSlot() : 1)
+            .slotDurationMinutes(slotDurationMinutes)
+            .maxPatientsPerSlot(
+                req.getMaxPatientsPerSlot() != null ? req.getMaxPatientsPerSlot() : 1)
             .build();
 
     return toScheduleResponse(scheduleRepository.save(schedule));
@@ -150,8 +184,9 @@ public class SchedulingService {
                   .anyMatch(
                       b ->
                           b.getStartTime() != null
-                              && !slotStart.isBefore(b.getStartTime())
-                              && !slotStart.isAfter(b.getEndTime()));
+                              && b.getEndTime() != null
+                              && slotStart.isBefore(b.getEndTime())
+                              && slotEnd.isAfter(b.getStartTime()));
 
           // Contar marcações neste slot
           long booked =
@@ -345,6 +380,14 @@ public class SchedulingService {
 
   @Transactional
   public void createBlock(CreateBlockRequest req) {
+    if (!req.isAllDay()
+        && (req.getStartTime() == null
+            || req.getEndTime() == null
+            || !req.getStartTime().isBefore(req.getEndTime()))) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Um bloqueio parcial exige horas válidas de início e fim.");
+    }
+
     UUID hospitalId = TenantContext.getCurrentHospital();
     var doctor =
         userRepository
