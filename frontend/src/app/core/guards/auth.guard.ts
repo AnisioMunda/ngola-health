@@ -19,6 +19,18 @@ export const authGuard: CanActivateFn = (_route, state) => {
 };
 
 /**
+ * Guard para operações de gestão de utilizadores, reservadas ao administrador do hospital.
+ */
+export const adminGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.getCurrentUser()?.roles?.includes('ADMIN')
+    ? true
+    : router.createUrlTree(['/users']);
+};
+
+/**
  * Guard para redirigir utilizadores já autenticados.
  * Usado na rota /login — se já estiver autenticado,
  * vai directamente para o dashboard.

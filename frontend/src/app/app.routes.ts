@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, publicGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, publicGuard } from './core/guards/auth.guard';
 import { portalRoutes } from './portal.routes';
 
 export const routes: Routes = [
@@ -368,6 +368,7 @@ export const routes: Routes = [
           },
           {
             path: 'new',
+            canActivate: [adminGuard],
             loadComponent: () =>
               import('./features/users/user-form/user-form.component').then(
                 (m) => m.UserFormComponent,
@@ -375,6 +376,7 @@ export const routes: Routes = [
           },
           {
             path: ':id/edit',
+            canActivate: [adminGuard],
             loadComponent: () =>
               import('./features/users/user-form/user-form.component').then(
                 (m) => m.UserFormComponent,

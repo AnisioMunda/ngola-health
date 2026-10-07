@@ -46,8 +46,14 @@ export class UserFormComponent implements OnInit {
       ],
       email: ['', [Validators.required, Validators.email]],
       password: [
-        this.isEdit ? '' : '',
-        this.isEdit ? [] : [Validators.required, Validators.minLength(8)],
+        '',
+        this.isEdit
+          ? []
+          : [
+              Validators.required,
+              Validators.minLength(8),
+              Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'),
+            ],
       ],
       phone: [''],
       especiality: [''],
@@ -76,7 +82,7 @@ export class UserFormComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Failed to load user.';
+        this.error = 'Não foi possível carregar os dados do utilizador.';
         this.loading = false;
       },
     });
@@ -121,7 +127,7 @@ export class UserFormComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.error = err.error?.message ?? 'Failed to save user.';
+        this.error = err.error?.message ?? 'Não foi possível guardar o utilizador.';
       },
     });
   }

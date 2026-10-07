@@ -6,17 +6,22 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { AuthService } from '../services/auth.service';
-import { authGuard, publicGuard } from './auth.guard';
+import { AuthService, AuthUser } from '../services/auth.service';
+import { adminGuard, authGuard, publicGuard } from './auth.guard';
 
 describe('authentication guards', () => {
   let isLoggedIn: jasmine.Spy;
+  let getCurrentUser: jasmine.Spy;
   let router: Router;
 
   beforeEach(() => {
     isLoggedIn = jasmine.createSpy('isLoggedIn').and.returnValue(false);
+    getCurrentUser = jasmine.createSpy('getCurrentUser').and.returnValue(null);
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: AuthService, useValue: { isLoggedIn } }],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { isLoggedIn, getCurrentUser } },
+      ],
     });
     router = TestBed.inject(Router);
   });
@@ -55,4 +60,38 @@ describe('authentication guards', () => {
     }
     expect(router.serializeUrl(result)).toBe('/dashboard');
   });
+
+  it('allows user-management mutations only for hospital administrators', () => {
+    getCurrentUser.and.returnValue(createUser(['ADMIN']));
+
+    const result = TestBed.runInInjectionContext(() =>
+      adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+
+    expect(result).toBeTrue();
+  });
+
+  it('redirects non-administrators to the user list', () => {
+    getCurrentUser.and.returnValue(createUser(['MANAGER']));
+
+    const result = TestBed.runInInjectionContext(() =>
+      adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+
+    if (!(result instanceof UrlTree)) {
+      throw new Error('Expected the guard to return the user list UrlTree.');
+    }
+    expect(router.serializeUrl(result)).toBe('/users');
+  });
 });
+
+function createUser(roles: string[]): AuthUser {
+  return {
+    id: 'user-id',
+    fullName: 'Utilizador',
+    username: 'utilizador',
+    email: 'utilizador@example.invalid',
+    roles,
+    mustChangePassword: false,
+  };
+}
