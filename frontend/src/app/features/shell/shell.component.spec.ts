@@ -21,6 +21,7 @@ describe('ShellComponent', () => {
       '/scheduling',
       '/inpatient',
       '/lab',
+      '/pharmacy',
       '/prescriptions',
       '/triage',
       '/telemedicine',

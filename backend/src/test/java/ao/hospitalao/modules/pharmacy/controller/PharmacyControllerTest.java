@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +15,7 @@ import ao.hospitalao.config.SecurityConfig;
 import ao.hospitalao.modules.audit.service.AuditService;
 import ao.hospitalao.modules.auth.service.TokenBlackListService;
 import ao.hospitalao.modules.pharmacy.dto.PharmacyDtos.DispenseResponse;
+import ao.hospitalao.modules.pharmacy.dto.PharmacyDtos.MedicationResponse;
 import ao.hospitalao.modules.pharmacy.service.PharmacyService;
 import ao.hospitalao.security.UserDetailsServiceImpl;
 import ao.hospitalao.security.jwt.JwtService;
@@ -40,6 +42,29 @@ class PharmacyControllerTest {
   @MockitoBean private JwtService jwtService;
   @MockitoBean private ObjectMapper jwtObjectMapper;
   @MockitoBean private TokenBlackListService blacklistService;
+
+  @Test
+  void allowsDoctorsToReadMedicationDetails() throws Exception {
+    UUID medicationId = UUID.randomUUID();
+    when(pharmacyService.findMedication(medicationId))
+        .thenReturn(
+            MedicationResponse.builder()
+                .id(medicationId)
+                .name("Medicamento de teste")
+                .unit("comprimido")
+                .totalAvailable(3)
+                .active(true)
+                .build());
+
+    mockMvc
+        .perform(api(get("/api/pharmacy/medications/{id}", medicationId), "doctor", "DOCTOR"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(medicationId.toString()))
+        .andExpect(jsonPath("$.name").value("Medicamento de teste"))
+        .andExpect(jsonPath("$.totalAvailable").value(3));
+
+    verify(pharmacyService).findMedication(medicationId);
+  }
 
   @Test
   void deniesMedicationDispensingToDoctors() throws Exception {

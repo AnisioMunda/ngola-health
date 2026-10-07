@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   PharmacyService,
   MedicationResponse,
   DOSAGE_FORM_LABELS,
+  pharmacyErrorMessage,
 } from '../../../core/services/pharmacy.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -16,7 +18,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
   templateUrl: './medications-list.component.html',
   styleUrls: ['./medications-list.component.scss'],
 })
-export class MedicationsListComponent implements OnInit {
+export class MedicationsListComponent implements OnInit, OnDestroy {
   medications: MedicationResponse[] = [];
   loading = true;
   error = '';
@@ -31,18 +33,24 @@ export class MedicationsListComponent implements OnInit {
   constructor(
     private pharmacyService: PharmacyService,
     private router: Router,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
-    this.loadMedications();
     this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
       this.currentPage = 0;
       this.loadMedications();
     });
+    this.loadMedications();
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubject.complete();
   }
 
   loadMedications(): void {
     this.loading = true;
+    this.error = '';
     this.pharmacyService
       .findAllMedications(this.searchQuery, this.currentPage, this.pageSize)
       .subscribe({
@@ -52,8 +60,11 @@ export class MedicationsListComponent implements OnInit {
           this.totalPages = page.totalPages;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Failed to load medications.';
+        error: (error: unknown) => {
+          this.medications = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+          this.error = pharmacyErrorMessage(error, 'Não foi possível carregar os medicamentos.');
           this.loading = false;
         },
       });
@@ -62,18 +73,36 @@ export class MedicationsListComponent implements OnInit {
   onSearch(): void {
     this.searchSubject.next(this.searchQuery);
   }
+
   goToMedication(id: string): void {
+    if (!this.canViewStockDetails) return;
     this.router.navigate(['/pharmacy', id]);
   }
+
   goToAdd(): void {
+    if (!this.canManagePharmacy) return;
     this.router.navigate(['/pharmacy/new']);
   }
+
   goToExpiring(): void {
+    if (!this.canViewStockDetails) return;
     this.router.navigate(['/pharmacy/expiring']);
   }
-  isLowStock(med: MedicationResponse): boolean {
-    return med.totalAvailable <= med.minStockLevel;
+
+  get canManagePharmacy(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return roles.some((role) => role === 'ADMIN' || role === 'PHARMACIST');
   }
+
+  get canViewStockDetails(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return roles.some((role) => ['ADMIN', 'MANAGER', 'PHARMACIST'].includes(role));
+  }
+
+  isLowStock(med: MedicationResponse): boolean {
+    return med.totalAvailable <= (med.minStockLevel ?? 0);
+  }
+
   prevPage(): void {
     if (this.currentPage > 0) {
       this.currentPage--;

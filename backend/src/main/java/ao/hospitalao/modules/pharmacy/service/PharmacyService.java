@@ -59,6 +59,12 @@ public class PharmacyService {
     return page.map(this::toMedicationResponse);
   }
 
+  @Transactional(readOnly = true)
+  public MedicationResponse findMedication(UUID medicationId) {
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    return toMedicationResponse(findMedicationOrThrow(hospitalId, medicationId));
+  }
+
   @Transactional
   public MedicationResponse createMedication(CreateMedicationRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();

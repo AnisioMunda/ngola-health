@@ -1,5 +1,5 @@
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -17,14 +17,24 @@ export type DosageForm =
 export interface MedicationResponse {
   id: string;
   name: string;
-  genericName: string;
+  genericName: string | null;
   dosageForm: DosageForm;
-  strength: string;
+  strength: string | null;
+  unit: string;
+  requiresPrescription: boolean;
+  minStockLevel: number | null;
+  totalAvailable: number;
+  active: boolean;
+}
+
+export interface CreateMedicationRequest {
+  name: string;
+  genericName: string | null;
+  dosageForm: DosageForm;
+  strength: string | null;
   unit: string;
   requiresPrescription: boolean;
   minStockLevel: number;
-  totalAvailable: number;
-  active: boolean;
 }
 
 export interface StockBatchResponse {
@@ -35,8 +45,8 @@ export interface StockBatchResponse {
   expiryDate: string;
   quantityReceived: number;
   quantityAvailable: number;
-  unitCost: number;
-  supplier: string;
+  unitCost: number | null;
+  supplier: string | null;
   expired: boolean;
   expiringSoon: boolean;
   receivedAt: string;
@@ -75,16 +85,25 @@ export interface Page<T> {
 }
 
 export const DOSAGE_FORM_LABELS: Record<DosageForm, string> = {
-  TABLET: 'Tablet',
-  CAPSULE: 'Capsule',
-  SYRUP: 'Syrup',
-  INJECTION: 'Injection',
-  CREAM: 'Cream',
-  OINTMENT: 'Ointment',
-  DROPS: 'Drops',
-  INHALER: 'Inhaler',
-  OTHER: 'Other',
+  TABLET: 'Comprimido',
+  CAPSULE: 'Cápsula',
+  SYRUP: 'Xarope',
+  INJECTION: 'Injectável',
+  CREAM: 'Creme',
+  OINTMENT: 'Pomada',
+  DROPS: 'Gotas',
+  INHALER: 'Inalador',
+  OTHER: 'Outro',
 };
+
+export function pharmacyErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+    const body = error.error as Record<string, unknown>;
+    if (typeof body['detail'] === 'string' && body['detail']) return body['detail'];
+    if (typeof body['message'] === 'string' && body['message']) return body['message'];
+  }
+  return fallback;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PharmacyService {
@@ -97,7 +116,11 @@ export class PharmacyService {
     return this.http.get<Page<MedicationResponse>>(`${this.apiUrl}/medications`, { params });
   }
 
-  createMedication(request: Partial<MedicationResponse>): Observable<MedicationResponse> {
+  findMedication(id: string): Observable<MedicationResponse> {
+    return this.http.get<MedicationResponse>(`${this.apiUrl}/medications/${id}`);
+  }
+
+  createMedication(request: CreateMedicationRequest): Observable<MedicationResponse> {
     return this.http.post<MedicationResponse>(`${this.apiUrl}/medications`, request);
   }
 

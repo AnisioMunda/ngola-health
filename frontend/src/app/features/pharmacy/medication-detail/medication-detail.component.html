@@ -1,0 +1,237 @@
+<main class="page">
+  <header class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">← Voltar à farmácia</button>
+    <div class="heading" *ngIf="medication">
+      <div class="title-row">
+        <h1>{{ medication.name }}</h1>
+        <span class="stock-warning" *ngIf="isLowStock()">Stock baixo</span>
+      </div>
+      <p>
+        {{ medication.genericName || 'Sem princípio activo indicado' }}
+        <span *ngIf="medication.strength"> · {{ medication.strength }}</span>
+        · {{ formLabels[medication.dosageForm] }}
+      </p>
+    </div>
+  </header>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>A carregar medicamento...</span>
+  </div>
+
+  <div class="alert-error" role="alert" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" role="status" *ngIf="successMsg">{{ successMsg }}</div>
+
+  <ng-container *ngIf="!loading && medication">
+    <section class="summary-card" aria-label="Resumo do medicamento">
+      <div>
+        <span class="summary-label">Stock disponível</span>
+        <strong [class.low-stock]="isLowStock()">
+          {{ medication.totalAvailable }} {{ medication.unit }}
+        </strong>
+      </div>
+      <div>
+        <span class="summary-label">Nível mínimo</span>
+        <strong>{{ medication.minStockLevel ?? '—' }} {{ medication.unit }}</strong>
+      </div>
+      <div>
+        <span class="summary-label">Venda</span>
+        <strong>{{ medication.requiresPrescription ? 'Sujeito a receita' : 'Sem receita' }}</strong>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Operações do medicamento">
+      <button
+        type="button"
+        class="tab"
+        [class.active]="activeTab === 'batches'"
+        (click)="activeTab = 'batches'"
+      >
+        Lotes de stock <span class="tab-badge">{{ batches.length }}</span>
+      </button>
+      <button
+        type="button"
+        class="tab"
+        *ngIf="canManageStock"
+        [class.active]="activeTab === 'receive'"
+        (click)="activeTab = 'receive'"
+      >
+        Receber stock
+      </button>
+      <button
+        type="button"
+        class="tab"
+        *ngIf="canManageStock"
+        [class.active]="activeTab === 'dispense'"
+        (click)="activeTab = 'dispense'"
+      >
+        Dispensar
+      </button>
+    </nav>
+
+    <section class="panel" *ngIf="activeTab === 'batches'">
+      <div class="loading-state compact" *ngIf="batchesLoading">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>A carregar lotes...</span>
+      </div>
+      <div class="table-card" *ngIf="!batchesLoading">
+        <table>
+          <thead>
+            <tr>
+              <th>Lote</th>
+              <th>Validade</th>
+              <th>Quantidade</th>
+              <th>Custo unitário (Kz)</th>
+              <th>Fornecedor</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let batch of batches">
+              <td class="strong">{{ batch.batchNumber }}</td>
+              <td>{{ batch.expiryDate | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                {{ batch.quantityAvailable }} / {{ batch.quantityReceived }} {{ medication.unit }}
+              </td>
+              <td>{{ batch.unitCost === null ? '—' : (batch.unitCost | number: '1.2-2') }}</td>
+              <td>{{ batch.supplier || '—' }}</td>
+              <td>
+                <span class="status-badge expired" *ngIf="batch.expired">Expirado</span>
+                <span class="status-badge expiring" *ngIf="!batch.expired && batch.expiringSoon">
+                  A expirar
+                </span>
+                <span
+                  class="status-badge available"
+                  *ngIf="!batch.expired && !batch.expiringSoon && batch.quantityAvailable > 0"
+                >
+                  Disponível
+                </span>
+                <span class="status-badge depleted" *ngIf="batch.quantityAvailable === 0">
+                  Esgotado
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="batches.length === 0">
+              <td colspan="6" class="empty-state">Ainda não existem lotes registados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel form-panel" *ngIf="activeTab === 'receive' && canManageStock">
+      <h2>Registar entrada de stock</h2>
+      <form [formGroup]="receiveForm" (ngSubmit)="receiveStock()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="batchNumber">Número do lote *</label>
+            <input id="batchNumber" type="text" formControlName="batchNumber" maxlength="50" />
+            <span
+              class="field-error"
+              *ngIf="f.receiveForm.batchNumber.invalid && f.receiveForm.batchNumber.touched"
+            >
+              Indique um lote com até 50 caracteres.
+            </span>
+          </div>
+          <div class="field">
+            <label for="expiryDate">Data de validade *</label>
+            <input
+              id="expiryDate"
+              type="date"
+              formControlName="expiryDate"
+              [min]="minimumExpiryDate"
+            />
+            <span
+              class="field-error"
+              *ngIf="f.receiveForm.expiryDate.invalid && f.receiveForm.expiryDate.touched"
+            >
+              Indique uma data de validade válida.
+            </span>
+          </div>
+          <div class="field">
+            <label for="quantity">Quantidade recebida ({{ medication.unit }}) *</label>
+            <input id="quantity" type="number" formControlName="quantity" min="1" step="1" />
+            <span
+              class="field-error"
+              *ngIf="f.receiveForm.quantity.invalid && f.receiveForm.quantity.touched"
+            >
+              A quantidade deve ser pelo menos 1.
+            </span>
+          </div>
+          <div class="field">
+            <label for="unitCost">Custo unitário (Kz)</label>
+            <input id="unitCost" type="number" formControlName="unitCost" min="0" step="0.01" />
+            <span
+              class="field-error"
+              *ngIf="f.receiveForm.unitCost.invalid && f.receiveForm.unitCost.touched"
+            >
+              O custo não pode ser negativo.
+            </span>
+          </div>
+          <div class="field span-2">
+            <label for="supplier">Fornecedor</label>
+            <input id="supplier" type="text" formControlName="supplier" maxlength="200" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="activeTab = 'batches'">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="saving">
+            {{ saving ? 'A registar...' : 'Registar entrada' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel form-panel" *ngIf="activeTab === 'dispense' && canManageStock">
+      <h2>Dispensar medicamento</h2>
+      <p class="panel-description">
+        A saída será efectuada por ordem FEFO: primeiro o lote com validade mais próxima.
+      </p>
+      <form [formGroup]="dispenseForm" (ngSubmit)="dispense()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="dispenseQuantity">Quantidade a dispensar ({{ medication.unit }}) *</label>
+            <input
+              id="dispenseQuantity"
+              type="number"
+              formControlName="quantity"
+              min="1"
+              step="1"
+              [max]="medication.totalAvailable"
+            />
+            <span
+              class="field-error"
+              *ngIf="f.dispenseForm.quantity.invalid && f.dispenseForm.quantity.touched"
+            >
+              Indique uma quantidade válida, maior que zero.
+            </span>
+          </div>
+          <div class="field span-2">
+            <label for="dispenseReason">Motivo / observações</label>
+            <textarea
+              id="dispenseReason"
+              formControlName="reason"
+              rows="3"
+              maxlength="500"
+              placeholder="Registo opcional da saída..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="activeTab = 'batches'">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="saving || medication.totalAvailable < 1"
+          >
+            {{ saving ? 'A dispensar...' : 'Confirmar dispensa' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </ng-container>
+</main>

@@ -115,6 +115,10 @@
 }
 
 .alert-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 12px 16px;
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -122,6 +126,16 @@
   color: #dc2626;
   font-size: 0.875rem;
   margin-bottom: 1rem;
+}
+
+.retry-button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #991b1b;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .loading-state {

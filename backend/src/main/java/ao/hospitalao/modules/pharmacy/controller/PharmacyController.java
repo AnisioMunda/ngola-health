@@ -43,6 +43,14 @@ public class PharmacyController {
     return ResponseEntity.ok(pharmacyService.findAllMedications(search, pageable));
   }
 
+  @GetMapping("/medications/{id}")
+  @Operation(summary = "Get medication details")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+  public ResponseEntity<MedicationResponse> findMedication(@PathVariable UUID id) {
+    return ResponseEntity.ok(pharmacyService.findMedication(id));
+  }
+
   @PostMapping("/medications")
   @Operation(summary = "Add new medication to catalog")
   @PreAuthorize(
