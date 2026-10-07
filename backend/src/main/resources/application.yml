@@ -154,7 +154,6 @@ agt:
   software-version: ${AGT_SOFTWARE_VERSION}
   software-validation-number: ${AGT_SOFTWARE_VALIDATION:}
   private-key-path: ${AGT_PRIVATE_KEY_PATH:}
-  private-key-content: ${AGT_PRIVATE_KEY_CONTENT:}
   sandbox: ${AGT_SANDBOX:false}
 
 app:

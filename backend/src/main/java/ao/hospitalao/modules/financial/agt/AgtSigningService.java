@@ -126,21 +126,23 @@ public class AgtSigningService {
   private PrivateKey getPrivateKey() throws Exception {
     if (cachedPrivateKey != null) return cachedPrivateKey;
 
-    String pemContent;
-
-    // Prioridade: conteúdo directo > ficheiro
-    if (properties.getPrivateKeyContent() != null && !properties.getPrivateKeyContent().isBlank()) {
-      pemContent = properties.getPrivateKeyContent();
-    } else if (properties.getPrivateKeyPath() != null) {
-      pemContent =
-          java.nio.file.Files.readString(java.nio.file.Path.of(properties.getPrivateKeyPath()));
-    } else {
-      throw new IllegalStateException(
-          "AGT private key not configured. Set agt.private-key-content or agt.private-key-path");
+    String privateKeyPath = properties.getPrivateKeyPath();
+    if (privateKeyPath == null || privateKeyPath.isBlank()) {
+      throw new IllegalStateException("AGT_PRIVATE_KEY_PATH is not configured.");
     }
 
+    String pemContent = java.nio.file.Files.readString(java.nio.file.Path.of(privateKeyPath));
     cachedPrivateKey = parsePemPrivateKey(pemContent);
     return cachedPrivateKey;
+  }
+
+  public void validatePrivateKey() {
+    try {
+      getPrivateKey();
+    } catch (Exception exception) {
+      throw new IllegalStateException(
+          "The AGT signing key file is unavailable or invalid.", exception);
+    }
   }
 
   private PrivateKey parsePemPrivateKey(String pem) throws Exception {

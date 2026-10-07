@@ -160,6 +160,16 @@ SPRING_JPA_HIBERNATE_DDL_AUTO=none \
 O backend fica em `http://localhost:8080`; o health check é
 `http://localhost:8080/api/actuator/health`.
 
+### Segredos da integração AGT em produção
+
+O perfil `prod` exige `AGT_CLIENT_ID`, `AGT_CLIENT_SECRET` e
+`AGT_PRIVATE_KEY_PATH`. Injecte as credenciais através do gestor de segredos do
+ambiente e monte a chave privada RSA em ficheiro fora da imagem e do
+repositório; a aplicação valida a sua leitura e formato no arranque. Não use
+`AGT_PRIVATE_KEY_CONTENT`, não inclua chaves em `.env` e não reutilize
+credenciais de produção em desenvolvimento ou testes. A integração continua
+sujeita à validação oficial descrita na ADR-0009.
+
 ## Desenvolver o frontend
 
 Com o backend local a responder na porta `8080`:

@@ -22,6 +22,5 @@ public class AgtProperties {
   @NotBlank private String softwareVersion;
   private String softwareValidationNumber;
   private String privateKeyPath;
-  private String privateKeyContent;
   private boolean sandbox;
 }
