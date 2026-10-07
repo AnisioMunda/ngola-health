@@ -10,7 +10,9 @@
     "build:prod": "ng build --configuration production",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
     "test:watch": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "format": "prettier --write \"src/**/*.{ts,html,scss,json}\" angular.json package.json \"tsconfig*.json\" eslint.config.js",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\" angular.json package.json \"tsconfig*.json\" eslint.config.js"
   },
   "dependencies": {
     "@angular/animations": "^22.2.1",
@@ -37,13 +39,19 @@
     "@angular/build": "^22.2.1",
     "@angular/cli": "^22.2.1",
     "@angular/compiler-cli": "^22.2.1",
+    "@eslint/js": "^10.0.1",
     "@types/jasmine": "~5.1.0",
+    "angular-eslint": "^22.5.0",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~6.0.3"
+    "prettier": "^3.9.9",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
   }
 }

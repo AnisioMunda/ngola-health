@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <h1>Internamentos</h1>
@@ -8,14 +7,27 @@
     <div class="header-actions">
       <button class="btn-secondary" (click)="goToMap()">
         <svg viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="6" width="7" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="11" y="2" width="7" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="2" y="6" width="7" height="10" rx="1" stroke="currentColor" stroke-width="1.5" />
+          <rect
+            x="11"
+            y="2"
+            width="7"
+            height="14"
+            rx="1"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
         </svg>
         Mapa de Camas
       </button>
       <button class="btn-primary" (click)="goToNew()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path
+            d="M10 4v12M4 10h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
         Nova Admissão
       </button>
@@ -31,9 +43,11 @@
       <option value="">Todas as enfermarias</option>
       <option *ngFor="let w of wards" [value]="w.id">{{ w.name }}</option>
     </select>
-    <button class="btn-clear"
+    <button
+      class="btn-clear"
       *ngIf="wardFilter || statusFilter !== 'ACTIVE'"
-      (click)="statusFilter='ACTIVE'; wardFilter=''; onFilterChange()">
+      (click)="statusFilter = 'ACTIVE'; wardFilter = ''; onFilterChange()"
+    >
       Limpar
     </button>
   </div>
@@ -41,7 +55,8 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
@@ -58,10 +73,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of admissions"
-          (click)="goToDetail(a.id)" class="clickable"
-          [class.overdue]="isOverdue(a)">
-
+        <tr
+          *ngFor="let a of admissions"
+          (click)="goToDetail(a.id)"
+          class="clickable"
+          [class.overdue]="isOverdue(a)"
+        >
           <td>
             <span class="patient-name">{{ a.patientName }}</span>
             <span class="patient-phone" *ngIf="a.patientPhone">{{ a.patientPhone }}</span>
@@ -71,11 +88,10 @@
             <span class="bed-number">Cama {{ a.bedNumber }}</span>
           </td>
           <td class="doctor-name">{{ a.doctorName }}</td>
-          <td class="date">{{ a.admissionDate | date:'dd/MM/yyyy' }}</td>
+          <td class="date">{{ a.admissionDate | date: 'dd/MM/yyyy' }}</td>
           <td>
-            <span class="expected-date"
-              [class.overdue-text]="isOverdue(a)">
-              {{ a.expectedDischargeDate ? (a.expectedDischargeDate | date:'dd/MM/yyyy') : '—' }}
+            <span class="expected-date" [class.overdue-text]="isOverdue(a)">
+              {{ a.expectedDischargeDate ? (a.expectedDischargeDate | date: 'dd/MM/yyyy') : '—' }}
               <span class="overdue-badge" *ngIf="isOverdue(a)">Em atraso</span>
             </span>
           </td>
@@ -90,9 +106,27 @@
         <tr *ngIf="admissions.length === 0">
           <td colspan="7" class="empty-state">
             <svg viewBox="0 0 48 48" fill="none">
-              <rect x="4" y="12" width="40" height="30" rx="4" stroke="currentColor" stroke-width="2"/>
-              <path d="M4 20h40M16 12V8M32 12V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M14 30h20M14 36h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <rect
+                x="4"
+                y="12"
+                width="40"
+                height="30"
+                rx="4"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <path
+                d="M4 20h40M16 12V8M32 12V8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <path
+                d="M14 30h20M14 36h12"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
             </svg>
             <p>Nenhum internamento encontrado</p>
             <button class="btn-primary" (click)="goToNew()">Nova Admissão</button>
@@ -102,10 +136,13 @@
     </table>
 
     <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Anterior
+      </button>
       <span>Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        Próxima →
+      </button>
     </div>
   </div>
-
 </div>

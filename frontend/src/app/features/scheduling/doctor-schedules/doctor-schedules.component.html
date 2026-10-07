@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <h1>Gestão de Horários</h1>
@@ -7,14 +6,14 @@
     </div>
     <button class="btn-primary" (click)="showForm = !showForm">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Novo Horário
     </button>
   </header>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <!-- Formulário -->
   <div class="form-card" *ngIf="showForm">
@@ -22,7 +21,6 @@
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="form-grid">
-
         <div class="field span-2">
           <label>Médico *</label>
           <select formControlName="doctorId">
@@ -45,12 +43,12 @@
 
         <div class="field">
           <label>Hora de Início *</label>
-          <input type="time" formControlName="startTime"/>
+          <input type="time" formControlName="startTime" />
         </div>
 
         <div class="field">
           <label>Hora de Fim *</label>
-          <input type="time" formControlName="endTime"/>
+          <input type="time" formControlName="endTime" />
         </div>
 
         <div class="field">
@@ -67,22 +65,25 @@
 
         <div class="field">
           <label>Máx. Pacientes por Slot</label>
-          <input type="number" formControlName="maxPatientsPerSlot" min="1" max="10"/>
+          <input type="number" formControlName="maxPatientsPerSlot" min="1" max="10" />
         </div>
 
         <!-- Preview slots -->
-        <div class="slots-preview span-2"
-          *ngIf="f['startTime'].value && f['endTime'].value">
+        <div class="slots-preview span-2" *ngIf="f['startTime'].value && f['endTime'].value">
           <svg viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M8 5v3.5L10 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2" />
+            <path
+              d="M8 5v3.5L10 10"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
           </svg>
           <span>
-            Este horário gera <strong>{{ slotsPreview() }}</strong>
-            slots de {{ f['slotDurationMinutes'].value }} minutos
+            Este horário gera <strong>{{ slotsPreview() }}</strong> slots de
+            {{ f['slotDurationMinutes'].value }} minutos
           </span>
         </div>
-
       </div>
 
       <div class="form-actions">
@@ -99,24 +100,33 @@
 
   <!-- Loading -->
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar horários...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar horários...</span>
   </div>
 
   <!-- Lista por médico -->
   <ng-container *ngIf="!loading">
-
     <div class="empty-state" *ngIf="schedulesByDoctor.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <rect x="6" y="4" width="36" height="40" rx="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M6 16h36M16 4v6M32 4v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M16 26h16M16 33h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="6" y="4" width="36" height="40" rx="4" stroke="currentColor" stroke-width="2" />
+        <path
+          d="M6 16h36M16 4v6M32 4v6"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <path
+          d="M16 26h16M16 33h10"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
       </svg>
       <p>Nenhum horário configurado.</p>
       <button class="btn-primary" (click)="showForm = true">Configurar primeiro horário</button>
     </div>
 
     <div class="doctor-card" *ngFor="let group of schedulesByDoctor">
-
       <!-- Cabeçalho do médico -->
       <div class="doctor-header">
         <div class="doctor-avatar">{{ group.initials }}</div>
@@ -129,14 +139,17 @@
 
       <!-- Grelha semanal -->
       <div class="week-grid">
-        <div class="week-day"
+        <div
+          class="week-day"
           *ngFor="let day of days"
-          [class.has-schedule]="hasScheduleOnDay(group.schedules, day.value)">
-
+          [class.has-schedule]="hasScheduleOnDay(group.schedules, day.value)"
+        >
           <span class="day-label">{{ day.label.substring(0, 3) }}</span>
 
-          <div class="schedule-block"
-            *ngFor="let s of getSchedulesForDay(group.schedules, day.value)">
+          <div
+            class="schedule-block"
+            *ngFor="let s of getSchedulesForDay(group.schedules, day.value)"
+          >
             <div class="schedule-time">{{ s.startTime }} — {{ s.endTime }}</div>
             <div class="schedule-meta">
               {{ slotsPerDay(s) }} slots · {{ s.slotDurationMinutes }}min
@@ -144,16 +157,11 @@
             <button class="btn-remove" (click)="delete(s.id)" title="Remover">✕</button>
           </div>
 
-          <div class="day-empty"
-            *ngIf="!hasScheduleOnDay(group.schedules, day.value)">
+          <div class="day-empty" *ngIf="!hasScheduleOnDay(group.schedules, day.value)">
             <span>—</span>
           </div>
-
         </div>
       </div>
-
     </div>
-
   </ng-container>
-
 </div>

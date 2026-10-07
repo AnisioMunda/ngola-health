@@ -7,28 +7,48 @@
     <div class="header-actions">
       <button class="btn-secondary" (click)="goToExpiring()">⚠ Expiring Soon</button>
       <button class="btn-primary" (click)="goToAdd()">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 20 20" fill="none">
+          <path
+            d="M10 4v12M4 10h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
         Add Medication
       </button>
     </div>
   </header>
 
   <div class="search-bar">
-    <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearch()" placeholder="Search by name or generic name..."/>
+    <svg viewBox="0 0 20 20" fill="none">
+      <circle cx="9" cy="9" r="5" stroke="currentColor" stroke-width="1.5" />
+      <path d="M13 13l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+    </svg>
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="onSearch()"
+      placeholder="Search by name or generic name..."
+    />
   </div>
 
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>Loading medications...</span>
+    <div class="spinner-lg"></div>
+    <span>Loading medications...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
     <table>
       <thead>
         <tr>
-          <th>Medication</th><th>Form</th><th>Strength</th><th>Stock</th><th>Prescription</th>
+          <th>Medication</th>
+          <th>Form</th>
+          <th>Strength</th>
+          <th>Stock</th>
+          <th>Prescription</th>
         </tr>
       </thead>
       <tbody>
@@ -42,11 +62,15 @@
               </div>
             </div>
           </td>
-          <td><span class="form-badge">{{ formLabels[m.dosageForm] }}</span></td>
+          <td>
+            <span class="form-badge">{{ formLabels[m.dosageForm] }}</span>
+          </td>
           <td class="text-muted">{{ m.strength || '—' }}</td>
           <td>
             <div class="stock-info">
-              <span class="stock-value" [class.low-stock]="isLowStock(m)">{{ m.totalAvailable }} {{ m.unit }}</span>
+              <span class="stock-value" [class.low-stock]="isLowStock(m)"
+                >{{ m.totalAvailable }} {{ m.unit }}</span
+              >
               <span class="low-stock-badge" *ngIf="isLowStock(m)">Low</span>
             </div>
           </td>
@@ -57,7 +81,23 @@
         </tr>
         <tr *ngIf="medications.length === 0">
           <td colspan="5" class="empty-state">
-            <svg viewBox="0 0 48 48" fill="none"><rect x="10" y="6" width="28" height="36" rx="4" stroke="currentColor" stroke-width="2"/><path d="M18 18h12M24 14v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 48 48" fill="none">
+              <rect
+                x="10"
+                y="6"
+                width="28"
+                height="36"
+                rx="4"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <path
+                d="M18 18h12M24 14v8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
             <p>No medications in catalog</p>
             <button class="btn-primary" (click)="goToAdd()">Add first medication</button>
           </td>
@@ -65,9 +105,13 @@
       </tbody>
     </table>
     <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Previous</button>
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Previous
+      </button>
       <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Next →</button>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        Next →
+      </button>
     </div>
   </div>
 </div>

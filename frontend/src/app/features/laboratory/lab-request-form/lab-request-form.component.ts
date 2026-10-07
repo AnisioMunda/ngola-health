@@ -10,10 +10,9 @@ import { PatientService } from '../../../core/services/patient.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './lab-request-form.component.html',
-  styleUrls: ['./lab-request-form.component.scss']
+  styleUrls: ['./lab-request-form.component.scss'],
 })
 export class LabRequestFormComponent implements OnInit {
-
   form!: FormGroup;
   saving = false;
   error = '';
@@ -25,21 +24,21 @@ export class LabRequestFormComponent implements OnInit {
   priorities: { value: Priority; label: string }[] = [
     { value: 'NORMAL', label: 'Normal' },
     { value: 'URGENT', label: 'Urgent' },
-    { value: 'STAT',   label: 'STAT (Immediate)' }
+    { value: 'STAT', label: 'STAT (Immediate)' },
   ];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private labService: LabService,
-    private patientService: PatientService
+    private patientService: PatientService,
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      patientId:     ['', Validators.required],
-      priority:      ['NORMAL', Validators.required],
-      clinicalNotes: ['']
+      patientId: ['', Validators.required],
+      priority: ['NORMAL', Validators.required],
+      clinicalNotes: [''],
     });
 
     this.loadPatients();
@@ -49,14 +48,16 @@ export class LabRequestFormComponent implements OnInit {
   loadPatients(): void {
     this.patientService.findAll('', 0, 100).subscribe({
       next: (page) => {
-        this.patients = page.content.map(p => ({ id: p.id, fullName: p.fullName }));
-      }
+        this.patients = page.content.map((p) => ({ id: p.id, fullName: p.fullName }));
+      },
     });
   }
 
   loadTests(): void {
     this.labService.findAllTests().subscribe({
-      next: (tests) => { this.availableTests = tests; }
+      next: (tests) => {
+        this.availableTests = tests;
+      },
     });
   }
 
@@ -84,19 +85,25 @@ export class LabRequestFormComponent implements OnInit {
     this.saving = true;
     this.error = '';
 
-    this.labService.createRequest({
-      ...this.form.value,
-      labTestIds: Array.from(this.selectedTestIds)
-    }).subscribe({
-      next: () => this.router.navigate(['/lab']),
-      error: (err) => {
-        this.saving = false;
-        this.error = err.error?.message ?? 'Failed to create lab request.';
-      }
-    });
+    this.labService
+      .createRequest({
+        ...this.form.value,
+        labTestIds: Array.from(this.selectedTestIds),
+      })
+      .subscribe({
+        next: () => this.router.navigate(['/lab']),
+        error: (err) => {
+          this.saving = false;
+          this.error = err.error?.message ?? 'Failed to create lab request.';
+        },
+      });
   }
 
-  goBack(): void { this.router.navigate(['/lab']); }
+  goBack(): void {
+    this.router.navigate(['/lab']);
+  }
 
-  get f() { return this.form.controls; }
+  get f() {
+    return this.form.controls;
+  }
 }

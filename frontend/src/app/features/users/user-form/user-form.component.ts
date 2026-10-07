@@ -2,20 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-  UserManagementService,
-  ROLES
-} from '../../../core/services/user-management.service';
+import { UserManagementService, ROLES } from '../../../core/services/user-management.service';
 
 @Component({
   selector: 'app-user-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-form.component.html',
-  styleUrls: ['./user-form.component.scss']
+  styleUrls: ['./user-form.component.scss'],
 })
 export class UserFormComponent implements OnInit {
-
   form!: FormGroup;
   isEdit = false;
   userId: string | null = null;
@@ -28,7 +24,7 @@ export class UserFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private userService: UserManagementService
+    private userService: UserManagementService,
   ) {}
 
   ngOnInit(): void {
@@ -43,18 +39,21 @@ export class UserFormComponent implements OnInit {
 
   buildForm(): void {
     this.form = this.fb.group({
-      fullName:        ['', [Validators.required, Validators.minLength(3)]],
-      username:        [{ value: '', disabled: this.isEdit },
-                        [Validators.required, Validators.minLength(3),
-                         Validators.pattern('^[a-z0-9._-]+$')]],
-      email:           ['', [Validators.required, Validators.email]],
-      password:        [this.isEdit ? '' : '',
-                        this.isEdit ? [] : [Validators.required, Validators.minLength(8)]],
-      phone:           [''],
-      especiality:     [''],
-      professionalCard:[''],
+      fullName: ['', [Validators.required, Validators.minLength(3)]],
+      username: [
+        { value: '', disabled: this.isEdit },
+        [Validators.required, Validators.minLength(3), Validators.pattern('^[a-z0-9._-]+$')],
+      ],
+      email: ['', [Validators.required, Validators.email]],
+      password: [
+        this.isEdit ? '' : '',
+        this.isEdit ? [] : [Validators.required, Validators.minLength(8)],
+      ],
+      phone: [''],
+      especiality: [''],
+      professionalCard: [''],
       mustChangePassword: [true],
-      roleIds:         [[], [Validators.required]]
+      roleIds: [[], [Validators.required]],
     });
   }
 
@@ -62,9 +61,7 @@ export class UserFormComponent implements OnInit {
     this.loading = true;
     this.userService.findById(this.userId!).subscribe({
       next: (user) => {
-        const roleIds = ROLES
-          .filter(r => user.roles.includes(r.name))
-          .map(r => r.id);
+        const roleIds = ROLES.filter((r) => user.roles.includes(r.name)).map((r) => r.id);
 
         this.form.patchValue({
           fullName: user.fullName,
@@ -74,14 +71,14 @@ export class UserFormComponent implements OnInit {
           especiality: user.especiality,
           professionalCard: user.professionalCard,
           mustChangePassword: user.mustChangePassword,
-          roleIds
+          roleIds,
         });
         this.loading = false;
       },
       error: () => {
         this.error = 'Failed to load user.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -92,7 +89,7 @@ export class UserFormComponent implements OnInit {
   toggleRole(roleId: string): void {
     const current: string[] = this.form.get('roleIds')?.value ?? [];
     const updated = current.includes(roleId)
-      ? current.filter(id => id !== roleId)
+      ? current.filter((id) => id !== roleId)
       : [...current, roleId];
     this.form.get('roleIds')?.setValue(updated);
   }
@@ -114,7 +111,7 @@ export class UserFormComponent implements OnInit {
           phone: value.phone,
           especiality: value.especiality,
           professionalCard: value.professionalCard,
-          roleIds: value.roleIds
+          roleIds: value.roleIds,
         })
       : this.userService.create(value);
 
@@ -125,7 +122,7 @@ export class UserFormComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.error = err.error?.message ?? 'Failed to save user.';
-      }
+      },
     });
   }
 
@@ -133,5 +130,7 @@ export class UserFormComponent implements OnInit {
     this.router.navigate(['/users']);
   }
 
-  get f() { return this.form.controls; }
+  get f() {
+    return this.form.controls;
+  }
 }

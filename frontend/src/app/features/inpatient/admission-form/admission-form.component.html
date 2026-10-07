@@ -1,10 +1,9 @@
 <!-- admission-form.component.html -->
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Voltar
     </button>
@@ -13,7 +12,6 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <div class="form-grid">
-
       <div class="form-section">
         <h2 class="section-title">Paciente e Médico</h2>
 
@@ -36,23 +34,32 @@
             <option value="">Seleccionar médico...</option>
             <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
           </select>
-          <span class="field-error" *ngIf="f['responsibleDoctorId'].invalid && f['responsibleDoctorId'].touched">
+          <span
+            class="field-error"
+            *ngIf="f['responsibleDoctorId'].invalid && f['responsibleDoctorId'].touched"
+          >
             Médico obrigatório
           </span>
         </div>
 
         <div class="field">
           <label>Motivo de Internamento *</label>
-          <textarea formControlName="admissionReason" rows="3"
-            placeholder="Descreva o motivo do internamento..."></textarea>
-          <span class="field-error" *ngIf="f['admissionReason'].invalid && f['admissionReason'].touched">
+          <textarea
+            formControlName="admissionReason"
+            rows="3"
+            placeholder="Descreva o motivo do internamento..."
+          ></textarea>
+          <span
+            class="field-error"
+            *ngIf="f['admissionReason'].invalid && f['admissionReason'].touched"
+          >
             Motivo obrigatório (mínimo 10 caracteres)
           </span>
         </div>
 
         <div class="field">
           <label>Alta Esperada</label>
-          <input type="date" formControlName="expectedDischargeDate" [min]="minDate"/>
+          <input type="date" formControlName="expectedDischargeDate" [min]="minDate" />
         </div>
       </div>
 
@@ -76,7 +83,8 @@
           <label>Cama *</label>
 
           <div class="beds-loading" *ngIf="loadingBeds">
-            <div class="spinner-sm"></div> A carregar camas...
+            <div class="spinner-sm"></div>
+            A carregar camas...
           </div>
 
           <div class="beds-placeholder" *ngIf="!loadingBeds && !f['wardId'].value">
@@ -88,12 +96,14 @@
           </div>
 
           <div class="beds-grid" *ngIf="!loadingBeds && beds.length > 0">
-            <button type="button"
+            <button
+              type="button"
               *ngFor="let b of beds"
               class="bed-btn"
               [class.selected]="f['bedId'].value === b.id"
               [class.reserved]="b.status === 'RESERVED'"
-              (click)="form.get('bedId')?.setValue(b.id)">
+              (click)="form.get('bedId')?.setValue(b.id)"
+            >
               <span class="bed-num">{{ b.bedNumber }}</span>
               <span class="bed-lbl">{{ b.status === 'RESERVED' ? 'Reservada' : 'Livre' }}</span>
             </button>
@@ -104,7 +114,6 @@
           </span>
         </div>
       </div>
-
     </div>
 
     <div class="alert-error" *ngIf="error">{{ error }}</div>
@@ -118,7 +127,5 @@
         </span>
       </button>
     </div>
-
   </form>
-
 </div>

@@ -6,10 +6,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export type EquipmentStatus   = 'ACTIVE' | 'MAINTENANCE' | 'REPAIR' | 'RETIRED' | 'RESERVED';
-export type EquipmentCategory = 'DIAGNOSTIC' | 'THERAPEUTIC' | 'SURGICAL' |
-                                'MONITORING' | 'MOBILITY' | 'IT' | 'OTHER';
-export type MaintenanceType   = 'PREVENTIVE' | 'CORRECTIVE' | 'CALIBRATION' | 'INSPECTION';
+export type EquipmentStatus = 'ACTIVE' | 'MAINTENANCE' | 'REPAIR' | 'RETIRED' | 'RESERVED';
+export type EquipmentCategory =
+  'DIAGNOSTIC' | 'THERAPEUTIC' | 'SURGICAL' | 'MONITORING' | 'MOBILITY' | 'IT' | 'OTHER';
+export type MaintenanceType = 'PREVENTIVE' | 'CORRECTIVE' | 'CALIBRATION' | 'INSPECTION';
 
 export interface MaintenanceResponse {
   id: string;
@@ -67,21 +67,21 @@ export interface Page<T> {
 }
 
 export const STATUS_COLORS: Record<EquipmentStatus, string> = {
-  ACTIVE:      '#16a34a',
+  ACTIVE: '#16a34a',
   MAINTENANCE: '#f59e0b',
-  REPAIR:      '#dc2626',
-  RETIRED:     '#9ca3af',
-  RESERVED:    '#3b82f6'
+  REPAIR: '#dc2626',
+  RETIRED: '#9ca3af',
+  RESERVED: '#3b82f6',
 };
 
 export const CATEGORY_LABELS: Record<EquipmentCategory, string> = {
-  DIAGNOSTIC:  'Diagnóstico',
+  DIAGNOSTIC: 'Diagnóstico',
   THERAPEUTIC: 'Terapêutico',
-  SURGICAL:    'Cirúrgico',
-  MONITORING:  'Monitorização',
-  MOBILITY:    'Mobilidade',
-  IT:          'Informático',
-  OTHER:       'Outro'
+  SURGICAL: 'Cirúrgico',
+  MONITORING: 'Monitorização',
+  MOBILITY: 'Mobilidade',
+  IT: 'Informático',
+  OTHER: 'Outro',
 };
 
 @Injectable({ providedIn: 'root' })

@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  LabService, LabRequestResponse, LabRequestItemResponse,
-  STATUS_LABELS, PRIORITY_LABELS
+  LabService,
+  LabRequestResponse,
+  LabRequestItemResponse,
+  STATUS_LABELS,
+  PRIORITY_LABELS,
 } from '../../../core/services/lab.service';
 
 @Component({
@@ -12,10 +15,9 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './lab-request-detail.component.html',
-  styleUrls: ['./lab-request-detail.component.scss']
+  styleUrls: ['./lab-request-detail.component.scss'],
 })
 export class LabRequestDetailComponent implements OnInit {
-
   request: LabRequestResponse | null = null;
   loading = true;
   error = '';
@@ -31,13 +33,13 @@ export class LabRequestDetailComponent implements OnInit {
     resultUnit: '',
     referenceRange: '',
     abnormal: false,
-    resultNotes: ''
+    resultNotes: '',
   };
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private labService: LabService
+    private labService: LabService,
   ) {}
 
   ngOnInit(): void {
@@ -48,8 +50,14 @@ export class LabRequestDetailComponent implements OnInit {
   loadRequest(id: string): void {
     this.loading = true;
     this.labService.findRequestById(id).subscribe({
-      next: (req) => { this.request = req; this.loading = false; },
-      error: () => { this.error = 'Failed to load request.'; this.loading = false; }
+      next: (req) => {
+        this.request = req;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Failed to load request.';
+        this.loading = false;
+      },
     });
   }
 
@@ -60,7 +68,7 @@ export class LabRequestDetailComponent implements OnInit {
       resultUnit: item.resultUnit || '',
       referenceRange: item.referenceRange || '',
       abnormal: item.abnormal || false,
-      resultNotes: item.resultNotes || ''
+      resultNotes: item.resultNotes || '',
     };
   }
 
@@ -81,31 +89,41 @@ export class LabRequestDetailComponent implements OnInit {
       error: (err) => {
         this.error = err.error?.message ?? 'Failed to save result.';
         this.saving = false;
-      }
+      },
     });
   }
 
   collect(): void {
     if (!this.request) return;
     this.labService.collect(this.request.id).subscribe({
-      next: (updated) => { this.request = updated; }
+      next: (updated) => {
+        this.request = updated;
+      },
     });
   }
 
   startAnalysis(): void {
     if (!this.request) return;
     this.labService.startAnalysis(this.request.id).subscribe({
-      next: (updated) => { this.request = updated; }
+      next: (updated) => {
+        this.request = updated;
+      },
     });
   }
 
   cancelRequest(): void {
     if (!this.request) return;
     this.labService.cancel(this.request.id).subscribe({
-      next: (updated) => { this.request = updated; },
-      error: (err) => { this.error = err.error?.message ?? 'Failed to cancel.'; }
+      next: (updated) => {
+        this.request = updated;
+      },
+      error: (err) => {
+        this.error = err.error?.message ?? 'Failed to cancel.';
+      },
     });
   }
 
-  goBack(): void { this.router.navigate(['/lab']); }
+  goBack(): void {
+    this.router.navigate(['/lab']);
+  }
 }

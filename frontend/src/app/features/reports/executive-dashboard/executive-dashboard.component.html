@@ -1,10 +1,9 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="goBack()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
         Relatórios
       </button>
@@ -18,19 +17,33 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar dados...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar dados...</span>
   </div>
 
   <!-- Tabs -->
   <div class="tabs" *ngIf="!loading">
-    <button class="tab" [class.active]="activeTab==='executive'"  (click)="onTabChange('executive')">Executivo</button>
-    <button class="tab" [class.active]="activeTab==='financial'"  (click)="onTabChange('financial')">Financeiro</button>
-    <button class="tab" [class.active]="activeTab==='beds'"       (click)="onTabChange('beds')">Ocupação</button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'executive'"
+      (click)="onTabChange('executive')"
+    >
+      Executivo
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'financial'"
+      (click)="onTabChange('financial')"
+    >
+      Financeiro
+    </button>
+    <button class="tab" [class.active]="activeTab === 'beds'" (click)="onTabChange('beds')">
+      Ocupação
+    </button>
   </div>
 
   <!-- ===== TAB EXECUTIVO ===== -->
   <ng-container *ngIf="!loading && activeTab === 'executive' && dashboard">
-
     <!-- KPIs principais -->
     <div class="kpi-grid">
       <!-- Receita -->
@@ -38,9 +51,11 @@
         <div class="kpi-header">
           <span class="kpi-icon">💰</span>
           <span class="kpi-title">Receita do Mês</span>
-          <span class="growth-badge"
+          <span
+            class="growth-badge"
             [class.positive]="dashboard.revenueGrowthPercent >= 0"
-            [class.negative]="dashboard.revenueGrowthPercent < 0">
+            [class.negative]="dashboard.revenueGrowthPercent < 0"
+          >
             {{ formatGrowth(dashboard.revenueGrowthPercent) }}
           </span>
         </div>
@@ -64,12 +79,13 @@
           <span class="kpi-icon">🛏</span>
           <span class="kpi-title">Ocupação</span>
         </div>
-        <div class="kpi-value">{{ dashboard.occupancyRate | number:'1.0-0' }}%</div>
+        <div class="kpi-value">{{ dashboard.occupancyRate | number: '1.0-0' }}%</div>
         <div class="occupancy-bar">
-          <div class="occ-fill"
+          <div
+            class="occ-fill"
             [style.width.%]="dashboard.occupancyRate"
-            [style.background]="occupancyColor(dashboard.occupancyRate)">
-          </div>
+            [style.background]="occupancyColor(dashboard.occupancyRate)"
+          ></div>
         </div>
         <div class="kpi-sub">
           {{ dashboard.bedsAvailable }}/{{ dashboard.bedsTotal }} disponíveis
@@ -109,7 +125,6 @@
 
     <!-- Gráficos -->
     <div class="charts-grid">
-
       <!-- Receita mensal — barras -->
       <div class="chart-card">
         <div class="chart-header">
@@ -120,10 +135,13 @@
           <div class="bar-wrapper" *ngFor="let d of dashboard.revenueByMonth">
             <div class="bar-col">
               <div class="bar-tooltip">{{ formatCurrency(d.value) }}</div>
-              <div class="bar"
+              <div
+                class="bar"
                 [style.height.%]="getBarHeight(d.value, dashboard.revenueByMonth)"
-                [class.current]="d === dashboard.revenueByMonth[dashboard.revenueByMonth.length - 1]">
-              </div>
+                [class.current]="
+                  d === dashboard.revenueByMonth[dashboard.revenueByMonth.length - 1]
+                "
+              ></div>
             </div>
             <span class="bar-label">{{ d.month }}</span>
           </div>
@@ -139,8 +157,12 @@
           <svg class="line-chart" viewBox="0 0 500 150" preserveAspectRatio="none">
             <polyline
               [attr.points]="getLinePoints(dashboard.patientsByMonth, 500, 150)"
-              fill="none" stroke="#3b82f6" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
+              fill="none"
+              stroke="#3b82f6"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
           <div class="line-labels">
             <span *ngFor="let d of dashboard.patientsByMonth">{{ d.month }}</span>
@@ -158,10 +180,11 @@
             <span class="doctor-rank">{{ i + 1 }}</span>
             <span class="doctor-name">{{ d.doctorName }}</span>
             <div class="doctor-bar-wrap">
-             <div class="doctor-bar"
-              [style.width.%]="getBarHeight(d.episodes, getTopDoctorEpisodesData())"
-              [style.background]="i === 0 ? '#203a43' : '#64748b'">
-            </div>
+              <div
+                class="doctor-bar"
+                [style.width.%]="getBarHeight(d.episodes, getTopDoctorEpisodesData())"
+                [style.background]="i === 0 ? '#203a43' : '#64748b'"
+              ></div>
             </div>
             <span class="doctor-count">{{ d.episodes }}</span>
           </div>
@@ -181,25 +204,24 @@
             <span class="priority-dot" [style.background]="p.color"></span>
             <span class="priority-label">{{ p.label }}</span>
             <div class="priority-bar-wrap">
-              <div class="priority-bar-fill"
+              <div
+                class="priority-bar-fill"
                 [style.width.%]="p.percentage"
-                [style.background]="p.color">
-              </div>
+                [style.background]="p.color"
+              ></div>
             </div>
             <span class="priority-count">{{ p.count }}</span>
           </div>
         </div>
       </div>
-
     </div>
-
   </ng-container>
 
   <!-- ===== TAB FINANCEIRO ===== -->
   <ng-container *ngIf="!loading && activeTab === 'financial'">
     <div class="filter-row">
-      <label>De: <input type="date" [(ngModel)]="financialFrom"/></label>
-      <label>Até: <input type="date" [(ngModel)]="financialTo"/></label>
+      <label>De: <input type="date" [(ngModel)]="financialFrom" /></label>
+      <label>Até: <input type="date" [(ngModel)]="financialTo" /></label>
       <button class="btn-filter" (click)="loadFinancial()">Actualizar</button>
     </div>
 
@@ -209,12 +231,16 @@
 
     <div class="kpi-grid" *ngIf="financialReport">
       <div class="kpi-card revenue-card">
-        <div class="kpi-header"><span class="kpi-icon">💰</span><span class="kpi-title">Receita Total</span></div>
+        <div class="kpi-header">
+          <span class="kpi-icon">💰</span><span class="kpi-title">Receita Total</span>
+        </div>
         <div class="kpi-value">{{ formatCurrency(financialReport.totalRevenue) }}</div>
         <div class="kpi-sub">{{ financialReport.period }}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-header"><span class="kpi-icon">📄</span><span class="kpi-title">Total Facturas</span></div>
+        <div class="kpi-header">
+          <span class="kpi-icon">📄</span><span class="kpi-title">Total Facturas</span>
+        </div>
         <div class="kpi-value">{{ financialReport.totalInvoices }}</div>
       </div>
     </div>
@@ -228,9 +254,10 @@
         <div class="bar-wrapper" *ngFor="let d of financialReport!.revenueByMonth">
           <div class="bar-col">
             <div class="bar-tooltip">{{ formatCurrency(d.value) }}</div>
-            <div class="bar"
-              [style.height.%]="getBarHeight(d.value, financialReport!.revenueByMonth)">
-            </div>
+            <div
+              class="bar"
+              [style.height.%]="getBarHeight(d.value, financialReport!.revenueByMonth)"
+            ></div>
           </div>
           <span class="bar-label">{{ d.month }}</span>
         </div>
@@ -247,22 +274,29 @@
     <ng-container *ngIf="bedReport">
       <div class="kpi-grid">
         <div class="kpi-card" [class.alert-kpi]="bedReport.occupancyRate >= 90">
-          <div class="kpi-header"><span class="kpi-icon">🛏</span><span class="kpi-title">Ocupação Global</span></div>
-          <div class="kpi-value">{{ bedReport.occupancyRate | number:'1.0-1' }}%</div>
+          <div class="kpi-header">
+            <span class="kpi-icon">🛏</span><span class="kpi-title">Ocupação Global</span>
+          </div>
+          <div class="kpi-value">{{ bedReport.occupancyRate | number: '1.0-1' }}%</div>
           <div class="occupancy-bar">
-            <div class="occ-fill"
+            <div
+              class="occ-fill"
               [style.width.%]="bedReport.occupancyRate"
-              [style.background]="occupancyColor(bedReport.occupancyRate)">
-            </div>
+              [style.background]="occupancyColor(bedReport.occupancyRate)"
+            ></div>
           </div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-header"><span class="kpi-icon">✓</span><span class="kpi-title">Disponíveis</span></div>
+          <div class="kpi-header">
+            <span class="kpi-icon">✓</span><span class="kpi-title">Disponíveis</span>
+          </div>
           <div class="kpi-value green">{{ bedReport.availableBeds }}</div>
           <div class="kpi-sub">de {{ bedReport.totalBeds }} camas</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-header"><span class="kpi-icon">👤</span><span class="kpi-title">Ocupadas</span></div>
+          <div class="kpi-header">
+            <span class="kpi-icon">👤</span><span class="kpi-title">Ocupadas</span>
+          </div>
           <div class="kpi-value red">{{ bedReport.occupiedBeds }}</div>
         </div>
       </div>
@@ -276,12 +310,13 @@
           <div class="ward-row" *ngFor="let w of bedReport.byWard">
             <span class="ward-name">{{ w.wardName }}</span>
             <div class="ward-bar-wrap">
-              <div class="ward-bar"
+              <div
+                class="ward-bar"
                 [style.width.%]="w.occupancyRate"
-                [style.background]="occupancyColor(w.occupancyRate)">
-              </div>
+                [style.background]="occupancyColor(w.occupancyRate)"
+              ></div>
             </div>
-            <span class="ward-rate">{{ w.occupancyRate | number:'1.0-0' }}%</span>
+            <span class="ward-rate">{{ w.occupancyRate | number: '1.0-0' }}%</span>
             <span class="ward-detail">{{ w.occupiedBeds }}/{{ w.totalBeds }}</span>
           </div>
           <div class="empty-chart" *ngIf="bedReport.byWard.length === 0">
@@ -291,5 +326,4 @@
       </div>
     </ng-container>
   </ng-container>
-
 </div>

@@ -4,8 +4,10 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type DocumentType = 'FT' | 'FR' | 'NC' | 'ND' | 'RC';
-export type InvoiceStatus = 'RASCUNHO' | 'EMITIDO' | 'PAGO_PARCIALMENTE' | 'PAGO' | 'ANULADO' | 'EM_ATRASO';
-export type PaymentMethod = 'NUMERARIO' | 'TRANSFERENCIA' | 'CARTAO' | 'SEGURO' | 'CHEQUE' | 'DINHEIRO_MOVEL';
+export type InvoiceStatus =
+  'RASCUNHO' | 'EMITIDO' | 'PAGO_PARCIALMENTE' | 'PAGO' | 'ANULADO' | 'EM_ATRASO';
+export type PaymentMethod =
+  'NUMERARIO' | 'TRANSFERENCIA' | 'CARTAO' | 'SEGURO' | 'CHEQUE' | 'DINHEIRO_MOVEL';
 
 export interface ServicePriceResponse {
   id: string;
@@ -108,30 +110,29 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   FR: 'Factura/Recibo',
   NC: 'Nota de Crédito',
   ND: 'Nota de Débito',
-  RC: 'Recibo'
+  RC: 'Recibo',
 };
 
 export const STATUS_LABELS: Record<InvoiceStatus, string> = {
-  RASCUNHO:          'Rascunho',
-  EMITIDO:           'Emitido',
+  RASCUNHO: 'Rascunho',
+  EMITIDO: 'Emitido',
   PAGO_PARCIALMENTE: 'Pago Parcialmente',
-  PAGO:              'Pago',
-  ANULADO:           'Anulado',
-  EM_ATRASO:         'Em Atraso'
+  PAGO: 'Pago',
+  ANULADO: 'Anulado',
+  EM_ATRASO: 'Em Atraso',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  NUMERARIO:     'Numerário',
+  NUMERARIO: 'Numerário',
   TRANSFERENCIA: 'Transferência Bancária',
-  CARTAO:        'Cartão',
-  SEGURO:        'Seguro de Saúde',
-  CHEQUE:        'Cheque',
-  DINHEIRO_MOVEL:'Dinheiro Móvel'
+  CARTAO: 'Cartão',
+  SEGURO: 'Seguro de Saúde',
+  CHEQUE: 'Cheque',
+  DINHEIRO_MOVEL: 'Dinheiro Móvel',
 };
 
 @Injectable({ providedIn: 'root' })
 export class FinancialService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/financial`;
 
@@ -143,11 +144,11 @@ export class FinancialService {
     patientId?: string,
     status?: InvoiceStatus,
     page = 0,
-    size = 20
+    size = 20,
   ): Observable<Page<InvoiceResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (patientId) params = params.set('patientId', patientId);
-    if (status)    params = params.set('status', status);
+    if (status) params = params.set('status', status);
     return this.http.get<Page<InvoiceResponse>>(`${this.apiUrl}/invoices`, { params });
   }
 
@@ -164,21 +165,20 @@ export class FinancialService {
   }
 
   registerPayment(id: string, request: RegisterPaymentRequest): Observable<InvoiceResponse> {
-    return this.http.post<InvoiceResponse>(
-      `${this.apiUrl}/invoices/${id}/payments`, request);
+    return this.http.post<InvoiceResponse>(`${this.apiUrl}/invoices/${id}/payments`, request);
   }
 
   void_(id: string, reason: string): Observable<InvoiceResponse> {
     return this.http.patch<InvoiceResponse>(
       `${this.apiUrl}/invoices/${id}/void`,
       {},
-      { params: new HttpParams().set('reason', reason) }
+      { params: new HttpParams().set('reason', reason) },
     );
   }
 
   downloadPdf(id: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/invoices/${id}/pdf`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
   }
 }

@@ -56,25 +56,35 @@ export interface Page<T> {
 }
 
 export const ANGOLA_PROVINCES = [
-  'Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando Cubango',
-  'Cuanza Norte', 'Cuanza Sul', 'Cunene', 'Huambo', 'Huíla',
-  'Luanda', 'Lunda Norte', 'Lunda Sul', 'Malanje', 'Moxico',
-  'Namibe', 'Uíge', 'Zaire'
+  'Bengo',
+  'Benguela',
+  'Bié',
+  'Cabinda',
+  'Cuando Cubango',
+  'Cuanza Norte',
+  'Cuanza Sul',
+  'Cunene',
+  'Huambo',
+  'Huíla',
+  'Luanda',
+  'Lunda Norte',
+  'Lunda Sul',
+  'Malanje',
+  'Moxico',
+  'Namibe',
+  'Uíge',
+  'Zaire',
 ];
 
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 @Injectable({ providedIn: 'root' })
 export class PatientService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/patients`;
 
   findAll(search?: string, page = 0, size = 20): Observable<Page<PatientResponse>> {
-    let params = new HttpParams()
-      .set('page', page)
-      .set('size', size)
-      .set('sort', 'fullName');
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', 'fullName');
     if (search?.trim()) {
       params = params.set('search', search.trim());
     }

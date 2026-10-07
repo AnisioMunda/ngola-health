@@ -78,27 +78,27 @@ export interface PortalAppointmentDto {
 }
 
 const PORTAL_TOKEN_KEY = 'portal_token';
-const PORTAL_USER_KEY  = 'portal_user';
+const PORTAL_USER_KEY = 'portal_user';
 
 @Injectable({ providedIn: 'root' })
 export class PortalService {
-
-  private http   = inject(HttpClient);
+  private http = inject(HttpClient);
   private router = inject(Router);
   private readonly apiUrl = `${environment.apiUrl}/portal`;
 
-  private currentUser$ = new BehaviorSubject<PortalLoginResponse | null>(
-    this.getStoredUser());
+  private currentUser$ = new BehaviorSubject<PortalLoginResponse | null>(this.getStoredUser());
 
   // Auth
   register(req: any): Observable<PortalLoginResponse> {
-    return this.http.post<PortalLoginResponse>(`${this.apiUrl}/register`, req)
-      .pipe(tap(r => this.storeSession(r)));
+    return this.http
+      .post<PortalLoginResponse>(`${this.apiUrl}/register`, req)
+      .pipe(tap((r) => this.storeSession(r)));
   }
 
   login(email: string, password: string): Observable<PortalLoginResponse> {
-    return this.http.post<PortalLoginResponse>(`${this.apiUrl}/login`, { email, password })
-      .pipe(tap(r => this.storeSession(r)));
+    return this.http
+      .post<PortalLoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .pipe(tap((r) => this.storeSession(r)));
   }
 
   logout(): void {
@@ -147,6 +147,8 @@ export class PortalService {
     try {
       const s = localStorage.getItem(PORTAL_USER_KEY);
       return s ? JSON.parse(s) : null;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 }

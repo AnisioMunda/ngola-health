@@ -5,8 +5,13 @@ import { switchMap, startWith } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export type NotificationType =
-  'LOW_STOCK' | 'EXPIRING_STOCK' | 'LAB_RESULT' |
-  'APPOINTMENT' | 'APPOINTMENT_CANCELLED' | 'INVOICE_OVERDUE' | 'SYSTEM';
+  | 'LOW_STOCK'
+  | 'EXPIRING_STOCK'
+  | 'LAB_RESULT'
+  | 'APPOINTMENT'
+  | 'APPOINTMENT_CANCELLED'
+  | 'INVOICE_OVERDUE'
+  | 'SYSTEM';
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -32,25 +37,24 @@ export interface Page<T> {
 }
 
 export const TYPE_ICONS: Record<NotificationType, string> = {
-  LOW_STOCK:             '💊',
-  EXPIRING_STOCK:        '⏱',
-  LAB_RESULT:            '🔬',
-  APPOINTMENT:           '📅',
+  LOW_STOCK: '💊',
+  EXPIRING_STOCK: '⏱',
+  LAB_RESULT: '🔬',
+  APPOINTMENT: '📅',
   APPOINTMENT_CANCELLED: '❌',
-  INVOICE_OVERDUE:       '💶',
-  SYSTEM:                '🔔'
+  INVOICE_OVERDUE: '💶',
+  SYSTEM: '🔔',
 };
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  LOW:      '#6b7280',
-  MEDIUM:   '#3b82f6',
-  HIGH:     '#f59e0b',
-  CRITICAL: '#ef4444'
+  LOW: '#6b7280',
+  MEDIUM: '#3b82f6',
+  HIGH: '#f59e0b',
+  CRITICAL: '#ef4444',
 };
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/notifications`;
 
@@ -59,13 +63,15 @@ export class NotificationService {
 
   // Polling automático a cada 60 segundos
   startPolling(): void {
-    interval(60_000).pipe(
-      startWith(0),
-      switchMap(() => this.getUnreadCount())
-    ).subscribe({
-      next: (res) => this.unreadCount.set(res.count),
-      error: () => {}
-    });
+    interval(60_000)
+      .pipe(
+        startWith(0),
+        switchMap(() => this.getUnreadCount()),
+      )
+      .subscribe({
+        next: (res) => this.unreadCount.set(res.count),
+        error: () => {},
+      });
   }
 
   getAll(page = 0, size = 20): Observable<Page<NotificationDto>> {

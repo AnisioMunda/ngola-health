@@ -1,10 +1,9 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="goToList()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
         Lista
       </button>
@@ -17,7 +16,12 @@
       </select>
       <button class="btn-primary" (click)="goToCreate()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path
+            d="M10 4v12M4 10h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
         Nova Marcação
       </button>
@@ -28,13 +32,13 @@
   <div class="calendar-nav">
     <button class="btn-nav" (click)="prevMonth()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
     </button>
     <div class="month-label">{{ monthLabel }}</div>
     <button class="btn-nav" (click)="nextMonth()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
     </button>
     <button class="btn-today" (click)="goToToday()">Hoje</button>
@@ -44,7 +48,6 @@
 
   <!-- Grelha do calendário -->
   <div class="calendar-card">
-
     <!-- Dias da semana -->
     <div class="day-headers">
       <div class="day-header" *ngFor="let d of DAY_NAMES">{{ d }}</div>
@@ -58,22 +61,25 @@
     <!-- Semanas -->
     <div class="calendar-grid">
       <ng-container *ngFor="let week of weeks">
-        <div class="calendar-day"
+        <div
+          class="calendar-day"
           *ngFor="let day of week"
           [class.today]="day.isToday"
           [class.other-month]="!day.isCurrentMonth"
-          [class.has-events]="day.events.length > 0">
-
+          [class.has-events]="day.events.length > 0"
+        >
           <div class="day-number">{{ day.date.getDate() }}</div>
 
           <!-- Eventos do dia (máx 3 visíveis) -->
           <div class="day-events">
-            <div class="event-chip"
+            <div
+              class="event-chip"
               *ngFor="let ev of day.events.slice(0, 3)"
               [style.background]="statusColor(ev.status) + '22'"
               [style.border-left-color]="statusColor(ev.status)"
               (click)="openEvent(ev)"
-              [title]="ev.patientName + ' — ' + ev.doctorName + ' ' + ev.startTime">
+              [title]="ev.patientName + ' — ' + ev.doctorName + ' ' + ev.startTime"
+            >
               <span class="event-time">{{ ev.startTime }}</span>
               <span class="event-name">{{ ev.patientName }}</span>
             </div>
@@ -82,25 +88,27 @@
               +{{ day.events.length - 3 }} mais
             </div>
           </div>
-
         </div>
       </ng-container>
     </div>
-
   </div>
 
   <!-- Legenda -->
   <div class="legend">
-    <div class="legend-item" *ngFor="let item of [
-      {color:'#3b82f6', label:'Agendado'},
-      {color:'#16a34a', label:'Confirmado'},
-      {color:'#6b7280', label:'Realizado'},
-      {color:'#ef4444', label:'Cancelado'},
-      {color:'#f59e0b', label:'Não Compareceu'}
-    ]">
+    <div
+      class="legend-item"
+      *ngFor="
+        let item of [
+          { color: '#3b82f6', label: 'Agendado' },
+          { color: '#16a34a', label: 'Confirmado' },
+          { color: '#6b7280', label: 'Realizado' },
+          { color: '#ef4444', label: 'Cancelado' },
+          { color: '#f59e0b', label: 'Não Compareceu' },
+        ]
+      "
+    >
       <span class="legend-dot" [style.background]="item.color"></span>
       <span>{{ item.label }}</span>
     </div>
   </div>
-
 </div>

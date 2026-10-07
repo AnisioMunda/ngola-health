@@ -79,7 +79,6 @@ export interface FinancialReportDto {
 
 @Injectable({ providedIn: 'root' })
 export class AdvancedReportsService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/reports/advanced`;
 
@@ -94,7 +93,7 @@ export class AdvancedReportsService {
   getFinancialReport(from?: string, to?: string): Observable<FinancialReportDto> {
     let params = new HttpParams();
     if (from) params = params.set('from', from);
-    if (to)   params = params.set('to',   to);
+    if (to) params = params.set('to', to);
     return this.http.get<FinancialReportDto>(`${this.apiUrl}/financial`, { params });
   }
 }

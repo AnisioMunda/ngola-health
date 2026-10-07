@@ -60,15 +60,11 @@ export const ROLES = [
 
 @Injectable({ providedIn: 'root' })
 export class UserManagementService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/users`;
 
   findAll(page = 0, size = 20): Observable<Page<UserResponse>> {
-    const params = new HttpParams()
-      .set('page', page)
-      .set('size', size)
-      .set('sort', 'fullName');
+    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'fullName');
     return this.http.get<Page<UserResponse>>(this.apiUrl, { params });
   }
 

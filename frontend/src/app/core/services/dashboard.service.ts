@@ -85,7 +85,6 @@ export interface AdvancedDashboard {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/dashboard`;
 

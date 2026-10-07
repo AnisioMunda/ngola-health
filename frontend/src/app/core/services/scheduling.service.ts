@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type AppointmentStatus = 'SCHEDULED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
-export type AppointmentType   = 'OUTPATIENT' | 'EMERGENCY' | 'EXAM' | 'SURGERY' | 'FOLLOW_UP';
+export type AppointmentType = 'OUTPATIENT' | 'EMERGENCY' | 'EXAM' | 'SURGERY' | 'FOLLOW_UP';
 
 export interface DoctorScheduleResponse {
   id: string;
@@ -107,25 +107,29 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   CONFIRMED: 'Confirmado',
   COMPLETED: 'Realizado',
   CANCELLED: 'Cancelado',
-  NO_SHOW:   'Não Compareceu'
+  NO_SHOW: 'Não Compareceu',
 };
 
 export const TYPE_LABELS: Record<AppointmentType, string> = {
   OUTPATIENT: 'Ambulatório',
-  EMERGENCY:  'Urgência',
-  EXAM:       'Exame',
-  SURGERY:    'Cirurgia',
-  FOLLOW_UP:  'Seguimento'
+  EMERGENCY: 'Urgência',
+  EXAM: 'Exame',
+  SURGERY: 'Cirurgia',
+  FOLLOW_UP: 'Seguimento',
 };
 
 export const DAY_LABELS = [
-  'Segunda-feira', 'Terça-feira', 'Quarta-feira',
-  'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'
+  'Segunda-feira',
+  'Terça-feira',
+  'Quarta-feira',
+  'Quinta-feira',
+  'Sexta-feira',
+  'Sábado',
+  'Domingo',
 ];
 
 @Injectable({ providedIn: 'root' })
 export class SchedulingService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/scheduling`;
 
@@ -135,8 +139,7 @@ export class SchedulingService {
   }
 
   getDoctorSchedules(doctorId: string): Observable<DoctorScheduleResponse[]> {
-    return this.http.get<DoctorScheduleResponse[]>(
-      `${this.apiUrl}/schedules/doctor/${doctorId}`);
+    return this.http.get<DoctorScheduleResponse[]>(`${this.apiUrl}/schedules/doctor/${doctorId}`);
   }
 
   createSchedule(req: CreateScheduleRequest): Observable<DoctorScheduleResponse> {
@@ -149,9 +152,7 @@ export class SchedulingService {
 
   // Disponibilidade
   getAvailability(doctorId: string, date: string): Observable<DayAvailabilityResponse> {
-    const params = new HttpParams()
-      .set('doctorId', doctorId)
-      .set('date', date);
+    const params = new HttpParams().set('doctorId', doctorId).set('date', date);
     return this.http.get<DayAvailabilityResponse>(`${this.apiUrl}/availability`, { params });
   }
 
@@ -163,17 +164,19 @@ export class SchedulingService {
 
   // Agendamentos
   findAll(
-    doctorId?: string, patientId?: string,
-    status?: AppointmentStatus, date?: string,
-    page = 0, size = 20
+    doctorId?: string,
+    patientId?: string,
+    status?: AppointmentStatus,
+    date?: string,
+    page = 0,
+    size = 20,
   ): Observable<Page<AppointmentResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
-    if (doctorId)  params = params.set('doctorId', doctorId);
+    if (doctorId) params = params.set('doctorId', doctorId);
     if (patientId) params = params.set('patientId', patientId);
-    if (status)    params = params.set('status', status);
-    if (date)      params = params.set('date', date);
-    return this.http.get<Page<AppointmentResponse>>(
-      `${this.apiUrl}/appointments`, { params });
+    if (status) params = params.set('status', status);
+    if (date) params = params.set('date', date);
+    return this.http.get<Page<AppointmentResponse>>(`${this.apiUrl}/appointments`, { params });
   }
 
   findById(id: string): Observable<AppointmentResponse> {
@@ -185,24 +188,24 @@ export class SchedulingService {
   }
 
   confirm(id: string): Observable<AppointmentResponse> {
-    return this.http.patch<AppointmentResponse>(
-      `${this.apiUrl}/appointments/${id}/confirm`, {});
+    return this.http.patch<AppointmentResponse>(`${this.apiUrl}/appointments/${id}/confirm`, {});
   }
 
   complete(id: string): Observable<AppointmentResponse> {
-    return this.http.patch<AppointmentResponse>(
-      `${this.apiUrl}/appointments/${id}/complete`, {});
+    return this.http.patch<AppointmentResponse>(`${this.apiUrl}/appointments/${id}/complete`, {});
   }
 
   cancel(id: string, reason: string): Observable<AppointmentResponse> {
     const params = new HttpParams().set('reason', reason);
     return this.http.patch<AppointmentResponse>(
-      `${this.apiUrl}/appointments/${id}/cancel`, {}, { params });
+      `${this.apiUrl}/appointments/${id}/cancel`,
+      {},
+      { params },
+    );
   }
 
   noShow(id: string): Observable<AppointmentResponse> {
-    return this.http.patch<AppointmentResponse>(
-      `${this.apiUrl}/appointments/${id}/no-show`, {});
+    return this.http.patch<AppointmentResponse>(`${this.apiUrl}/appointments/${id}/no-show`, {});
   }
 
   createBlock(req: any): Observable<void> {

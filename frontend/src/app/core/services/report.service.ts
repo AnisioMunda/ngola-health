@@ -5,19 +5,18 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/reports`;
 
   downloadPatientReport(patientId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/patients/${patientId}`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
   }
 
   downloadStockReport(): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/stock`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
   }
 

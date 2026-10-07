@@ -7,7 +7,7 @@ import {
   EpisodeResponse,
   EpisodeStatus,
   EPISODE_TYPE_LABELS,
-  EPISODE_STATUS_LABELS
+  EPISODE_STATUS_LABELS,
 } from '../../../core/services/episode.service';
 
 @Component({
@@ -15,10 +15,9 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './episodes-list.component.html',
-  styleUrls: ['./episodes-list.component.scss']
+  styleUrls: ['./episodes-list.component.scss'],
 })
 export class EpisodesListComponent implements OnInit {
-
   episodes: EpisodeResponse[] = [];
   loading = true;
   error = '';
@@ -33,16 +32,16 @@ export class EpisodesListComponent implements OnInit {
   statusLabels = EPISODE_STATUS_LABELS;
 
   statuses: { value: EpisodeStatus | ''; label: string }[] = [
-    { value: '',            label: 'All statuses' },
-    { value: 'SCHEDULED',  label: 'Scheduled' },
-    { value: 'IN_PROGRESS',label: 'In Progress' },
-    { value: 'COMPLETED',  label: 'Completed' },
-    { value: 'CANCELLED',  label: 'Cancelled' }
+    { value: '', label: 'All statuses' },
+    { value: 'SCHEDULED', label: 'Scheduled' },
+    { value: 'IN_PROGRESS', label: 'In Progress' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'CANCELLED', label: 'Cancelled' },
   ];
 
   constructor(
     private episodeService: EpisodeService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -51,22 +50,26 @@ export class EpisodesListComponent implements OnInit {
 
   loadEpisodes(): void {
     this.loading = true;
-    this.episodeService.findAll(
-      undefined, undefined,
-      this.statusFilter || undefined,
-      this.currentPage, this.pageSize
-    ).subscribe({
-      next: (page) => {
-        this.episodes = page.content;
-        this.totalElements = page.totalElements;
-        this.totalPages = page.totalPages;
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Failed to load episodes.';
-        this.loading = false;
-      }
-    });
+    this.episodeService
+      .findAll(
+        undefined,
+        undefined,
+        this.statusFilter || undefined,
+        this.currentPage,
+        this.pageSize,
+      )
+      .subscribe({
+        next: (page) => {
+          this.episodes = page.content;
+          this.totalElements = page.totalElements;
+          this.totalPages = page.totalPages;
+          this.loading = false;
+        },
+        error: () => {
+          this.error = 'Failed to load episodes.';
+          this.loading = false;
+        },
+      });
   }
 
   onFilterChange(): void {
@@ -82,28 +85,41 @@ export class EpisodesListComponent implements OnInit {
     this.router.navigate(['/episodes', id]);
   }
 
-  changeStatus(episode: EpisodeResponse, action: 'start' | 'complete' | 'cancel', event: Event): void {
+  changeStatus(
+    episode: EpisodeResponse,
+    action: 'start' | 'complete' | 'cancel',
+    event: Event,
+  ): void {
     event.stopPropagation();
-    const obs = action === 'start'    ? this.episodeService.start(episode.id)
-              : action === 'complete' ? this.episodeService.complete(episode.id)
-              :                         this.episodeService.cancel(episode.id);
+    const obs =
+      action === 'start'
+        ? this.episodeService.start(episode.id)
+        : action === 'complete'
+          ? this.episodeService.complete(episode.id)
+          : this.episodeService.cancel(episode.id);
 
     obs.subscribe({
       next: (updated) => {
-        const idx = this.episodes.findIndex(e => e.id === updated.id);
+        const idx = this.episodes.findIndex((e) => e.id === updated.id);
         if (idx !== -1) this.episodes[idx] = updated;
       },
       error: (err) => {
         this.error = err.error?.message ?? 'Failed to update episode.';
-      }
+      },
     });
   }
 
   prevPage(): void {
-    if (this.currentPage > 0) { this.currentPage--; this.loadEpisodes(); }
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.loadEpisodes();
+    }
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages - 1) { this.currentPage++; this.loadEpisodes(); }
+    if (this.currentPage < this.totalPages - 1) {
+      this.currentPage++;
+      this.loadEpisodes();
+    }
   }
 }

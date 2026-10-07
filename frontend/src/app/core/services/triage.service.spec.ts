@@ -1,8 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-  HttpTestingController
-} from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TriageService, TriageResponse } from './triage.service';
 import { environment } from '../../../environments/environment';
 
@@ -38,29 +35,37 @@ describe('TriageService', () => {
     attendedAt: '',
     completedAt: '',
     waitingMinutes: 15,
-    overdue: false
+    overdue: false,
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [TriageService]
+      providers: [TriageService],
     });
-    service  = TestBed.inject(TriageService);
+    service = TestBed.inject(TriageService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => { httpMock.verify(); });
+  afterEach(() => {
+    httpMock.verify();
+  });
 
   it('deve retornar estatísticas de triagem', () => {
     const stats = {
-      totalWaiting: 3, totalToday: 10, inProgress: 1,
-      completedToday: 6, waitingRed: 1, waitingOrange: 0,
-      waitingYellow: 2, waitingGreen: 0, waitingBlue: 0,
-      avgWaitingMinutes: 22.5
+      totalWaiting: 3,
+      totalToday: 10,
+      inProgress: 1,
+      completedToday: 6,
+      waitingRed: 1,
+      waitingOrange: 0,
+      waitingYellow: 2,
+      waitingGreen: 0,
+      waitingBlue: 0,
+      avgWaitingMinutes: 22.5,
     };
 
-    service.getStats().subscribe(s => {
+    service.getStats().subscribe((s) => {
       expect(s.totalWaiting).toBe(3);
       expect(s.waitingRed).toBe(1);
     });
@@ -71,7 +76,7 @@ describe('TriageService', () => {
   });
 
   it('deve retornar fila activa', () => {
-    service.getActiveQueue().subscribe(q => {
+    service.getActiveQueue().subscribe((q) => {
       expect(q.length).toBe(1);
       expect(q[0].priority).toBe('YELLOW');
     });
@@ -83,7 +88,7 @@ describe('TriageService', () => {
   it('deve chamar paciente', () => {
     const called = { ...mockTriage, status: 'IN_PROGRESS' as any };
 
-    service.callNext(mockTriage.id).subscribe(t => {
+    service.callNext(mockTriage.id).subscribe((t) => {
       expect(t.status).toBe('IN_PROGRESS');
     });
 
@@ -95,7 +100,7 @@ describe('TriageService', () => {
   it('deve completar atendimento', () => {
     const completed = { ...mockTriage, status: 'COMPLETED' as any };
 
-    service.complete(mockTriage.id).subscribe(t => {
+    service.complete(mockTriage.id).subscribe((t) => {
       expect(t.status).toBe('COMPLETED');
     });
 
@@ -108,10 +113,10 @@ describe('TriageService', () => {
     const req = {
       patientId: 'patient-uuid',
       priority: 'RED',
-      chiefComplaint: 'Dor no peito'
+      chiefComplaint: 'Dor no peito',
     };
 
-    service.create(req).subscribe(t => {
+    service.create(req).subscribe((t) => {
       expect(t.id).toBe('triage-uuid');
     });
 

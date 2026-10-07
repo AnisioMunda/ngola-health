@@ -2,8 +2,10 @@ import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
-  NotificationService, NotificationDto,
-  TYPE_ICONS, PRIORITY_COLORS
+  NotificationService,
+  NotificationDto,
+  TYPE_ICONS,
+  PRIORITY_COLORS,
 } from '../../../core/services/notification.service';
 
 @Component({
@@ -11,21 +13,22 @@ import {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './notification-bell.component.html',
-  styleUrls: ['./notification-bell.component.scss']
+  styleUrls: ['./notification-bell.component.scss'],
 })
 export class NotificationBellComponent implements OnInit {
-
   open = false;
   notifications: NotificationDto[] = [];
   loading = false;
 
-  typeIcons     = TYPE_ICONS;
+  typeIcons = TYPE_ICONS;
   priorityColors = PRIORITY_COLORS;
 
   notificationService = inject(NotificationService);
   private router = inject(Router);
 
-  get unreadCount() { return this.notificationService.unreadCount(); }
+  get unreadCount() {
+    return this.notificationService.unreadCount();
+  }
 
   ngOnInit(): void {
     this.notificationService.startPolling();
@@ -40,8 +43,13 @@ export class NotificationBellComponent implements OnInit {
   loadTopUnread(): void {
     this.loading = true;
     this.notificationService.getTopUnread().subscribe({
-      next: (n) => { this.notifications = n; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: (n) => {
+        this.notifications = n;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      },
     });
   }
 
@@ -51,24 +59,24 @@ export class NotificationBellComponent implements OnInit {
     this.notificationService.markAsRead(n.id).subscribe({
       next: () => {
         n.read = true;
-        this.notificationService.unreadCount.update(c => Math.max(0, c - 1));
-      }
+        this.notificationService.unreadCount.update((c) => Math.max(0, c - 1));
+      },
     });
   }
 
   markAllAsRead(): void {
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
-        this.notifications.forEach(n => n.read = true);
+        this.notifications.forEach((n) => (n.read = true));
         this.notificationService.unreadCount.set(0);
-      }
+      },
     });
   }
 
   open_(n: NotificationDto): void {
     if (!n.read) {
       this.notificationService.markAsRead(n.id).subscribe();
-      this.notificationService.unreadCount.update(c => Math.max(0, c - 1));
+      this.notificationService.unreadCount.update((c) => Math.max(0, c - 1));
     }
     if (n.actionUrl) {
       this.router.navigateByUrl(n.actionUrl);
@@ -92,12 +100,12 @@ export class NotificationBellComponent implements OnInit {
 
   timeAgo(dateStr: string): string {
     const diff = Date.now() - new Date(dateStr).getTime();
-    const mins  = Math.floor(diff / 60000);
-    const hours = Math.floor(mins  / 60);
-    const days  = Math.floor(hours / 24);
-    if (days  > 0) return days  + 'd atrás';
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    if (days > 0) return days + 'd atrás';
     if (hours > 0) return hours + 'h atrás';
-    if (mins  > 0) return mins  + 'min atrás';
+    if (mins > 0) return mins + 'min atrás';
     return 'Agora';
   }
 }

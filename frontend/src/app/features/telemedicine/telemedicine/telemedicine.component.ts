@@ -6,8 +6,10 @@ import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import {
-  TelemedicineService, SessionResponse, TelemedicineStatsDto,
-  SESSION_STATUS_COLORS
+  TelemedicineService,
+  SessionResponse,
+  TelemedicineStatsDto,
+  SESSION_STATUS_COLORS,
 } from '../../../core/services/telemedicine.service';
 import { PatientService } from '../../../core/services/patient.service';
 
@@ -16,19 +18,18 @@ import { PatientService } from '../../../core/services/patient.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './telemedicine.component.html',
-  styleUrls: ['./telemedicine.component.scss']
+  styleUrls: ['./telemedicine.component.scss'],
 })
 export class TelemedicineComponent implements OnInit, OnDestroy {
+  sessions: SessionResponse[] = [];
+  stats: TelemedicineStatsDto | null = null;
+  loading = true;
+  saving = false;
+  error = '';
+  success = '';
 
-  sessions: SessionResponse[]       = [];
-  stats:    TelemedicineStatsDto | null = null;
-  loading  = true;
-  saving   = false;
-  error    = '';
-  success  = '';
-
-  showForm    = false;
-  showNotes   = false;
+  showForm = false;
+  showNotes = false;
   selectedSession: SessionResponse | null = null;
   clinicalNotesText = '';
 
@@ -37,8 +38,8 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   statusColors = SESSION_STATUS_COLORS;
 
   form = this.fb.group({
-    patientId:   ['', Validators.required],
-    scheduledAt: ['', Validators.required]
+    patientId: ['', Validators.required],
+    scheduledAt: ['', Validators.required],
   });
 
   private pollingSub?: Subscription;
@@ -47,53 +48,75 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private telemedicineService: TelemedicineService,
     private patientService: PatientService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.load();
     this.loadPatients();
-    this.pollingSub = interval(30000).pipe(
-      switchMap(() => this.telemedicineService.getActiveSessions())
-    ).subscribe(s => { this.sessions = s; this.loadStats(); });
+    this.pollingSub = interval(30000)
+      .pipe(switchMap(() => this.telemedicineService.getActiveSessions()))
+      .subscribe((s) => {
+        this.sessions = s;
+        this.loadStats();
+      });
   }
 
-  ngOnDestroy(): void { this.pollingSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.pollingSub?.unsubscribe();
+  }
 
   load(): void {
     this.loading = true;
     this.telemedicineService.getActiveSessions().subscribe({
-      next: (s) => { this.sessions = s; this.loading = false; this.loadStats(); },
-      error: () => { this.error = 'Erro ao carregar sessões.'; this.loading = false; }
+      next: (s) => {
+        this.sessions = s;
+        this.loading = false;
+        this.loadStats();
+      },
+      error: () => {
+        this.error = 'Erro ao carregar sessões.';
+        this.loading = false;
+      },
     });
   }
 
   loadStats(): void {
-    this.telemedicineService.getStats().subscribe({ next: s => this.stats = s });
+    this.telemedicineService.getStats().subscribe({ next: (s) => (this.stats = s) });
   }
 
   loadPatients(): void {
     this.patientService.findAll('', 0, 200).subscribe({
-      next: p => this.patients = p.content.map(x => ({ id: x.id, fullName: x.fullName }))
+      next: (p) => (this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }))),
     });
   }
 
   onCreate(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.saving = true; this.error = '';
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving = true;
+    this.error = '';
     const v = this.form.getRawValue();
-    this.telemedicineService.create({
-      patientId:   v.patientId,
-      scheduledAt: v.scheduledAt
-    }).subscribe({
-      next: () => {
-        this.saving = false; this.showForm = false;
-        this.form.reset();
-        this.flash('Sessão criada com sucesso.');
-        this.load();
-      },
-      error: (e) => { this.error = e.error?.message ?? 'Erro.'; this.saving = false; }
-    });
+    this.telemedicineService
+      .create({
+        patientId: v.patientId,
+        scheduledAt: v.scheduledAt,
+      })
+      .subscribe({
+        next: () => {
+          this.saving = false;
+          this.showForm = false;
+          this.form.reset();
+          this.flash('Sessão criada com sucesso.');
+          this.load();
+        },
+        error: (e) => {
+          this.error = e.error?.message ?? 'Erro.';
+          this.saving = false;
+        },
+      });
   }
 
   joinSession(s: SessionResponse): void {
@@ -101,35 +124,40 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
       next: (updated) => {
         this.updateInList(updated);
         window.open(s.roomUrl, '_blank');
-      }
+      },
     });
   }
 
   openEndForm(s: SessionResponse): void {
-    this.selectedSession   = s;
+    this.selectedSession = s;
     this.clinicalNotesText = s.clinicalNotes ?? '';
     this.showNotes = true;
   }
 
   endSession(): void {
     if (!this.selectedSession) return;
-    this.telemedicineService.endSession(
-      this.selectedSession.id, this.clinicalNotesText
-    ).subscribe({
+    this.telemedicineService.endSession(this.selectedSession.id, this.clinicalNotesText).subscribe({
       next: () => {
         this.showNotes = false;
         this.flash('Sessão concluída.');
         this.load();
       },
-      error: (e) => { this.error = e.error?.message ?? 'Erro.'; }
+      error: (e) => {
+        this.error = e.error?.message ?? 'Erro.';
+      },
     });
   }
 
   cancel(s: SessionResponse): void {
     if (!confirm('Cancelar sessão de ' + s.patientName + '?')) return;
     this.telemedicineService.cancel(s.id).subscribe({
-      next: () => { this.load(); this.flash('Sessão cancelada.'); },
-      error: (e) => { this.error = e.error?.message ?? 'Erro.'; }
+      next: () => {
+        this.load();
+        this.flash('Sessão cancelada.');
+      },
+      error: (e) => {
+        this.error = e.error?.message ?? 'Erro.';
+      },
     });
   }
 
@@ -139,13 +167,17 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   }
 
   updateInList(updated: SessionResponse): void {
-    const idx = this.sessions.findIndex(s => s.id === updated.id);
-    if (idx !== -1) this.sessions[idx] = updated; else this.load();
+    const idx = this.sessions.findIndex((s) => s.id === updated.id);
+    if (idx !== -1) this.sessions[idx] = updated;
+    else this.load();
   }
 
   flash(msg: string): void {
-    this.success = msg; setTimeout(() => this.success = '', 3500);
+    this.success = msg;
+    setTimeout(() => (this.success = ''), 3500);
   }
 
-  get f() { return this.form.controls; }
+  get f() {
+    return this.form.controls;
+  }
 }

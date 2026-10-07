@@ -10,10 +10,9 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './patients-list.component.html',
-  styleUrls: ['./patients-list.component.scss']
+  styleUrls: ['./patients-list.component.scss'],
 })
 export class PatientsListComponent implements OnInit {
-
   patients: PatientResponse[] = [];
   loading = true;
   error = '';
@@ -27,15 +26,12 @@ export class PatientsListComponent implements OnInit {
 
   constructor(
     private patientService: PatientService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.loadPatients();
-    this.searchSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
+    this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
       this.currentPage = 0;
       this.loadPatients();
     });
@@ -43,19 +39,18 @@ export class PatientsListComponent implements OnInit {
 
   loadPatients(): void {
     this.loading = true;
-    this.patientService.findAll(this.searchQuery, this.currentPage, this.pageSize)
-      .subscribe({
-        next: (page) => {
-          this.patients = page.content;
-          this.totalElements = page.totalElements;
-          this.totalPages = page.totalPages;
-          this.loading = false;
-        },
-        error: () => {
-          this.error = 'Failed to load patients.';
-          this.loading = false;
-        }
-      });
+    this.patientService.findAll(this.searchQuery, this.currentPage, this.pageSize).subscribe({
+      next: (page) => {
+        this.patients = page.content;
+        this.totalElements = page.totalElements;
+        this.totalPages = page.totalPages;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Failed to load patients.';
+        this.loading = false;
+      },
+    });
   }
 
   onSearch(): void {

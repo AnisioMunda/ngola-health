@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div>
       <h1>Triagem e Urgência</h1>
@@ -7,14 +6,14 @@
     </div>
     <button class="btn-primary" (click)="showForm = !showForm">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Nova Triagem
     </button>
   </header>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -35,14 +34,14 @@
       <div class="stat-label">Concluídos hoje</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value grey">{{ stats.avgWaitingMinutes | number:'1.0-0' }} min</div>
+      <div class="stat-value grey">{{ stats.avgWaitingMinutes | number: '1.0-0' }} min</div>
       <div class="stat-label">Espera média</div>
     </div>
   </div>
 
   <!-- Contador por prioridade -->
   <div class="priority-bar" *ngIf="stats">
-    <div class="priority-count red"    [class.has]="stats.waitingRed > 0">
+    <div class="priority-count red" [class.has]="stats.waitingRed > 0">
       <span class="dot"></span>
       <span class="cnt">{{ stats.waitingRed }}</span>
       <span class="lbl">Imediato</span>
@@ -57,12 +56,12 @@
       <span class="cnt">{{ stats.waitingYellow }}</span>
       <span class="lbl">Urgente</span>
     </div>
-    <div class="priority-count green"  [class.has]="stats.waitingGreen > 0">
+    <div class="priority-count green" [class.has]="stats.waitingGreen > 0">
       <span class="dot"></span>
       <span class="cnt">{{ stats.waitingGreen }}</span>
       <span class="lbl">Pouco Urgente</span>
     </div>
-    <div class="priority-count blue"   [class.has]="stats.waitingBlue > 0">
+    <div class="priority-count blue" [class.has]="stats.waitingBlue > 0">
       <span class="dot"></span>
       <span class="cnt">{{ stats.waitingBlue }}</span>
       <span class="lbl">Não Urgente</span>
@@ -73,7 +72,6 @@
   <div class="form-card" *ngIf="showForm">
     <h2 class="form-title">Nova Triagem</h2>
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-
       <!-- Identificação -->
       <div class="form-section">
         <h3>Identificação do Paciente</h3>
@@ -90,12 +88,11 @@
           </div>
           <div class="field">
             <label>Nome temporário</label>
-            <input type="text" formControlName="patientNameTemp"
-              placeholder="Nome do paciente"/>
+            <input type="text" formControlName="patientNameTemp" placeholder="Nome do paciente" />
           </div>
           <div class="field">
             <label>Idade</label>
-            <input type="number" formControlName="patientAgeTemp" min="0" max="150"/>
+            <input type="number" formControlName="patientAgeTemp" min="0" max="150" />
           </div>
           <div class="field">
             <label>Género</label>
@@ -112,11 +109,14 @@
       <div class="form-section">
         <h3>Prioridade Manchester *</h3>
         <div class="priority-selector">
-          <label *ngFor="let p of priorities" class="priority-option"
+          <label
+            *ngFor="let p of priorities"
+            class="priority-option"
             [class.selected]="f['priority'].value === p.value"
             [style.border-color]="f['priority'].value === p.value ? p.color : ''"
-            [style.background]="f['priority'].value === p.value ? p.color + '18' : ''">
-            <input type="radio" formControlName="priority" [value]="p.value" hidden/>
+            [style.background]="f['priority'].value === p.value ? p.color + '18' : ''"
+          >
+            <input type="radio" formControlName="priority" [value]="p.value" hidden />
             <span class="p-dot" [style.background]="p.color"></span>
             <span class="p-label">{{ p.label }}</span>
             <span class="p-time">{{ p.desc }}</span>
@@ -130,47 +130,59 @@
         <div class="form-grid">
           <div class="field span-2">
             <label>Queixa Principal *</label>
-            <input type="text" formControlName="chiefComplaint"
-              placeholder="Descrever a queixa principal..."/>
-            <span class="field-error"
-              *ngIf="f['chiefComplaint'].invalid && f['chiefComplaint'].touched">
+            <input
+              type="text"
+              formControlName="chiefComplaint"
+              placeholder="Descrever a queixa principal..."
+            />
+            <span
+              class="field-error"
+              *ngIf="f['chiefComplaint'].invalid && f['chiefComplaint'].touched"
+            >
               Obrigatório
             </span>
           </div>
           <div class="field">
             <label>Tensão Arterial</label>
-            <input type="text" formControlName="bloodPressure" placeholder="120/80"/>
+            <input type="text" formControlName="bloodPressure" placeholder="120/80" />
           </div>
           <div class="field">
             <label>Freq. Cardíaca (bpm)</label>
-            <input type="number" formControlName="heartRate" placeholder="72"/>
+            <input type="number" formControlName="heartRate" placeholder="72" />
           </div>
           <div class="field">
             <label>Temperatura (°C)</label>
-            <input type="number" formControlName="temperature"
-              placeholder="37.0" step="0.1"/>
+            <input type="number" formControlName="temperature" placeholder="37.0" step="0.1" />
           </div>
           <div class="field">
             <label>Saturação O₂ (%)</label>
-            <input type="number" formControlName="oxygenSaturation"
-              placeholder="98" min="0" max="100"/>
+            <input
+              type="number"
+              formControlName="oxygenSaturation"
+              placeholder="98"
+              min="0"
+              max="100"
+            />
           </div>
           <div class="field">
             <label>Freq. Respiratória</label>
-            <input type="number" formControlName="respiratoryRate" placeholder="16"/>
+            <input type="number" formControlName="respiratoryRate" placeholder="16" />
           </div>
           <div class="field">
             <label>Peso (kg)</label>
-            <input type="number" formControlName="weightKg" placeholder="70"/>
+            <input type="number" formControlName="weightKg" placeholder="70" />
           </div>
           <div class="field">
             <label>Dor (0-10)</label>
-            <input type="number" formControlName="painScale" min="0" max="10"/>
+            <input type="number" formControlName="painScale" min="0" max="10" />
           </div>
           <div class="field span-2">
             <label>Notas de Triagem</label>
-            <input type="text" formControlName="triageNotes"
-              placeholder="Observações adicionais..."/>
+            <input
+              type="text"
+              formControlName="triageNotes"
+              placeholder="Observações adicionais..."
+            />
           </div>
         </div>
       </div>
@@ -186,13 +198,11 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="activeTab === 'queue'"
-      (click)="onTabChange('queue')">
+    <button class="tab" [class.active]="activeTab === 'queue'" (click)="onTabChange('queue')">
       Fila Activa
       <span class="tab-badge" *ngIf="waitingCount > 0">{{ waitingCount }}</span>
     </button>
-    <button class="tab" [class.active]="activeTab === 'history'"
-      (click)="onTabChange('history')">
+    <button class="tab" [class.active]="activeTab === 'history'" (click)="onTabChange('history')">
       Histórico
     </button>
   </div>
@@ -203,33 +213,29 @@
 
   <!-- Fila activa -->
   <ng-container *ngIf="!loading && activeTab === 'queue'">
-
     <div class="empty-state" *ngIf="queue.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"/>
-        <path d="M17 24l5 5 9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" />
+        <path d="M17 24l5 5 9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       <p>Fila de espera vazia.</p>
     </div>
 
     <div class="queue-grid">
-      <div class="queue-card"
+      <div
+        class="queue-card"
         *ngFor="let t of queue"
         [class]="'priority-' + t.priority.toLowerCase()"
         [class.overdue]="t.overdue"
-        [class.in-progress]="t.status === 'IN_PROGRESS'">
-
+        [class.in-progress]="t.status === 'IN_PROGRESS'"
+      >
         <!-- Cabeçalho -->
         <div class="qcard-header">
           <div class="queue-num">#{{ t.queueNumber }}</div>
-          <div class="priority-badge"
-            [style.background]="t.priorityColor"
-            [style.color]="'white'">
+          <div class="priority-badge" [style.background]="t.priorityColor" [style.color]="'white'">
             {{ t.priorityLabel }}
           </div>
-          <div class="overdue-indicator" *ngIf="t.overdue" title="Tempo de espera excedido">
-            ⚠
-          </div>
+          <div class="overdue-indicator" *ngIf="t.overdue" title="Tempo de espera excedido">⚠</div>
         </div>
 
         <!-- Paciente -->
@@ -247,28 +253,30 @@
         <div class="vitals-row" *ngIf="t.bloodPressure || t.heartRate || t.oxygenSaturation">
           <span class="vital" *ngIf="t.bloodPressure">
             <svg viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
-              <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2" />
+              <path
+                d="M7 4v3l2 1.5"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
             {{ t.bloodPressure }}
           </span>
-          <span class="vital" *ngIf="t.heartRate">
-            ♥ {{ t.heartRate }}bpm
-          </span>
-          <span class="vital" *ngIf="t.oxygenSaturation">
-            O₂ {{ t.oxygenSaturation }}%
-          </span>
-          <span class="vital" *ngIf="t.temperature">
-            🌡 {{ t.temperature }}°C
-          </span>
+          <span class="vital" *ngIf="t.heartRate"> ♥ {{ t.heartRate }}bpm </span>
+          <span class="vital" *ngIf="t.oxygenSaturation"> O₂ {{ t.oxygenSaturation }}% </span>
+          <span class="vital" *ngIf="t.temperature"> 🌡 {{ t.temperature }}°C </span>
         </div>
 
         <!-- Dor -->
         <div class="pain-row" *ngIf="t.painScale !== null && t.painScale !== undefined">
           <span class="pain-label">Dor:</span>
           <div class="pain-bar">
-            <div class="pain-fill" [style.width.%]="t.painScale * 10"
-              [class.high-pain]="t.painScale >= 7"></div>
+            <div
+              class="pain-fill"
+              [style.width.%]="t.painScale * 10"
+              [class.high-pain]="t.painScale >= 7"
+            ></div>
           </div>
           <span class="pain-num">{{ t.painScale }}/10</span>
         </div>
@@ -276,8 +284,13 @@
         <!-- Tempo de espera -->
         <div class="wait-time" [class.overdue-time]="t.overdue">
           <svg viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2" />
+            <path
+              d="M7 4v3l2 1.5"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
           </svg>
           {{ formatWait(t.waitingMinutes) }}
           <span class="status-tag" [class]="'st-' + t.status.toLowerCase()">
@@ -287,29 +300,24 @@
 
         <!-- Acções -->
         <div class="qcard-actions">
-          <button class="btn-call"
-            *ngIf="t.status === 'WAITING'"
-            (click)="callNext(t)">
+          <button class="btn-call" *ngIf="t.status === 'WAITING'" (click)="callNext(t)">
             📢 Chamar
           </button>
-          <button class="btn-complete"
-            *ngIf="t.status === 'IN_PROGRESS'"
-            (click)="complete(t)">
+          <button class="btn-complete" *ngIf="t.status === 'IN_PROGRESS'" (click)="complete(t)">
             ✓ Concluir
           </button>
-          <button class="btn-left"
-            *ngIf="t.status === 'WAITING'"
-            (click)="markAsLeft(t)">
+          <button class="btn-left" *ngIf="t.status === 'WAITING'" (click)="markAsLeft(t)">
             Saiu
           </button>
           <!-- Alterar prioridade -->
-          <select class="priority-select"
+          <select
+            class="priority-select"
             [value]="t.priority"
-            (change)="updatePriority(t, $any($event.target).value)">
+            (change)="updatePriority(t, $any($event.target).value)"
+          >
             <option *ngFor="let p of priorities" [value]="p.value">{{ p.label }}</option>
           </select>
         </div>
-
       </div>
     </div>
   </ng-container>
@@ -318,7 +326,7 @@
   <ng-container *ngIf="activeTab === 'history'">
     <div class="history-filter">
       <label>Data:</label>
-      <input type="date" [(ngModel)]="historyDate" (ngModelChange)="loadHistory()"/>
+      <input type="date" [(ngModel)]="historyDate" (ngModelChange)="loadHistory()" />
     </div>
 
     <div class="table-card">
@@ -342,9 +350,11 @@
             <td class="qnum">{{ t.queueNumber }}</td>
             <td class="pname">{{ t.patientName }}</td>
             <td>
-              <span class="priority-dot"
+              <span
+                class="priority-dot"
                 [style.background]="t.priorityColor"
-                [title]="t.priorityLabel">
+                [title]="t.priorityLabel"
+              >
               </span>
               {{ t.priorityLabel }}
             </td>
@@ -355,11 +365,10 @@
                 {{ statusLabels[t.status] }}
               </span>
             </td>
-            <td class="time">{{ t.triagedAt | date:'HH:mm' }}</td>
+            <td class="time">{{ t.triagedAt | date: 'HH:mm' }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   </ng-container>
-
 </div>

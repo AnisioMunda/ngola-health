@@ -1,10 +1,9 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="goBack()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
         RH
       </button>
@@ -21,7 +20,12 @@
       </div>
       <button class="btn-primary" (click)="showForm = !showForm">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path
+            d="M10 4v12M4 10h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
         Novo Turno
       </button>
@@ -29,7 +33,7 @@
   </header>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <!-- Formulário novo turno -->
   <div class="form-card" *ngIf="showForm">
@@ -54,18 +58,18 @@
         </div>
         <div class="field">
           <label>Data *</label>
-          <input type="date" formControlName="shiftDate"/>
+          <input type="date" formControlName="shiftDate" />
           <span class="field-error" *ngIf="f['shiftDate'].invalid && f['shiftDate'].touched">
             Obrigatório
           </span>
         </div>
         <div class="field">
           <label>Hora de Início *</label>
-          <input type="time" formControlName="startTime"/>
+          <input type="time" formControlName="startTime" />
         </div>
         <div class="field">
           <label>Hora de Fim *</label>
-          <input type="time" formControlName="endTime"/>
+          <input type="time" formControlName="endTime" />
         </div>
         <div class="field">
           <label>Enfermaria</label>
@@ -76,11 +80,11 @@
         </div>
         <div class="field">
           <label>Departamento</label>
-          <input type="text" formControlName="department" placeholder="Ex: Urgência"/>
+          <input type="text" formControlName="department" placeholder="Ex: Urgência" />
         </div>
         <div class="field span-2">
           <label>Notas</label>
-          <input type="text" formControlName="notes" placeholder="Observações..."/>
+          <input type="text" formControlName="notes" placeholder="Observações..." />
         </div>
       </div>
       <div class="form-actions">
@@ -98,14 +102,11 @@
 
   <!-- Grelha semanal -->
   <div class="week-grid" *ngIf="schedule && !loading">
-    <div class="day-col"
-      *ngFor="let day of schedule.days"
-      [class.today]="isToday(day.date)">
-
+    <div class="day-col" *ngFor="let day of schedule.days" [class.today]="isToday(day.date)">
       <div class="day-header">
-        <span class="day-name">{{ day.dayLabel.substring(0,3) }}</span>
+        <span class="day-name">{{ day.dayLabel.substring(0, 3) }}</span>
         <span class="day-num" [class.today-num]="isToday(day.date)">
-          {{ day.date | date:'dd' }}
+          {{ day.date | date: 'dd' }}
         </span>
         <span class="day-count" *ngIf="day.totalShifts > 0">
           {{ day.confirmedShifts }}/{{ day.totalShifts }}
@@ -113,24 +114,34 @@
       </div>
 
       <div class="day-shifts">
-        <div class="shift-chip"
+        <div
+          class="shift-chip"
           *ngFor="let s of day.shifts"
           [style.border-left-color]="shiftTypeColors[s.shiftType]"
-          [style.background]="shiftTypeColors[s.shiftType] + '10'">
-
+          [style.background]="shiftTypeColors[s.shiftType] + '10'"
+        >
           <div class="chip-user">{{ s.userFullName.split(' ')[0] }}</div>
           <div class="chip-time">{{ s.startTime }}–{{ s.endTime }}</div>
-          <div class="chip-type"
-            [style.color]="shiftTypeColors[s.shiftType]">
+          <div class="chip-type" [style.color]="shiftTypeColors[s.shiftType]">
             {{ s.shiftTypeLabel }}
           </div>
           <div class="chip-actions">
-            <button class="chip-btn green"
+            <button
+              class="chip-btn green"
               *ngIf="s.status === 'SCHEDULED'"
-              (click)="confirmShift(s.id)" title="Confirmar">✓</button>
-            <button class="chip-btn red"
+              (click)="confirmShift(s.id)"
+              title="Confirmar"
+            >
+              ✓
+            </button>
+            <button
+              class="chip-btn red"
               *ngIf="s.status !== 'COMPLETED'"
-              (click)="deleteShift(s.id)" title="Eliminar">✕</button>
+              (click)="deleteShift(s.id)"
+              title="Eliminar"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
@@ -138,8 +149,6 @@
           <span>—</span>
         </div>
       </div>
-
     </div>
   </div>
-
 </div>

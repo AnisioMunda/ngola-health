@@ -1,9 +1,8 @@
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Voltar
     </button>
@@ -12,7 +11,6 @@
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <div class="form-layout">
-
       <!-- Coluna esquerda -->
       <div class="form-section">
         <h2 class="section-title">Dados da Consulta</h2>
@@ -46,8 +44,11 @@
         <div class="field-row">
           <div class="field">
             <label>Data *</label>
-            <input type="date" formControlName="appointmentDate" [min]="minDate"/>
-            <span class="field-error" *ngIf="f['appointmentDate'].invalid && f['appointmentDate'].touched">
+            <input type="date" formControlName="appointmentDate" [min]="minDate" />
+            <span
+              class="field-error"
+              *ngIf="f['appointmentDate'].invalid && f['appointmentDate'].touched"
+            >
               Data obrigatória
             </span>
           </div>
@@ -61,8 +62,11 @@
 
         <div class="field">
           <label>Motivo *</label>
-          <input type="text" formControlName="reason"
-            placeholder="Ex: Consulta de rotina, dores abdominais..."/>
+          <input
+            type="text"
+            formControlName="reason"
+            placeholder="Ex: Consulta de rotina, dores abdominais..."
+          />
           <span class="field-error" *ngIf="f['reason'].invalid && f['reason'].touched">
             Motivo obrigatório (mínimo 5 caracteres)
           </span>
@@ -70,20 +74,33 @@
 
         <div class="field">
           <label>Notas adicionais</label>
-          <textarea formControlName="notes" rows="3"
-            placeholder="Informações adicionais para o médico..."></textarea>
+          <textarea
+            formControlName="notes"
+            rows="3"
+            placeholder="Informações adicionais para o médico..."
+          ></textarea>
         </div>
 
         <!-- Slot seleccionado -->
         <div class="selected-slot" *ngIf="selectedSlot">
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M7 10l2 2 4-4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
-          <span>Slot seleccionado: <strong>{{ selectedSlot.startTime }} — {{ selectedSlot.endTime }}</strong></span>
+          <span
+            >Slot seleccionado:
+            <strong>{{ selectedSlot.startTime }} — {{ selectedSlot.endTime }}</strong></span
+          >
         </div>
-        <span class="field-error"
-          *ngIf="f['startTime'].invalid && f['startTime'].touched && !selectedSlot">
+        <span
+          class="field-error"
+          *ngIf="f['startTime'].invalid && f['startTime'].touched && !selectedSlot"
+        >
           Seleccione um slot disponível
         </span>
       </div>
@@ -92,16 +109,33 @@
       <div class="slots-section">
         <h2 class="section-title">Slots Disponíveis</h2>
 
-        <div class="slots-placeholder" *ngIf="!form.get('doctorId')?.value || !form.get('appointmentDate')?.value">
+        <div
+          class="slots-placeholder"
+          *ngIf="!form.get('doctorId')?.value || !form.get('appointmentDate')?.value"
+        >
           <svg viewBox="0 0 48 48" fill="none">
-            <rect x="6" y="6" width="36" height="36" rx="6" stroke="currentColor" stroke-width="2"/>
-            <path d="M6 18h36M16 6v6M32 6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect
+              x="6"
+              y="6"
+              width="36"
+              height="36"
+              rx="6"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <path
+              d="M6 18h36M16 6v6M32 6v6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
           </svg>
           <p>Seleccione um médico e uma data para ver os slots disponíveis</p>
         </div>
 
         <div class="slots-loading" *ngIf="loadingSlots">
-          <div class="spinner-sm"></div> A carregar slots...
+          <div class="spinner-sm"></div>
+          A carregar slots...
         </div>
 
         <ng-container *ngIf="availability && !loadingSlots">
@@ -117,14 +151,16 @@
           </div>
 
           <div class="slots-grid" *ngIf="availability.slots.length > 0">
-            <button type="button"
+            <button
+              type="button"
               *ngFor="let slot of availability.slots"
               class="slot-btn"
               [class.available]="slot.available"
               [class.occupied]="!slot.available"
               [class.selected]="selectedSlot?.startTime === slot.startTime"
               [disabled]="!slot.available"
-              (click)="selectSlot(slot)">
+              (click)="selectSlot(slot)"
+            >
               <span class="slot-time">{{ slot.startTime }}</span>
               <span class="slot-status">
                 {{ slot.available ? 'Livre' : slot.bookedCount + '/' + slot.maxPatients }}
@@ -133,7 +169,6 @@
           </div>
         </ng-container>
       </div>
-
     </div>
 
     <div class="alert-error" *ngIf="error">{{ error }}</div>
@@ -147,7 +182,5 @@
         </span>
       </button>
     </div>
-
   </form>
-
 </div>

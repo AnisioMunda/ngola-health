@@ -22,15 +22,19 @@ export const portalRoutes: Routes = [
       {
         path: 'login',
         canActivate: [portalPublicGuard],
-        loadComponent: () => import('./features/portal/portal-login/portal-login.component')
-          .then(m => m.PortalLoginComponent)
+        loadComponent: () =>
+          import('./features/portal/portal-login/portal-login.component').then(
+            (m) => m.PortalLoginComponent,
+          ),
       },
       {
         path: '',
         canActivate: [portalAuthGuard],
-        loadComponent: () => import('./features/portal/portal-dashboard/portal-dashboard.component')
-          .then(m => m.PortalDashboardComponent)
-      }
-    ]
-  }
+        loadComponent: () =>
+          import('./features/portal/portal-dashboard/portal-dashboard.component').then(
+            (m) => m.PortalDashboardComponent,
+          ),
+      },
+    ],
+  },
 ];

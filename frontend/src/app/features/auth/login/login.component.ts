@@ -10,14 +10,13 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
-
   // Usar inject() em vez de constructor injection
   // evita problemas com strict mode e standalone components
-  private fb       = inject(FormBuilder);
-  private router   = inject(Router);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
   private authService = inject(AuthService);
 
   form!: FormGroup;
@@ -32,13 +31,17 @@ export class LoginComponent implements OnInit {
     }
 
     this.form = this.fb.group({
-      email:    ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
-  get email()    { return this.form.get('email')!; }
-  get password() { return this.form.get('password')!; }
+  get email() {
+    return this.form.get('email')!;
+  }
+  get password() {
+    return this.form.get('password')!;
+  }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -66,7 +69,7 @@ export class LoginComponent implements OnInit {
         } else {
           this.errorMessage = 'Erro ao conectar ao servidor. Tente novamente.';
         }
-      }
+      },
     });
   }
 }

@@ -67,23 +67,22 @@ export interface Page<T> {
 }
 
 export const EPISODE_TYPE_LABELS: Record<EpisodeType, string> = {
-  EMERGENCY:         'Emergency',
-  OUTPATIENT:        'Outpatient',
-  INPATIENT:         'Inpatient',
-  OUTPATIENT_SURGERY:'Surgery',
-  EXAM:              'Exam'
+  EMERGENCY: 'Emergency',
+  OUTPATIENT: 'Outpatient',
+  INPATIENT: 'Inpatient',
+  OUTPATIENT_SURGERY: 'Surgery',
+  EXAM: 'Exam',
 };
 
 export const EPISODE_STATUS_LABELS: Record<EpisodeStatus, string> = {
-  SCHEDULED:   'Scheduled',
+  SCHEDULED: 'Scheduled',
   IN_PROGRESS: 'In Progress',
-  COMPLETED:   'Completed',
-  CANCELLED:   'Cancelled'
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
 };
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/episodes`;
 
@@ -92,12 +91,12 @@ export class EpisodeService {
     doctorId?: string,
     status?: EpisodeStatus,
     page = 0,
-    size = 20
+    size = 20,
   ): Observable<Page<EpisodeResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (patientId) params = params.set('patientId', patientId);
-    if (doctorId)  params = params.set('doctorId', doctorId);
-    if (status)    params = params.set('status', status);
+    if (doctorId) params = params.set('doctorId', doctorId);
+    if (status) params = params.set('status', status);
     return this.http.get<Page<EpisodeResponse>>(this.apiUrl, { params });
   }
 

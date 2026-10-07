@@ -1,8 +1,5 @@
-import {
-  Component, OnInit, AfterViewInit,
-  ViewChild, ElementRef, OnDestroy
-} from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DashboardService, AdvancedDashboard } from '../../core/services/dashboard.service';
 import { Chart, registerables } from 'chart.js';
@@ -14,10 +11,9 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
-
   @ViewChild('revenueChart') revenueChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('patientsChart') patientsChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('episodesTypeChart') episodesTypeChartRef!: ElementRef<HTMLCanvasElement>;
@@ -31,22 +27,30 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private episodesTypeChart?: Chart;
 
   readonly STATUS_LABELS: Record<string, string> = {
-    RASCUNHO: 'Rascunho', EMITIDO: 'Emitido',
-    PAGO_PARCIALMENTE: 'Pago Parc.', PAGO: 'Pago',
-    ANULADO: 'Anulado', EM_ATRASO: 'Em Atraso'
+    RASCUNHO: 'Rascunho',
+    EMITIDO: 'Emitido',
+    PAGO_PARCIALMENTE: 'Pago Parc.',
+    PAGO: 'Pago',
+    ANULADO: 'Anulado',
+    EM_ATRASO: 'Em Atraso',
   };
 
   readonly EPISODE_TYPE_LABELS: Record<string, string> = {
-    OUTPATIENT: 'Ambulatório', EMERGENCY: 'Urgência',
-    INPATIENT: 'Internamento', EXAM: 'Exame', SURGERY: 'Cirurgia'
+    OUTPATIENT: 'Ambulatório',
+    EMERGENCY: 'Urgência',
+    INPATIENT: 'Internamento',
+    EXAM: 'Exame',
+    SURGERY: 'Cirurgia',
   };
 
   constructor(
     private dashboardService: DashboardService,
-    private router: Router
+    private router: Router,
   ) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+  }
 
   ngAfterViewInit(): void {
     if (this.data) this.buildCharts();
@@ -69,7 +73,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       error: () => {
         this.error = 'Erro ao carregar dashboard.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -87,9 +91,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.revenueChartRef || !this.data?.revenueByMonth?.length) return;
     this.revenueChart?.destroy();
 
-    const labels  = this.data.revenueByMonth.map(r => r.month);
-    const revenue = this.data.revenueByMonth.map(r => r.revenue);
-    const paid    = this.data.revenueByMonth.map(r => r.paid);
+    const labels = this.data.revenueByMonth.map((r) => r.month);
+    const revenue = this.data.revenueByMonth.map((r) => r.revenue);
+    const paid = this.data.revenueByMonth.map((r) => r.paid);
 
     this.revenueChart = new Chart(this.revenueChartRef.nativeElement, {
       type: 'bar',
@@ -102,7 +106,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(32, 58, 67, 0.15)',
             borderColor: '#203a43',
             borderWidth: 2,
-            borderRadius: 6
+            borderRadius: 6,
           },
           {
             label: 'Recebido',
@@ -110,9 +114,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(22, 163, 74, 0.8)',
             borderColor: '#16a34a',
             borderWidth: 0,
-            borderRadius: 6
-          }
-        ]
+            borderRadius: 6,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -121,21 +125,21 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           legend: { position: 'top', labels: { font: { size: 11 } } },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${this.formatKz(ctx.raw as number)}`
-            }
-          }
+              label: (ctx) => `${ctx.dataset.label}: ${this.formatKz(ctx.raw as number)}`,
+            },
+          },
         },
         scales: {
           y: {
             ticks: {
               callback: (val) => this.formatKzShort(val as number),
-              font: { size: 10 }
+              font: { size: 10 },
             },
-            grid: { color: '#f1f5f9' }
+            grid: { color: '#f1f5f9' },
           },
-          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
-        }
-      }
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        },
+      },
     });
   }
 
@@ -146,9 +150,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.patientsChartRef || !this.data?.patientsByMonth?.length) return;
     this.patientsChart?.destroy();
 
-    const labels  = this.data.patientsByMonth.map(p => p.month);
-    const patients = this.data.patientsByMonth.map(p => p.newPatients);
-    const episodes = this.data.patientsByMonth.map(p => p.totalEpisodes);
+    const labels = this.data.patientsByMonth.map((p) => p.month);
+    const patients = this.data.patientsByMonth.map((p) => p.newPatients);
+    const episodes = this.data.patientsByMonth.map((p) => p.totalEpisodes);
 
     this.patientsChart = new Chart(this.patientsChartRef.nativeElement, {
       type: 'line',
@@ -163,7 +167,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             tension: 0.4,
             fill: true,
             pointRadius: 4,
-            pointBackgroundColor: '#3b82f6'
+            pointBackgroundColor: '#3b82f6',
           },
           {
             label: 'Episódios',
@@ -173,9 +177,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             tension: 0.4,
             fill: true,
             pointRadius: 4,
-            pointBackgroundColor: '#f59e0b'
-          }
-        ]
+            pointBackgroundColor: '#f59e0b',
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -183,9 +187,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
         scales: {
           y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
-          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
-        }
-      }
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        },
+      },
     });
   }
 
@@ -207,21 +211,23 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'doughnut',
       data: {
         labels,
-        datasets: [{
-          data: values,
-          backgroundColor: colors,
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#ffffff',
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
         },
-        cutout: '65%'
-      }
+        cutout: '65%',
+      },
     });
   }
 
@@ -232,23 +238,28 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   get revenueGrowth(): number {
     if (!this.data || !this.data.revenueLastMonth) return 0;
     return Math.round(
-      ((this.data.revenueThisMonth - this.data.revenueLastMonth)
-        / this.data.revenueLastMonth) * 100
+      ((this.data.revenueThisMonth - this.data.revenueLastMonth) / this.data.revenueLastMonth) *
+        100,
     );
   }
 
   formatKz(val: number): string {
-    return new Intl.NumberFormat('pt-AO', {
-      minimumFractionDigits: 2, maximumFractionDigits: 2
-    }).format(val) + ' Kz';
+    return (
+      new Intl.NumberFormat('pt-AO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(val) + ' Kz'
+    );
   }
 
   formatKzShort(val: number): string {
     if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M Kz';
-    if (val >= 1_000)     return (val / 1_000).toFixed(0) + 'K Kz';
+    if (val >= 1_000) return (val / 1_000).toFixed(0) + 'K Kz';
     return val + ' Kz';
   }
 
-  goTo(path: string): void { this.router.navigate([path]); }
+  goTo(path: string): void {
+    this.router.navigate([path]);
+  }
   objectKeys = Object.keys;
 }

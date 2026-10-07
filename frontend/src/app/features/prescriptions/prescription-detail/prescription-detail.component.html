@@ -1,9 +1,8 @@
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Voltar
     </button>
@@ -11,36 +10,42 @@
   </header>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <ng-container *ngIf="prescription && !loading">
-
     <!-- Card principal -->
     <div class="detail-card">
       <div class="card-header">
         <div>
           <div class="rx-number">{{ prescription.prescriptionNumber }}</div>
           <div class="card-badges">
-            <span class="status-badge"
+            <span
+              class="status-badge"
               [style.background]="statusColors[prescription.status] + '22'"
-              [style.color]="statusColors[prescription.status]">
+              [style.color]="statusColors[prescription.status]"
+            >
               {{ statusLabels[prescription.status] }}
             </span>
             <span class="expired-badge" *ngIf="prescription.expired">Expirada</span>
-            <span class="expiring-badge"
-              *ngIf="!prescription.expired && daysUntilExpiry() <= 3 && canDispense()">
+            <span
+              class="expiring-badge"
+              *ngIf="!prescription.expired && daysUntilExpiry() <= 3 && canDispense()"
+            >
               Expira em {{ daysUntilExpiry() }} dia(s)
             </span>
           </div>
         </div>
         <div class="card-actions">
-          <button class="btn-cancel-rx"
+          <button
+            class="btn-cancel-rx"
             *ngIf="canCancel()"
-            (click)="showCancelForm = !showCancelForm; showDispenseForm = false">
+            (click)="showCancelForm = !showCancelForm; showDispenseForm = false"
+          >
             ✕ Cancelar
           </button>
         </div>
@@ -59,12 +64,12 @@
         </div>
         <div class="info-block">
           <span class="info-label">Data de Emissão</span>
-          <span class="info-value">{{ prescription.prescriptionDate | date:'dd/MM/yyyy' }}</span>
+          <span class="info-value">{{ prescription.prescriptionDate | date: 'dd/MM/yyyy' }}</span>
         </div>
         <div class="info-block">
           <span class="info-label">Validade</span>
           <span class="info-value" [class.expired-text]="prescription.expired">
-            {{ prescription.expiryDate | date:'dd/MM/yyyy' }}
+            {{ prescription.expiryDate | date: 'dd/MM/yyyy' }}
           </span>
         </div>
         <div class="info-block" *ngIf="prescription.diagnosis">
@@ -80,8 +85,13 @@
       <!-- Cancelamento info -->
       <div class="cancelled-info" *ngIf="prescription.status === 'CANCELLED'">
         <svg viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M7 7l6 6M13 7l-6 6"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
         </svg>
         Motivo: {{ prescription.cancelledReason }}
       </div>
@@ -92,8 +102,7 @@
       <h3>Cancelar Prescrição</h3>
       <div class="field">
         <label>Motivo *</label>
-        <input type="text" [(ngModel)]="cancelReason"
-          placeholder="Motivo do cancelamento..."/>
+        <input type="text" [(ngModel)]="cancelReason" placeholder="Motivo do cancelamento..." />
       </div>
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showCancelForm = false">Voltar</button>
@@ -109,7 +118,6 @@
 
       <div class="items-list">
         <div class="item-row" *ngFor="let item of prescription.items">
-
           <div class="item-main">
             <div class="item-header">
               <span class="item-med-name">{{ item.medicationName }}</span>
@@ -119,9 +127,7 @@
             </div>
 
             <div class="item-details">
-              <span class="detail-chip">
-                <strong>Dosagem:</strong> {{ item.dosage }}
-              </span>
+              <span class="detail-chip"> <strong>Dosagem:</strong> {{ item.dosage }} </span>
               <span class="detail-chip" *ngIf="item.route">
                 <strong>Via:</strong> {{ item.route }}
               </span>
@@ -136,10 +142,11 @@
             <!-- Barra de progresso -->
             <div class="progress-row">
               <div class="progress-bar">
-                <div class="progress-fill"
+                <div
+                  class="progress-fill"
                   [style.width.%]="progressPercent(item)"
-                  [class.full]="item.status === 'DISPENSED'">
-                </div>
+                  [class.full]="item.status === 'DISPENSED'"
+                ></div>
               </div>
               <span class="progress-text">
                 {{ item.quantityDispensed }}/{{ item.quantityPrescribed }} {{ item.medicationUnit }}
@@ -153,17 +160,20 @@
 
           <!-- Botão dispensar -->
           <div class="item-action">
-            <div class="stock-info"
-              [class.low-stock]="item.stockAvailable < item.remainingQuantity">
+            <div
+              class="stock-info"
+              [class.low-stock]="item.stockAvailable < item.remainingQuantity"
+            >
               Stock: {{ item.stockAvailable }} {{ item.medicationUnit }}
             </div>
-            <button class="btn-dispense"
+            <button
+              class="btn-dispense"
               *ngIf="canDispense() && item.status !== 'DISPENSED' && item.status !== 'CANCELLED'"
-              (click)="openDispense(item)">
+              (click)="openDispense(item)"
+            >
               Dispensar
             </button>
           </div>
-
         </div>
       </div>
     </div>
@@ -173,32 +183,45 @@
       <h3>Dispensar — {{ selectedItem.medicationName }}</h3>
 
       <div class="dispense-info">
-        <span>Pendente: <strong>{{ selectedItem.remainingQuantity }} {{ selectedItem.medicationUnit }}</strong></span>
-        <span>Stock disponível: <strong>{{ selectedItem.stockAvailable }} {{ selectedItem.medicationUnit }}</strong></span>
+        <span
+          >Pendente:
+          <strong
+            >{{ selectedItem.remainingQuantity }} {{ selectedItem.medicationUnit }}</strong
+          ></span
+        >
+        <span
+          >Stock disponível:
+          <strong>{{ selectedItem.stockAvailable }} {{ selectedItem.medicationUnit }}</strong></span
+        >
       </div>
 
       <div class="field">
         <label>Quantidade a dispensar *</label>
-        <input type="number" [(ngModel)]="quantityToDispense"
-          [min]="1" [max]="selectedItem.remainingQuantity"/>
+        <input
+          type="number"
+          [(ngModel)]="quantityToDispense"
+          [min]="1"
+          [max]="selectedItem.remainingQuantity"
+        />
       </div>
       <div class="field">
         <label>Notas</label>
-        <input type="text" [(ngModel)]="dispenseNotes"
-          placeholder="Observações da dispensa..."/>
+        <input type="text" [(ngModel)]="dispenseNotes" placeholder="Observações da dispensa..." />
       </div>
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showDispenseForm = false">Cancelar</button>
-        <button class="btn-dispense-confirm"
+        <button
+          class="btn-dispense-confirm"
           [disabled]="quantityToDispense < 1 || savingDispense"
-          (click)="dispense()">
+          (click)="dispense()"
+        >
           {{ savingDispense ? 'A dispensar...' : 'Confirmar Dispensa' }}
         </button>
       </div>
     </div>
 
     <!-- Histórico de dispensas -->
-    <div class="section-card" *ngIf="(prescription.dispensations?.length ?? 0) > 0 ">
+    <div class="section-card" *ngIf="(prescription.dispensations?.length ?? 0) > 0">
       <h2 class="section-title">Histórico de Dispensas</h2>
       <table class="dispensations-table">
         <thead>
@@ -216,12 +239,10 @@
             <td class="batch">{{ d.batchNumber }}</td>
             <td class="qty">{{ d.quantityDispensed }}</td>
             <td>{{ d.dispensedByName }}</td>
-            <td class="dt">{{ d.dispensedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="dt">{{ d.dispensedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-
   </ng-container>
-
 </div>

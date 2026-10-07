@@ -1,10 +1,19 @@
 <div class="notification-bell">
-
   <!-- Botão sino -->
   <button class="bell-btn" (click)="toggleOpen()" [class.has-unread]="unreadCount > 0">
     <svg viewBox="0 0 24 24" fill="none">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path
+        d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+      <path
+        d="M13.73 21a2 2 0 0 1-3.46 0"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
     </svg>
     <span class="badge" *ngIf="unreadCount > 0">
       {{ unreadCount > 99 ? '99+' : unreadCount }}
@@ -13,12 +22,9 @@
 
   <!-- Dropdown -->
   <div class="dropdown" *ngIf="open">
-
     <div class="dropdown-header">
       <span class="dropdown-title">Notificações</span>
-      <button class="btn-read-all"
-        *ngIf="unreadCount > 0"
-        (click)="markAllAsRead()">
+      <button class="btn-read-all" *ngIf="unreadCount > 0" (click)="markAllAsRead()">
         Marcar todas como lidas
       </button>
     </div>
@@ -30,24 +36,30 @@
 
     <!-- Lista -->
     <div class="notification-list" *ngIf="!loading">
-
       <div class="notification-empty" *ngIf="notifications.length === 0">
         <svg viewBox="0 0 48 48" fill="none">
-          <path d="M36 16A12 12 0 0 0 12 16c0 14-6 18-6 18h36s-6-4-6-18"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M27.46 42a4 4 0 0 1-6.92 0" stroke="currentColor" stroke-width="2"/>
+          <path
+            d="M36 16A12 12 0 0 0 12 16c0 14-6 18-6 18h36s-6-4-6-18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path d="M27.46 42a4 4 0 0 1-6.92 0" stroke="currentColor" stroke-width="2" />
         </svg>
         <p>Sem notificações por ler</p>
       </div>
 
-      <div class="notification-item"
+      <div
+        class="notification-item"
         *ngFor="let n of notifications"
         [class.unread]="!n.read"
-        (click)="open_(n)">
-
-        <div class="notif-icon"
+        (click)="open_(n)"
+      >
+        <div
+          class="notif-icon"
           [style.border-color]="priorityColors[n.priority]"
-          [style.background]="priorityColors[n.priority] + '18'">
+          [style.background]="priorityColors[n.priority] + '18'"
+        >
           {{ typeIcons[n.type] }}
         </div>
 
@@ -57,22 +69,19 @@
           <div class="notif-time">{{ timeAgo(n.createdAt) }}</div>
         </div>
 
-        <button class="btn-mark-read"
+        <button
+          class="btn-mark-read"
           *ngIf="!n.read"
           (click)="markAsRead(n, $event)"
-          title="Marcar como lida">
+          title="Marcar como lida"
+        >
           ●
         </button>
-
       </div>
     </div>
 
     <div class="dropdown-footer">
-      <button class="btn-see-all" (click)="goToAll()">
-        Ver todas as notificações →
-      </button>
+      <button class="btn-see-all" (click)="goToAll()">Ver todas as notificações →</button>
     </div>
-
   </div>
-
 </div>

@@ -4,11 +4,18 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type WardType =
-  'GENERAL' | 'PEDIATRIC' | 'MATERNITY' | 'ICU' |
-  'SURGICAL' | 'CARDIOLOGY' | 'ONCOLOGY' | 'EMERGENCY' | 'ISOLATION';
+  | 'GENERAL'
+  | 'PEDIATRIC'
+  | 'MATERNITY'
+  | 'ICU'
+  | 'SURGICAL'
+  | 'CARDIOLOGY'
+  | 'ONCOLOGY'
+  | 'EMERGENCY'
+  | 'ISOLATION';
 
 export type BedStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED';
-export type BedType   = 'STANDARD' | 'PRIVATE' | 'SEMI_PRIVATE' | 'ICU' | 'ISOLATION';
+export type BedType = 'STANDARD' | 'PRIVATE' | 'SEMI_PRIVATE' | 'ICU' | 'ISOLATION';
 export type AdmissionStatus = 'ACTIVE' | 'DISCHARGED' | 'TRANSFERRED' | 'DECEASED';
 export type DischargeCondition =
   'IMPROVED' | 'STABLE' | 'CRITICAL' | 'DECEASED' | 'AGAINST_MEDICAL_ADVICE';
@@ -100,42 +107,41 @@ export interface Page<T> {
 }
 
 export const WARD_TYPE_LABELS: Record<WardType, string> = {
-  GENERAL:    'Medicina Geral',
-  PEDIATRIC:  'Pediatria',
-  MATERNITY:  'Maternidade',
-  ICU:        'UCI',
-  SURGICAL:   'Cirurgia',
+  GENERAL: 'Medicina Geral',
+  PEDIATRIC: 'Pediatria',
+  MATERNITY: 'Maternidade',
+  ICU: 'UCI',
+  SURGICAL: 'Cirurgia',
   CARDIOLOGY: 'Cardiologia',
-  ONCOLOGY:   'Oncologia',
-  EMERGENCY:  'Urgência',
-  ISOLATION:  'Isolamento'
+  ONCOLOGY: 'Oncologia',
+  EMERGENCY: 'Urgência',
+  ISOLATION: 'Isolamento',
 };
 
 export const BED_STATUS_LABELS: Record<BedStatus, string> = {
-  AVAILABLE:   'Disponível',
-  OCCUPIED:    'Ocupada',
+  AVAILABLE: 'Disponível',
+  OCCUPIED: 'Ocupada',
   MAINTENANCE: 'Manutenção',
-  RESERVED:    'Reservada'
+  RESERVED: 'Reservada',
 };
 
 export const ADMISSION_STATUS_LABELS: Record<AdmissionStatus, string> = {
-  ACTIVE:      'Internado',
-  DISCHARGED:  'Alta',
+  ACTIVE: 'Internado',
+  DISCHARGED: 'Alta',
   TRANSFERRED: 'Transferido',
-  DECEASED:    'Óbito'
+  DECEASED: 'Óbito',
 };
 
 export const DISCHARGE_CONDITION_LABELS: Record<DischargeCondition, string> = {
-  IMPROVED:               'Melhorado',
-  STABLE:                 'Estável',
-  CRITICAL:               'Crítico',
-  DECEASED:               'Óbito',
-  AGAINST_MEDICAL_ADVICE: 'Contra Indicação Médica'
+  IMPROVED: 'Melhorado',
+  STABLE: 'Estável',
+  CRITICAL: 'Crítico',
+  DECEASED: 'Óbito',
+  AGAINST_MEDICAL_ADVICE: 'Contra Indicação Médica',
 };
 
 @Injectable({ providedIn: 'root' })
 export class InpatientService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/inpatient`;
 
@@ -166,7 +172,12 @@ export class InpatientService {
   }
 
   // Internamentos
-  findAll(status?: AdmissionStatus, wardId?: string, page = 0, size = 20): Observable<Page<AdmissionResponse>> {
+  findAll(
+    status?: AdmissionStatus,
+    wardId?: string,
+    page = 0,
+    size = 20,
+  ): Observable<Page<AdmissionResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (status) params = params.set('status', status);
     if (wardId) params = params.set('wardId', wardId);

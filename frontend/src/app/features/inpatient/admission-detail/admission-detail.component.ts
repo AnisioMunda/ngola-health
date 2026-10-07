@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-  InpatientService, AdmissionResponse, BedResponse,
-  DischargeCondition, ADMISSION_STATUS_LABELS,
-  DISCHARGE_CONDITION_LABELS
+  InpatientService,
+  AdmissionResponse,
+  BedResponse,
+  DischargeCondition,
+  ADMISSION_STATUS_LABELS,
+  DISCHARGE_CONDITION_LABELS,
 } from '../../../core/services/inpatient.service';
 
 @Component({
@@ -13,44 +16,43 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admission-detail.component.html',
-  styleUrls: ['./admission-detail.component.scss']
+  styleUrls: ['./admission-detail.component.scss'],
 })
 export class AdmissionDetailComponent implements OnInit {
-
   admission: AdmissionResponse | null = null;
-  loading  = true;
-  error    = '';
-  success  = '';
+  loading = true;
+  error = '';
+  success = '';
 
   // Alta
-  showDischargeForm   = false;
-  dischargeNotes      = '';
+  showDischargeForm = false;
+  dischargeNotes = '';
   dischargeCondition: DischargeCondition = 'IMPROVED';
-  savingDischarge     = false;
+  savingDischarge = false;
 
   // Transferência
-  showTransferForm    = false;
+  showTransferForm = false;
   availableBeds: BedResponse[] = [];
-  selectedBedId       = '';
-  transferReason      = '';
-  savingTransfer      = false;
-  loadingBeds         = false;
+  selectedBedId = '';
+  transferReason = '';
+  savingTransfer = false;
+  loadingBeds = false;
 
-  statusLabels    = ADMISSION_STATUS_LABELS;
+  statusLabels = ADMISSION_STATUS_LABELS;
   conditionLabels = DISCHARGE_CONDITION_LABELS;
 
   dischargeConditions: { value: DischargeCondition; label: string }[] = [
-    { value: 'IMPROVED',               label: 'Melhorado'                },
-    { value: 'STABLE',                 label: 'Estável'                  },
-    { value: 'CRITICAL',               label: 'Crítico'                  },
-    { value: 'DECEASED',               label: 'Óbito'                    },
-    { value: 'AGAINST_MEDICAL_ADVICE', label: 'Contra Indicação Médica'  }
+    { value: 'IMPROVED', label: 'Melhorado' },
+    { value: 'STABLE', label: 'Estável' },
+    { value: 'CRITICAL', label: 'Crítico' },
+    { value: 'DECEASED', label: 'Óbito' },
+    { value: 'AGAINST_MEDICAL_ADVICE', label: 'Contra Indicação Médica' },
   ];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private inpatientService: InpatientService
+    private inpatientService: InpatientService,
   ) {}
 
   ngOnInit(): void {
@@ -61,42 +63,53 @@ export class AdmissionDetailComponent implements OnInit {
   load(id: string): void {
     this.loading = true;
     this.inpatientService.findById(id).subscribe({
-      next: (a) => { this.admission = a; this.loading = false; },
-      error: () => { this.error = 'Erro ao carregar internamento.'; this.loading = false; }
+      next: (a) => {
+        this.admission = a;
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Erro ao carregar internamento.';
+        this.loading = false;
+      },
     });
   }
 
   discharge(): void {
     if (!this.admission) return;
     this.savingDischarge = true;
-    this.inpatientService.discharge(this.admission.id, {
-      dischargeNotes:     this.dischargeNotes,
-      dischargeCondition: this.dischargeCondition
-    }).subscribe({
-      next: (a) => {
-        this.admission       = a;
-        this.showDischargeForm = false;
-        this.savingDischarge   = false;
-        this.flash('Alta registada com sucesso.');
-      },
-      error: (err) => {
-        this.error          = err.error?.message ?? 'Erro ao dar alta.';
-        this.savingDischarge = false;
-      }
-    });
+    this.inpatientService
+      .discharge(this.admission.id, {
+        dischargeNotes: this.dischargeNotes,
+        dischargeCondition: this.dischargeCondition,
+      })
+      .subscribe({
+        next: (a) => {
+          this.admission = a;
+          this.showDischargeForm = false;
+          this.savingDischarge = false;
+          this.flash('Alta registada com sucesso.');
+        },
+        error: (err) => {
+          this.error = err.error?.message ?? 'Erro ao dar alta.';
+          this.savingDischarge = false;
+        },
+      });
   }
 
   loadAvailableBeds(): void {
     if (!this.admission) return;
-    this.loadingBeds  = true;
+    this.loadingBeds = true;
     this.availableBeds = [];
     this.inpatientService.findBedsByWard(this.admission.wardId).subscribe({
       next: (beds) => {
-        this.availableBeds = beds.filter(b =>
-          b.status === 'AVAILABLE' && b.id !== this.admission!.bedId);
+        this.availableBeds = beds.filter(
+          (b) => b.status === 'AVAILABLE' && b.id !== this.admission!.bedId,
+        );
         this.loadingBeds = false;
       },
-      error: () => { this.loadingBeds = false; }
+      error: () => {
+        this.loadingBeds = false;
+      },
     });
   }
 
@@ -108,38 +121,45 @@ export class AdmissionDetailComponent implements OnInit {
   transfer(): void {
     if (!this.admission || !this.selectedBedId) return;
     this.savingTransfer = true;
-    this.inpatientService.transfer(this.admission.id, {
-      toBedId: this.selectedBedId,
-      reason:  this.transferReason
-    }).subscribe({
-      next: (a) => {
-        this.admission      = a;
-        this.showTransferForm = false;
-        this.selectedBedId   = '';
-        this.transferReason  = '';
-        this.savingTransfer  = false;
-        this.flash('Transferência realizada com sucesso.');
-      },
-      error: (err) => {
-        this.error         = err.error?.message ?? 'Erro na transferência.';
-        this.savingTransfer = false;
-      }
-    });
+    this.inpatientService
+      .transfer(this.admission.id, {
+        toBedId: this.selectedBedId,
+        reason: this.transferReason,
+      })
+      .subscribe({
+        next: (a) => {
+          this.admission = a;
+          this.showTransferForm = false;
+          this.selectedBedId = '';
+          this.transferReason = '';
+          this.savingTransfer = false;
+          this.flash('Transferência realizada com sucesso.');
+        },
+        error: (err) => {
+          this.error = err.error?.message ?? 'Erro na transferência.';
+          this.savingTransfer = false;
+        },
+      });
   }
 
   flash(msg: string): void {
     this.success = msg;
-    setTimeout(() => this.success = '', 4000);
+    setTimeout(() => (this.success = ''), 4000);
   }
 
-  goBack(): void { this.router.navigate(['/inpatient/admissions']); }
+  goBack(): void {
+    this.router.navigate(['/inpatient/admissions']);
+  }
   goToPatient(): void {
-    if (this.admission)
-      this.router.navigate(['/patients', this.admission.patientId, 'edit']);
+    if (this.admission) this.router.navigate(['/patients', this.admission.patientId, 'edit']);
   }
 
-  canDischarge(): boolean { return this.admission?.status === 'ACTIVE'; }
-  canTransfer():  boolean { return this.admission?.status === 'ACTIVE'; }
+  canDischarge(): boolean {
+    return this.admission?.status === 'ACTIVE';
+  }
+  canTransfer(): boolean {
+    return this.admission?.status === 'ACTIVE';
+  }
 
   isOverdue(): boolean {
     if (!this.admission?.expectedDischargeDate || this.admission.status !== 'ACTIVE') return false;

@@ -5,7 +5,15 @@ import { environment } from '../../../environments/environment';
 
 export type RequestStatus = 'PENDING' | 'COLLECTED' | 'IN_ANALYSIS' | 'COMPLETED' | 'CANCELLED';
 export type Priority = 'NORMAL' | 'URGENT' | 'STAT';
-export type TestCategory = 'HEMATOLOGY' | 'BIOCHEMISTRY' | 'MICROBIOLOGY' | 'IMMUNOLOGY' | 'URINE' | 'IMAGING' | 'CARDIOLOGY' | 'OTHER';
+export type TestCategory =
+  | 'HEMATOLOGY'
+  | 'BIOCHEMISTRY'
+  | 'MICROBIOLOGY'
+  | 'IMMUNOLOGY'
+  | 'URINE'
+  | 'IMAGING'
+  | 'CARDIOLOGY'
+  | 'OTHER';
 
 export interface LabTestResponse {
   id: string;
@@ -74,22 +82,21 @@ export interface Page<T> {
 }
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
-  PENDING:     'Pending',
-  COLLECTED:   'Collected',
+  PENDING: 'Pending',
+  COLLECTED: 'Collected',
   IN_ANALYSIS: 'In Analysis',
-  COMPLETED:   'Completed',
-  CANCELLED:   'Cancelled'
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
 };
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
   NORMAL: 'Normal',
   URGENT: 'Urgent',
-  STAT:   'STAT'
+  STAT: 'STAT',
 };
 
 @Injectable({ providedIn: 'root' })
 export class LabService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/lab`;
 
@@ -101,7 +108,7 @@ export class LabService {
     patientId?: string,
     status?: RequestStatus,
     page = 0,
-    size = 20
+    size = 20,
   ): Observable<Page<LabRequestResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (patientId) params = params.set('patientId', patientId);
@@ -125,9 +132,15 @@ export class LabService {
     return this.http.patch<LabRequestResponse>(`${this.apiUrl}/requests/${id}/start-analysis`, {});
   }
 
-  submitResult(requestId: string, itemId: string, result: SubmitResultRequest): Observable<LabRequestResponse> {
+  submitResult(
+    requestId: string,
+    itemId: string,
+    result: SubmitResultRequest,
+  ): Observable<LabRequestResponse> {
     return this.http.patch<LabRequestResponse>(
-      `${this.apiUrl}/requests/${requestId}/items/${itemId}/result`, result);
+      `${this.apiUrl}/requests/${requestId}/items/${itemId}/result`,
+      result,
+    );
   }
 
   cancel(id: string): Observable<LabRequestResponse> {

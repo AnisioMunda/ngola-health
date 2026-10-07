@@ -21,23 +21,28 @@ export interface AuthResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {}
 
   login(request: AuthRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, request).pipe(
-      tap(response => {
+      tap((response) => {
         localStorage.setItem('accessToken', response.accessToken);
         localStorage.setItem('refreshToken', response.refreshToken);
-        localStorage.setItem('user', JSON.stringify({
-          id: response.id,
-          fullName: response.fullName,
-          username: response.username,
-          email: response.email
-        }));
-      })
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            id: response.id,
+            fullName: response.fullName,
+            username: response.username,
+            email: response.email,
+          }),
+        );
+      }),
     );
   }
 

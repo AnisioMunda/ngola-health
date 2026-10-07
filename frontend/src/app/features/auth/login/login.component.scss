@@ -61,7 +61,10 @@
   height: 48px;
   flex-shrink: 0;
 
-  svg { width: 100%; height: 100%; }
+  svg {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .brand-name {
@@ -227,9 +230,9 @@
   flex-shrink: 0;
 }
 
-input[type="email"],
-input[type="password"],
-input[type="text"] {
+input[type='email'],
+input[type='password'],
+input[type='text'] {
   width: 100%;
   height: 48px;
   padding: 0 44px 0 44px;
@@ -238,11 +241,15 @@ input[type="text"] {
   font-size: 0.95rem;
   color: #1a1f2e;
   background: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
   outline: none;
 
-  &::placeholder { color: #c4c9d4; }
+  &::placeholder {
+    color: #c4c9d4;
+  }
 
   &:focus {
     border-color: #203a43;
@@ -262,9 +269,14 @@ input[type="text"] {
   align-items: center;
   transition: color 0.2s;
 
-  svg { width: 18px; height: 18px; }
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 
-  &:hover { color: #374151; }
+  &:hover {
+    color: #374151;
+  }
 }
 
 .field--error input {
@@ -316,7 +328,9 @@ input[type="text"] {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
   margin-top: 0.5rem;
   letter-spacing: 0.3px;
 
@@ -352,7 +366,9 @@ input[type="text"] {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // ============================================================

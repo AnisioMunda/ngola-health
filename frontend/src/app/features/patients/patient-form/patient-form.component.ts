@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   PatientService,
   ANGOLA_PROVINCES,
-  BLOOD_TYPES
+  BLOOD_TYPES,
 } from '../../../core/services/patient.service';
 
 @Component({
@@ -13,10 +13,9 @@ import {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './patient-form.component.html',
-  styleUrls: ['./patient-form.component.scss']
+  styleUrls: ['./patient-form.component.scss'],
 })
 export class PatientFormComponent implements OnInit {
-
   form!: FormGroup;
   isEdit = false;
   patientId: string | null = null;
@@ -32,7 +31,7 @@ export class PatientFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private patientService: PatientService
+    private patientService: PatientService,
   ) {}
 
   ngOnInit(): void {
@@ -45,26 +44,26 @@ export class PatientFormComponent implements OnInit {
   buildForm(): void {
     this.form = this.fb.group({
       // Personal
-      fullName:         ['', [Validators.required, Validators.minLength(3)]],
-      birthDate:        ['', Validators.required],
-      gender:           ['', Validators.required],
-      nationalId:       [''],
+      fullName: ['', [Validators.required, Validators.minLength(3)]],
+      birthDate: ['', Validators.required],
+      gender: ['', Validators.required],
+      nationalId: [''],
       healthCardNumber: [''],
       // Contact
-      phone:       [''],
-      email:       ['', Validators.email],
-      address:     [''],
-      province:    [''],
-      municipality:[''],
+      phone: [''],
+      email: ['', Validators.email],
+      address: [''],
+      province: [''],
+      municipality: [''],
       // Emergency
-      emergencyContactName:        [''],
-      emergencyContactPhone:       [''],
-      emergencyContactRelationship:[''],
+      emergencyContactName: [''],
+      emergencyContactPhone: [''],
+      emergencyContactRelationship: [''],
       // Clinical
-      bloodType:         [''],
-      allergies:         [''],
+      bloodType: [''],
+      allergies: [''],
       chronicConditions: [''],
-      notes:             ['']
+      notes: [''],
     });
   }
 
@@ -74,14 +73,14 @@ export class PatientFormComponent implements OnInit {
       next: (p) => {
         this.form.patchValue({
           ...p,
-          birthDate: p.birthDate?.substring(0, 10)
+          birthDate: p.birthDate?.substring(0, 10),
         });
         this.loading = false;
       },
       error: () => {
         this.error = 'Failed to load patient.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -109,7 +108,7 @@ export class PatientFormComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.error = err.error?.message ?? 'Failed to save patient.';
-      }
+      },
     });
   }
 
@@ -117,5 +116,7 @@ export class PatientFormComponent implements OnInit {
     this.router.navigate(['/patients']);
   }
 
-  get f() { return this.form.controls; }
+  get f() {
+    return this.form.controls;
+  }
 }

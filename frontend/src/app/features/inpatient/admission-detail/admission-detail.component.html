@@ -1,10 +1,9 @@
 <!-- admission-detail.component.html -->
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Voltar
     </button>
@@ -12,22 +11,27 @@
   </header>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <ng-container *ngIf="admission && !loading">
-
     <!-- Card principal -->
     <div class="detail-card">
       <div class="card-header">
         <div>
           <div class="patient-title">
             <svg viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+              <path
+                d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
             </svg>
             <span class="patient-name link" (click)="goToPatient()">
               {{ admission.patientName }}
@@ -45,9 +49,7 @@
         </div>
 
         <div class="card-actions" *ngIf="admission.status === 'ACTIVE'">
-          <button class="btn-transfer" (click)="openTransferForm()">
-            Transferir Cama
-          </button>
+          <button class="btn-transfer" (click)="openTransferForm()">Transferir Cama</button>
           <button class="btn-discharge" (click)="showDischargeForm = !showDischargeForm">
             Dar Alta
           </button>
@@ -69,13 +71,16 @@
         </div>
         <div class="info-block">
           <span class="info-label">Data de Admissão</span>
-          <span class="info-value">{{ admission.admissionDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="info-value">{{ admission.admissionDate | date: 'dd/MM/yyyy HH:mm' }}</span>
         </div>
         <div class="info-block">
           <span class="info-label">Alta Esperada</span>
           <span class="info-value" [class.overdue-text]="isOverdue()">
-            {{ admission.expectedDischargeDate
-               ? (admission.expectedDischargeDate | date:'dd/MM/yyyy') : '—' }}
+            {{
+              admission.expectedDischargeDate
+                ? (admission.expectedDischargeDate | date: 'dd/MM/yyyy')
+                : '—'
+            }}
           </span>
         </div>
         <div class="info-block">
@@ -98,10 +103,15 @@
       <div class="discharge-info" *ngIf="admission.status === 'DISCHARGED'">
         <div class="discharge-header">
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M7 10l2 2 4-4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
-          Alta em {{ admission.dischargeDate | date:'dd/MM/yyyy HH:mm' }}
+          Alta em {{ admission.dischargeDate | date: 'dd/MM/yyyy HH:mm' }}
           <span *ngIf="admission.dischargeCondition" class="condition-badge">
             {{ conditionLabels[admission.dischargeCondition] }}
           </span>
@@ -121,8 +131,11 @@
       </div>
       <div class="field">
         <label>Notas de Alta</label>
-        <textarea [(ngModel)]="dischargeNotes" rows="3"
-          placeholder="Instruções pós-alta, medicação, próxima consulta..."></textarea>
+        <textarea
+          [(ngModel)]="dischargeNotes"
+          rows="3"
+          placeholder="Instruções pós-alta, medicação, próxima consulta..."
+        ></textarea>
       </div>
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showDischargeForm = false">Cancelar</button>
@@ -137,15 +150,18 @@
       <h3>Transferir Paciente</h3>
 
       <div class="beds-loading" *ngIf="loadingBeds">
-        <div class="spinner-sm"></div> A carregar camas disponíveis...
+        <div class="spinner-sm"></div>
+        A carregar camas disponíveis...
       </div>
 
       <div class="beds-grid" *ngIf="!loadingBeds && availableBeds.length > 0">
-        <button type="button"
+        <button
+          type="button"
           *ngFor="let b of availableBeds"
           class="bed-btn"
           [class.selected]="selectedBedId === b.id"
-          (click)="selectedBedId = b.id">
+          (click)="selectedBedId = b.id"
+        >
           <span class="bed-num">{{ b.bedNumber }}</span>
           <span class="bed-lbl">{{ b.wardName }}</span>
         </button>
@@ -157,14 +173,16 @@
 
       <div class="field" style="margin-top: 1rem">
         <label>Motivo da Transferência</label>
-        <input type="text" [(ngModel)]="transferReason" placeholder="Motivo..."/>
+        <input type="text" [(ngModel)]="transferReason" placeholder="Motivo..." />
       </div>
 
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showTransferForm = false">Cancelar</button>
-        <button class="btn-transfer-confirm"
+        <button
+          class="btn-transfer-confirm"
           [disabled]="!selectedBedId || savingTransfer"
-          (click)="transfer()">
+          (click)="transfer()"
+        >
           {{ savingTransfer ? 'A transferir...' : 'Confirmar Transferência' }}
         </button>
       </div>
@@ -178,18 +196,22 @@
           <div class="transfer-arrow">
             <span class="from-bed">{{ t.fromWardName }} — Cama {{ t.fromBedNumber }}</span>
             <svg viewBox="0 0 20 20" fill="none">
-              <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path
+                d="M4 10h12M12 6l4 4-4 4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
             </svg>
             <span class="to-bed">{{ t.toWardName }} — Cama {{ t.toBedNumber }}</span>
           </div>
           <div class="transfer-meta">
-            <span>{{ t.transferredAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span>{{ t.transferredAt | date: 'dd/MM/yyyy HH:mm' }}</span>
             <span *ngIf="t.transferredByName">— {{ t.transferredByName }}</span>
             <span *ngIf="t.reason" class="transfer-reason">{{ t.reason }}</span>
           </div>
         </div>
       </div>
     </div>
-
   </ng-container>
 </div>

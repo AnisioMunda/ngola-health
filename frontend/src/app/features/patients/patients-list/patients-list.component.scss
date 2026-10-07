@@ -1,4 +1,6 @@
-:host { display: block; }
+:host {
+  display: block;
+}
 
 .page {
   padding: 2rem;
@@ -49,8 +51,13 @@
   cursor: pointer;
   transition: opacity 0.2s;
 
-  svg { width: 16px; height: 16px; }
-  &:hover { opacity: 0.88; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  &:hover {
+    opacity: 0.88;
+  }
 }
 
 // Search
@@ -80,12 +87,16 @@
     background: white;
     box-sizing: border-box;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
-    &::placeholder { color: #c4c9d4; }
+    &::placeholder {
+      color: #c4c9d4;
+    }
     &:focus {
       border-color: #203a43;
-      box-shadow: 0 0 0 3px rgba(32,58,67,0.08);
+      box-shadow: 0 0 0 3px rgba(32, 58, 67, 0.08);
     }
   }
 }
@@ -119,7 +130,11 @@
   animation: spin 0.7s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .table-card {
   background: white;
@@ -151,9 +166,15 @@ table {
     border-bottom: 1px solid #f1f5f9;
     transition: background 0.1s;
 
-    &:last-child { border-bottom: none; }
-    &.clickable { cursor: pointer; }
-    &.clickable:hover { background: #fafbfc; }
+    &:last-child {
+      border-bottom: none;
+    }
+    &.clickable {
+      cursor: pointer;
+    }
+    &.clickable:hover {
+      background: #fafbfc;
+    }
   }
 
   td {
@@ -164,7 +185,9 @@ table {
   }
 }
 
-.text-muted { color: #9ca3af !important; }
+.text-muted {
+  color: #9ca3af !important;
+}
 
 .patient-cell {
   display: flex;
@@ -222,8 +245,14 @@ table {
   border-radius: 6px;
   width: fit-content;
 
-  &.male   { background: #dbeafe; color: #1d4ed8; }
-  &.female { background: #fce7f3; color: #be185d; }
+  &.male {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  &.female {
+    background: #fce7f3;
+    color: #be185d;
+  }
 }
 
 .blood-badge {
@@ -249,8 +278,14 @@ table {
   color: #6b7280;
   transition: all 0.15s;
 
-  svg { width: 15px; height: 15px; }
-  &:hover { background: #f9fafb; color: #374151; }
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+  &:hover {
+    background: #f9fafb;
+    color: #374151;
+  }
 }
 
 .empty-state {
@@ -266,7 +301,10 @@ table {
     color: #d1d5db;
   }
 
-  p { margin: 0 0 16px; font-size: 0.875rem; }
+  p {
+    margin: 0 0 16px;
+    font-size: 0.875rem;
+  }
 }
 
 .pagination {
@@ -288,8 +326,13 @@ table {
   color: #374151;
   transition: all 0.15s;
 
-  &:hover:not(:disabled) { background: #f9fafb; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .page-info {

@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div>
       <h1>Recursos Humanos</h1>
@@ -8,21 +7,39 @@
     <div class="header-actions">
       <button class="btn-secondary" (click)="goToAttendance()">
         <svg viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+          <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
         </svg>
         Controlo de Ponto
       </button>
       <button class="btn-secondary" (click)="goToLeaves()">
         <svg viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M2 8h16M7 2v2M13 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <rect
+            x="2"
+            y="3"
+            width="16"
+            height="15"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M2 8h16M7 2v2M13 2v2"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
         </svg>
         Folgas e Férias
       </button>
       <button class="btn-primary" (click)="goToShifts()">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path
+            d="M10 4v12M4 10h12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
         Gerir Turnos
       </button>
@@ -32,20 +49,30 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <ng-container *ngIf="stats && !loading">
-
     <!-- KPI Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-icon blue">
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M1 17c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M14 10a3 3 0 0 0 0-6" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M17 17c0-2-1.3-3.7-3-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M1 17c0-3 2.7-5 6-5s6 2 6 5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path d="M14 10a3 3 0 0 0 0-6" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M17 17c0-2-1.3-3.7-3-4.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="kpi-body">
@@ -57,8 +84,13 @@
       <div class="kpi-card">
         <div class="kpi-icon green">
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M7 10l2 2 4-4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="kpi-body">
@@ -69,10 +101,19 @@
       </div>
 
       <div class="kpi-card" [class.alert-kpi]="stats.absentToday > 0">
-        <div class="kpi-icon" [class.red]="stats.absentToday > 0" [class.grey]="stats.absentToday === 0">
+        <div
+          class="kpi-icon"
+          [class.red]="stats.absentToday > 0"
+          [class.grey]="stats.absentToday === 0"
+        >
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M7 7l6 6M13 7l-6 6"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="kpi-body">
@@ -84,8 +125,21 @@
       <div class="kpi-card">
         <div class="kpi-icon amber">
           <svg viewBox="0 0 20 20" fill="none">
-            <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M2 8h16M7 2v2M13 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <rect
+              x="2"
+              y="3"
+              width="16"
+              height="15"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="M2 8h16M7 2v2M13 2v2"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </div>
         <div class="kpi-body">
@@ -97,8 +151,8 @@
       <div class="kpi-card">
         <div class="kpi-icon purple">
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
         </div>
         <div class="kpi-body">
@@ -108,11 +162,15 @@
       </div>
 
       <div class="kpi-card" [class.alert-kpi]="stats.pendingLeaves > 0">
-        <div class="kpi-icon" [class.amber]="stats.pendingLeaves > 0" [class.grey]="stats.pendingLeaves === 0">
+        <div
+          class="kpi-icon"
+          [class.amber]="stats.pendingLeaves > 0"
+          [class.grey]="stats.pendingLeaves === 0"
+        >
           <svg viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M10 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="10" cy="14" r="0.5" fill="currentColor" stroke="currentColor"/>
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <circle cx="10" cy="14" r="0.5" fill="currentColor" stroke="currentColor" />
           </svg>
         </div>
         <div class="kpi-body">
@@ -123,7 +181,6 @@
     </div>
 
     <div class="two-col">
-
       <!-- Turnos de hoje -->
       <div class="section-card">
         <div class="section-header">
@@ -137,17 +194,18 @@
 
         <div class="shift-list">
           <div class="shift-item" *ngFor="let s of stats.todayShifts">
-            <div class="shift-color-bar"
-              [style.background]="shiftTypeColors[s.shiftType]"></div>
+            <div class="shift-color-bar" [style.background]="shiftTypeColors[s.shiftType]"></div>
             <div class="shift-avatar">{{ getInitials(s.userFullName) }}</div>
             <div class="shift-info">
               <span class="shift-user">{{ s.userFullName }}</span>
               <span class="shift-time">{{ s.startTime }} — {{ s.endTime }}</span>
             </div>
             <div class="shift-badges">
-              <span class="shift-type-badge"
+              <span
+                class="shift-type-badge"
                 [style.background]="shiftTypeColors[s.shiftType] + '22'"
-                [style.color]="shiftTypeColors[s.shiftType]">
+                [style.color]="shiftTypeColors[s.shiftType]"
+              >
                 {{ s.shiftTypeLabel }}
               </span>
               <span class="shift-status" [class]="'ss-' + s.status.toLowerCase()">
@@ -176,20 +234,19 @@
               <span class="leave-user">{{ l.userFullName }}</span>
               <span class="leave-type">{{ l.leaveTypeLabel }}</span>
               <span class="leave-dates">
-                {{ l.startDate | date:'dd/MM' }} — {{ l.endDate | date:'dd/MM/yyyy' }}
-                ({{ l.totalDays }} dias)
+                {{ l.startDate | date: 'dd/MM' }} — {{ l.endDate | date: 'dd/MM/yyyy' }} ({{
+                  l.totalDays
+                }}
+                dias)
               </span>
             </div>
             <div class="leave-actions">
               <button class="btn-approve" (click)="approveLeave(l.id)" title="Aprovar">✓</button>
-              <button class="btn-reject"  (click)="rejectLeave(l.id)"  title="Rejeitar">✕</button>
+              <button class="btn-reject" (click)="rejectLeave(l.id)" title="Rejeitar">✕</button>
             </div>
           </div>
         </div>
       </div>
-
     </div>
-
   </ng-container>
-
 </div>

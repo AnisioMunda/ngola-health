@@ -1,4 +1,6 @@
-:host { display: block; }
+:host {
+  display: block;
+}
 
 .page {
   padding: 2rem;
@@ -51,8 +53,13 @@
   cursor: pointer;
   transition: opacity 0.2s;
 
-  svg { width: 16px; height: 16px; }
-  &:hover { opacity: 0.88; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  &:hover {
+    opacity: 0.88;
+  }
 }
 
 .btn-icon {
@@ -68,8 +75,15 @@
   color: #6b7280;
   transition: all 0.15s;
 
-  svg { width: 16px; height: 16px; }
-  &:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #374151;
+  }
 }
 
 .btn-page {
@@ -82,8 +96,13 @@
   color: #374151;
   transition: all 0.15s;
 
-  &:hover:not(:disabled) { background: #f9fafb; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 // Alert
@@ -117,7 +136,11 @@
   animation: spin 0.7s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 // Table
 .table-card {
@@ -149,8 +172,12 @@ table {
   tbody tr {
     border-bottom: 1px solid #f1f5f9;
     transition: background 0.1s;
-    &:last-child { border-bottom: none; }
-    &:hover { background: #fafbfc; }
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover {
+      background: #fafbfc;
+    }
   }
 
   td {
@@ -161,7 +188,9 @@ table {
   }
 }
 
-.text-muted { color: #9ca3af !important; }
+.text-muted {
+  color: #9ca3af !important;
+}
 
 // User cell
 .user-cell {
@@ -226,9 +255,18 @@ table {
   font-weight: 600;
 }
 
-.status-active   { background: #dcfce7; color: #16a34a; }
-.status-inactive { background: #f1f5f9; color: #64748b; }
-.status-suspended{ background: #fef3c7; color: #d97706; }
+.status-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.status-inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.status-suspended {
+  background: #fef3c7;
+  color: #d97706;
+}
 
 // Actions
 .actions {
@@ -251,7 +289,10 @@ table {
     color: #d1d5db;
   }
 
-  p { margin: 0 0 16px; font-size: 0.875rem; }
+  p {
+    margin: 0 0 16px;
+    font-size: 0.875rem;
+  }
 }
 
 // Pagination

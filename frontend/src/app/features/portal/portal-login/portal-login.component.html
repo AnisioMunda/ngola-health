@@ -1,7 +1,5 @@
 <div class="login-page">
-
   <div class="login-card">
-
     <div class="login-header">
       <div class="logo">H</div>
       <h1>HospitalAO</h1>
@@ -10,8 +8,10 @@
 
     <!-- Tabs -->
     <div class="auth-tabs">
-      <button [class.active]="tab === 'login'"    (click)="tab = 'login'; error = ''">Entrar</button>
-      <button [class.active]="tab === 'register'" (click)="tab = 'register'; error = ''">Criar Conta</button>
+      <button [class.active]="tab === 'login'" (click)="tab = 'login'; error = ''">Entrar</button>
+      <button [class.active]="tab === 'register'" (click)="tab = 'register'; error = ''">
+        Criar Conta
+      </button>
     </div>
 
     <div class="alert-error" *ngIf="error">{{ error }}</div>
@@ -20,16 +20,24 @@
     <form *ngIf="tab === 'login'" [formGroup]="form" (ngSubmit)="onLogin()" novalidate>
       <div class="field">
         <label>Email</label>
-        <input type="email" formControlName="email" placeholder="o.seu@email.com"
-          autocomplete="email"/>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="o.seu@email.com"
+          autocomplete="email"
+        />
         <span class="field-error" *ngIf="f['email'].invalid && f['email'].touched">
           Email inválido
         </span>
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" formControlName="password" placeholder="••••••••"
-          autocomplete="current-password"/>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
         <span class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
           Obrigatório
         </span>
@@ -40,43 +48,50 @@
     </form>
 
     <!-- Registo -->
-    <form *ngIf="tab === 'register'" [formGroup]="registerForm" (ngSubmit)="onRegister()" novalidate>
+    <form
+      *ngIf="tab === 'register'"
+      [formGroup]="registerForm"
+      (ngSubmit)="onRegister()"
+      novalidate
+    >
       <div class="field">
         <label>Número de Processo ou NIF *</label>
-        <input type="text" formControlName="patientNumber"
-          placeholder="Ex: 5000413178 ou PAC-2024-001"/>
+        <input
+          type="text"
+          formControlName="patientNumber"
+          placeholder="Ex: 5000413178 ou PAC-2024-001"
+        />
         <span class="hint">Encontra este número no seu cartão de paciente.</span>
-        <span class="field-error" *ngIf="rf['patientNumber'].invalid && rf['patientNumber'].touched">
+        <span
+          class="field-error"
+          *ngIf="rf['patientNumber'].invalid && rf['patientNumber'].touched"
+        >
           Obrigatório
         </span>
       </div>
       <div class="field">
         <label>Email *</label>
-        <input type="email" formControlName="email" placeholder="o.seu@email.com"/>
+        <input type="email" formControlName="email" placeholder="o.seu@email.com" />
         <span class="field-error" *ngIf="rf['email'].invalid && rf['email'].touched">
           Email inválido
         </span>
       </div>
       <div class="field">
         <label>Password *</label>
-        <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres"/>
+        <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres" />
         <span class="field-error" *ngIf="rf['password'].invalid && rf['password'].touched">
           Mínimo 8 caracteres
         </span>
       </div>
       <div class="field">
         <label>Confirmar Password *</label>
-        <input type="password" formControlName="confirmPassword" placeholder="Repetir password"/>
+        <input type="password" formControlName="confirmPassword" placeholder="Repetir password" />
       </div>
       <button type="submit" class="btn-submit" [disabled]="loading">
         {{ loading ? 'A criar conta...' : 'Criar Conta' }}
       </button>
     </form>
 
-    <p class="footer-note">
-      Precisa de ajuda? Contacte a recepção do hospital.
-    </p>
-
+    <p class="footer-note">Precisa de ajuda? Contacte a recepção do hospital.</p>
   </div>
-
 </div>

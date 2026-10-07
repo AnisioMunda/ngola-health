@@ -1,9 +1,8 @@
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Back
     </button>
@@ -11,13 +10,12 @@
   </header>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>Loading...</span>
+    <div class="spinner-lg"></div>
+    <span>Loading...</span>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading" novalidate>
-
     <div class="form-grid">
-
       <!-- Left column -->
       <div class="form-section">
         <h2 class="section-title">Episode Info</h2>
@@ -36,11 +34,13 @@
         <div class="field">
           <label>Type *</label>
           <div class="type-grid">
-            <button type="button"
+            <button
+              type="button"
               *ngFor="let t of episodeTypes"
               class="type-btn"
               [class.selected]="f['episodeType'].value === t.value"
-              (click)="form.get('episodeType')?.setValue(t.value)">
+              (click)="form.get('episodeType')?.setValue(t.value)"
+            >
               {{ t.label }}
             </button>
           </div>
@@ -56,18 +56,22 @@
           </div>
           <div class="field">
             <label>Scheduled At</label>
-            <input type="datetime-local" formControlName="scheduledAt"/>
+            <input type="datetime-local" formControlName="scheduledAt" />
           </div>
         </div>
 
         <div class="field">
           <label>Reason</label>
-          <input type="text" formControlName="reason" placeholder="Reason for the visit..."/>
+          <input type="text" formControlName="reason" placeholder="Reason for the visit..." />
         </div>
 
         <div class="field">
           <label>Symptoms</label>
-          <textarea formControlName="symptoms" rows="3" placeholder="Reported symptoms..."></textarea>
+          <textarea
+            formControlName="symptoms"
+            rows="3"
+            placeholder="Reported symptoms..."
+          ></textarea>
         </div>
       </div>
 
@@ -82,7 +86,11 @@
 
         <div class="field">
           <label>Prescription</label>
-          <textarea formControlName="prescription" rows="3" placeholder="Medications, dosages..."></textarea>
+          <textarea
+            formControlName="prescription"
+            rows="3"
+            placeholder="Medications, dosages..."
+          ></textarea>
         </div>
 
         <div class="field">
@@ -95,26 +103,25 @@
         <div class="field-row">
           <div class="field">
             <label>Blood Pressure</label>
-            <input type="text" formControlName="bloodPressure" placeholder="120/80"/>
+            <input type="text" formControlName="bloodPressure" placeholder="120/80" />
           </div>
           <div class="field">
             <label>Heart Rate (bpm)</label>
-            <input type="number" formControlName="heartRate" placeholder="72"/>
+            <input type="number" formControlName="heartRate" placeholder="72" />
           </div>
         </div>
 
         <div class="field-row">
           <div class="field">
             <label>Temperature (°C)</label>
-            <input type="number" formControlName="temperature" placeholder="36.5" step="0.1"/>
+            <input type="number" formControlName="temperature" placeholder="36.5" step="0.1" />
           </div>
           <div class="field">
             <label>Weight (kg)</label>
-            <input type="number" formControlName="weightKg" placeholder="70.5" step="0.1"/>
+            <input type="number" formControlName="weightKg" placeholder="70.5" step="0.1" />
           </div>
         </div>
       </div>
-
     </div>
 
     <div class="alert-error" *ngIf="error">{{ error }}</div>
@@ -128,7 +135,5 @@
         </span>
       </button>
     </div>
-
   </form>
-
 </div>

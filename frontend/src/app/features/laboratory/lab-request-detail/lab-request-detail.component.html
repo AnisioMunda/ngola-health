@@ -1,9 +1,8 @@
 <div class="page">
-
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Back
     </button>
@@ -11,13 +10,13 @@
   </header>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>Loading...</span>
+    <div class="spinner-lg"></div>
+    <span>Loading...</span>
   </div>
 
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <ng-container *ngIf="request && !loading">
-
     <!-- Summary card -->
     <div class="summary-card">
       <div class="summary-header">
@@ -35,12 +34,22 @@
           <button class="btn-action" *ngIf="request.status === 'PENDING'" (click)="collect()">
             Collect Sample
           </button>
-          <button class="btn-action" *ngIf="request.status === 'COLLECTED'" (click)="startAnalysis()">
+          <button
+            class="btn-action"
+            *ngIf="request.status === 'COLLECTED'"
+            (click)="startAnalysis()"
+          >
             Start Analysis
           </button>
-          <button class="btn-cancel"
-            *ngIf="request.status === 'PENDING' || request.status === 'COLLECTED' || request.status === 'IN_ANALYSIS'"
-            (click)="cancelRequest()">
+          <button
+            class="btn-cancel"
+            *ngIf="
+              request.status === 'PENDING' ||
+              request.status === 'COLLECTED' ||
+              request.status === 'IN_ANALYSIS'
+            "
+            (click)="cancelRequest()"
+          >
             Cancel
           </button>
         </div>
@@ -53,15 +62,15 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Created</span>
-          <span class="meta-value">{{ request.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-value">{{ request.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
         </div>
         <div class="meta-item" *ngIf="request.collectedAt">
           <span class="meta-label">Collected</span>
-          <span class="meta-value">{{ request.collectedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-value">{{ request.collectedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
         </div>
         <div class="meta-item" *ngIf="request.completedAt">
           <span class="meta-label">Completed</span>
-          <span class="meta-value">{{ request.completedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="meta-value">{{ request.completedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
         </div>
       </div>
 
@@ -114,22 +123,26 @@
         <div class="field-row">
           <div class="field">
             <label>Result Value</label>
-            <input type="text" [(ngModel)]="resultForm.resultValue" placeholder="e.g. 14.5"/>
+            <input type="text" [(ngModel)]="resultForm.resultValue" placeholder="e.g. 14.5" />
           </div>
           <div class="field">
             <label>Unit</label>
-            <input type="text" [(ngModel)]="resultForm.resultUnit" placeholder="g/dL"/>
+            <input type="text" [(ngModel)]="resultForm.resultUnit" placeholder="g/dL" />
           </div>
         </div>
 
         <div class="field">
           <label>Reference Range</label>
-          <input type="text" [(ngModel)]="resultForm.referenceRange" placeholder="12.0 - 16.0 g/dL"/>
+          <input
+            type="text"
+            [(ngModel)]="resultForm.referenceRange"
+            placeholder="12.0 - 16.0 g/dL"
+          />
         </div>
 
         <div class="field-checkbox">
           <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="resultForm.abnormal"/>
+            <input type="checkbox" [(ngModel)]="resultForm.abnormal" />
             <span>Mark as abnormal</span>
           </label>
         </div>
@@ -147,7 +160,5 @@
         </div>
       </div>
     </div>
-
   </ng-container>
-
 </div>

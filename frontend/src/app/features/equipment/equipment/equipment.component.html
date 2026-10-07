@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div>
       <h1>Equipamentos</h1>
@@ -7,14 +6,14 @@
     </div>
     <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Novo Equipamento
     </button>
   </header>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -47,25 +46,29 @@
       <div class="form-grid">
         <div class="field">
           <label>Nome *</label>
-          <input type="text" formControlName="name" placeholder="Ex: Ventilador Mecânico"/>
-          <span class="field-error" *ngIf="f['name'].invalid && f['name'].touched">Obrigatório</span>
+          <input type="text" formControlName="name" placeholder="Ex: Ventilador Mecânico" />
+          <span class="field-error" *ngIf="f['name'].invalid && f['name'].touched"
+            >Obrigatório</span
+          >
         </div>
         <div class="field">
           <label>Código *</label>
-          <input type="text" formControlName="code" placeholder="Ex: EQ-001"/>
-          <span class="field-error" *ngIf="f['code'].invalid && f['code'].touched">Obrigatório</span>
+          <input type="text" formControlName="code" placeholder="Ex: EQ-001" />
+          <span class="field-error" *ngIf="f['code'].invalid && f['code'].touched"
+            >Obrigatório</span
+          >
         </div>
         <div class="field">
           <label>Marca</label>
-          <input type="text" formControlName="brand"/>
+          <input type="text" formControlName="brand" />
         </div>
         <div class="field">
           <label>Modelo</label>
-          <input type="text" formControlName="model"/>
+          <input type="text" formControlName="model" />
         </div>
         <div class="field">
           <label>Número de Série</label>
-          <input type="text" formControlName="serialNumber"/>
+          <input type="text" formControlName="serialNumber" />
         </div>
         <div class="field">
           <label>Categoria</label>
@@ -75,39 +78,41 @@
         </div>
         <div class="field span-2">
           <label>Localização</label>
-          <input type="text" formControlName="location" placeholder="Ex: Bloco A — Sala 3"/>
+          <input type="text" formControlName="location" placeholder="Ex: Bloco A — Sala 3" />
         </div>
         <div class="field">
           <label>Data de Compra</label>
-          <input type="date" formControlName="purchaseDate"/>
+          <input type="date" formControlName="purchaseDate" />
         </div>
         <div class="field">
           <label>Preço de Compra (Kz)</label>
-          <input type="number" formControlName="purchasePrice"/>
+          <input type="number" formControlName="purchasePrice" />
         </div>
         <div class="field">
           <label>Validade Garantia</label>
-          <input type="date" formControlName="warrantyExpiry"/>
+          <input type="date" formControlName="warrantyExpiry" />
         </div>
         <div class="field">
           <label>Próxima Manutenção</label>
-          <input type="date" formControlName="nextMaintenanceDate"/>
+          <input type="date" formControlName="nextMaintenanceDate" />
         </div>
         <div class="field">
           <label>Intervalo Manutenção (dias)</label>
-          <input type="number" formControlName="maintenanceIntervalDays"/>
+          <input type="number" formControlName="maintenanceIntervalDays" />
         </div>
         <div class="field">
           <label>Próxima Calibração</label>
-          <input type="date" formControlName="nextCalibrationDate"/>
+          <input type="date" formControlName="nextCalibrationDate" />
         </div>
         <div class="field span-2">
           <label>Notas</label>
-          <input type="text" formControlName="notes"/>
+          <input type="text" formControlName="notes" />
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="showCreateForm = false">Cancelar</button>
+        <button type="button" class="btn-secondary" (click)="showCreateForm = false">
+          Cancelar
+        </button>
         <button type="submit" class="btn-primary" [disabled]="saving">
           {{ saving ? 'A guardar...' : 'Registar Equipamento' }}
         </button>
@@ -117,12 +122,15 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" [class.active]="activeTab === 'list'"   (click)="onTabChange('list')">
+    <button class="tab" [class.active]="activeTab === 'list'" (click)="onTabChange('list')">
       Inventário <span class="tab-badge">{{ totalElements }}</span>
     </button>
     <button class="tab" [class.active]="activeTab === 'alerts'" (click)="onTabChange('alerts')">
       Alertas
-      <span class="tab-badge alert" *ngIf="stats && (stats.maintenanceDue + stats.calibrationDue) > 0">
+      <span
+        class="tab-badge alert"
+        *ngIf="stats && stats.maintenanceDue + stats.calibrationDue > 0"
+      >
         {{ stats!.maintenanceDue + stats!.calibrationDue }}
       </span>
     </button>
@@ -133,15 +141,24 @@
   <!-- ===== INVENTÁRIO ===== -->
   <ng-container *ngIf="!loading && activeTab === 'list'">
     <div class="search-bar">
-      <input type="text" [(ngModel)]="searchQuery" placeholder="Pesquisar por nome, código, marca..."
-        (keyup.enter)="onSearch()"/>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Pesquisar por nome, código, marca..."
+        (keyup.enter)="onSearch()"
+      />
       <button class="btn-search" (click)="onSearch()">🔍</button>
     </div>
 
     <div class="empty-state" *ngIf="equipment.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <rect x="6" y="6" width="36" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M16 24h16M24 16v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="6" y="6" width="36" height="36" rx="4" stroke="currentColor" stroke-width="2" />
+        <path
+          d="M16 24h16M24 16v16"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
       </svg>
       <p>Nenhum equipamento registado.</p>
     </div>
@@ -172,14 +189,16 @@
             <td class="location">{{ e.location || '—' }}</td>
             <td>
               <span class="maint-date" [class.overdue]="e.maintenanceDue">
-                {{ e.nextMaintenanceDate ? (e.nextMaintenanceDate | date:'dd/MM/yyyy') : '—' }}
+                {{ e.nextMaintenanceDate ? (e.nextMaintenanceDate | date: 'dd/MM/yyyy') : '—' }}
                 <span *ngIf="e.maintenanceDue" class="due-tag">ATRASO</span>
               </span>
             </td>
             <td>
-              <span class="status-badge"
+              <span
+                class="status-badge"
                 [style.background]="statusColors[e.status] + '22'"
-                [style.color]="statusColors[e.status]">
+                [style.color]="statusColors[e.status]"
+              >
                 {{ e.statusLabel }}
               </span>
             </td>
@@ -191,9 +210,13 @@
       </table>
 
       <div class="pagination" *ngIf="totalPages > 1">
-        <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+        <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+          ← Anterior
+        </button>
         <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
-        <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+        <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+          Próxima →
+        </button>
       </div>
     </div>
   </ng-container>
@@ -204,21 +227,23 @@
       <p>✓ Sem alertas de manutenção nos próximos 7 dias.</p>
     </div>
     <div class="alert-list" *ngIf="maintenanceDue.length > 0">
-      <div class="alert-row" *ngFor="let e of maintenanceDue"
-        [class.overdue]="e.maintenanceDue">
+      <div class="alert-row" *ngFor="let e of maintenanceDue" [class.overdue]="e.maintenanceDue">
         <div class="alert-icon">🔧</div>
         <div class="alert-info">
           <span class="alert-name">{{ e.name }}</span>
           <span class="alert-code">{{ e.code }} · {{ e.location }}</span>
           <span class="alert-date">
-            Manutenção: {{ e.nextMaintenanceDate | date:'dd/MM/yyyy' }}
+            Manutenção: {{ e.nextMaintenanceDate | date: 'dd/MM/yyyy' }}
             <span *ngIf="e.maintenanceDue" class="due-tag">EM ATRASO</span>
           </span>
         </div>
         <div class="alert-actions">
           <button class="btn-detail" (click)="openDetail(e)">Ver</button>
-          <select class="status-select" [value]="e.status"
-            (change)="updateStatus(e, $any($event.target).value)">
+          <select
+            class="status-select"
+            [value]="e.status"
+            (change)="updateStatus(e, $any($event.target).value)"
+          >
             <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
           </select>
         </div>
@@ -230,8 +255,11 @@
   <ng-container *ngIf="activeTab === 'detail' && selected">
     <div class="detail-header">
       <button class="btn-back" (click)="closeDetail()">← Voltar</button>
-      <select class="status-select-lg" [value]="selected.status"
-        (change)="updateStatus(selected, $any($event.target).value)">
+      <select
+        class="status-select-lg"
+        [value]="selected.status"
+        (change)="updateStatus(selected, $any($event.target).value)"
+      >
         <option *ngFor="let s of statusList" [value]="s.value">{{ s.label }}</option>
       </select>
     </div>
@@ -264,26 +292,36 @@
         </div>
         <div class="detail-block">
           <span class="detail-label">Data de Compra</span>
-          <span class="detail-value">{{ selected.purchaseDate ? (selected.purchaseDate | date:'dd/MM/yyyy') : '—' }}</span>
+          <span class="detail-value">{{
+            selected.purchaseDate ? (selected.purchaseDate | date: 'dd/MM/yyyy') : '—'
+          }}</span>
         </div>
         <div class="detail-block">
           <span class="detail-label">Garantia</span>
           <span class="detail-value" [class.expired-text]="selected.warrantyExpired">
-            {{ selected.warrantyExpiry ? (selected.warrantyExpiry | date:'dd/MM/yyyy') : '—' }}
+            {{ selected.warrantyExpiry ? (selected.warrantyExpiry | date: 'dd/MM/yyyy') : '—' }}
             <span *ngIf="selected.warrantyExpired"> (Expirada)</span>
           </span>
         </div>
         <div class="detail-block">
           <span class="detail-label">Próxima Manutenção</span>
           <span class="detail-value" [class.overdue-text]="selected.maintenanceDue">
-            {{ selected.nextMaintenanceDate ? (selected.nextMaintenanceDate | date:'dd/MM/yyyy') : '—' }}
+            {{
+              selected.nextMaintenanceDate
+                ? (selected.nextMaintenanceDate | date: 'dd/MM/yyyy')
+                : '—'
+            }}
             <span *ngIf="selected.maintenanceDue"> ⚠ Em atraso</span>
           </span>
         </div>
         <div class="detail-block">
           <span class="detail-label">Próxima Calibração</span>
           <span class="detail-value">
-            {{ selected.nextCalibrationDate ? (selected.nextCalibrationDate | date:'dd/MM/yyyy') : '—' }}
+            {{
+              selected.nextCalibrationDate
+                ? (selected.nextCalibrationDate | date: 'dd/MM/yyyy')
+                : '—'
+            }}
           </span>
         </div>
         <div class="detail-block span-2" *ngIf="selected.notes">
@@ -297,14 +335,18 @@
     <div class="section-card">
       <div class="section-header">
         <h2>Histórico de Manutenção</h2>
-        <button class="btn-add-maint"
-          (click)="showMaintenanceForm = !showMaintenanceForm">
+        <button class="btn-add-maint" (click)="showMaintenanceForm = !showMaintenanceForm">
           + Registar
         </button>
       </div>
 
-      <form *ngIf="showMaintenanceForm" [formGroup]="maintenanceForm"
-        (ngSubmit)="onAddMaintenance()" novalidate class="maint-form">
+      <form
+        *ngIf="showMaintenanceForm"
+        [formGroup]="maintenanceForm"
+        (ngSubmit)="onAddMaintenance()"
+        novalidate
+        class="maint-form"
+      >
         <div class="form-grid">
           <div class="field">
             <label>Tipo *</label>
@@ -323,24 +365,33 @@
           </div>
           <div class="field span-2">
             <label>Descrição *</label>
-            <input type="text" formControlName="description"
-              placeholder="Descrever o trabalho realizado..."/>
-            <span class="field-error" *ngIf="mf['description'].invalid && mf['description'].touched">
+            <input
+              type="text"
+              formControlName="description"
+              placeholder="Descrever o trabalho realizado..."
+            />
+            <span
+              class="field-error"
+              *ngIf="mf['description'].invalid && mf['description'].touched"
+            >
               Obrigatório
             </span>
           </div>
           <div class="field">
             <label>Custo (Kz)</label>
-            <input type="number" formControlName="cost"/>
+            <input type="number" formControlName="cost" />
           </div>
           <div class="field">
             <label>Próxima Manutenção</label>
-            <input type="date" formControlName="nextMaintenanceDate"/>
+            <input type="date" formControlName="nextMaintenanceDate" />
           </div>
           <div class="field span-2">
             <label>Peças Substituídas</label>
-            <input type="text" formControlName="partsReplaced"
-              placeholder="Ex: Filtro HEPA, correa de transmissão..."/>
+            <input
+              type="text"
+              formControlName="partsReplaced"
+              placeholder="Ex: Filtro HEPA, correa de transmissão..."
+            />
           </div>
         </div>
         <div class="form-actions">
@@ -364,13 +415,11 @@
           <div class="maint-info">
             <span class="maint-desc">{{ m.description }}</span>
             <span class="maint-meta">
-              {{ m.performedAt | date:'dd/MM/yyyy HH:mm' }}
+              {{ m.performedAt | date: 'dd/MM/yyyy HH:mm' }}
               · {{ m.performedByName }}
-              <span *ngIf="m.cost"> · {{ m.cost | number:'1.2-2' }} Kz</span>
+              <span *ngIf="m.cost"> · {{ m.cost | number: '1.2-2' }} Kz</span>
             </span>
-            <span class="maint-parts" *ngIf="m.partsReplaced">
-              Peças: {{ m.partsReplaced }}
-            </span>
+            <span class="maint-parts" *ngIf="m.partsReplaced"> Peças: {{ m.partsReplaced }} </span>
           </div>
           <span class="maint-result" [class]="'result-' + m.result?.toLowerCase()">
             {{ m.result }}
@@ -379,5 +428,4 @@
       </div>
     </div>
   </ng-container>
-
 </div>

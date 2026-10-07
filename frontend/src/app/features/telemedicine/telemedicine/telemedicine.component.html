@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div>
       <h1>Telemedicina</h1>
@@ -7,14 +6,14 @@
     </div>
     <button class="btn-primary" (click)="showForm = !showForm">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Nova Sessão
     </button>
   </header>
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error"   *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -31,7 +30,7 @@
       <span class="stat-label">Concluídas este mês</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value amber">{{ stats.avgDurationMinutes | number:'1.0-0' }} min</span>
+      <span class="stat-value amber">{{ stats.avgDurationMinutes | number: '1.0-0' }} min</span>
       <span class="stat-label">Duração média</span>
     </div>
   </div>
@@ -53,7 +52,7 @@
         </div>
         <div class="field">
           <label>Data e Hora *</label>
-          <input type="datetime-local" formControlName="scheduledAt"/>
+          <input type="datetime-local" formControlName="scheduledAt" />
           <span class="field-error" *ngIf="f['scheduledAt'].invalid && f['scheduledAt'].touched">
             Obrigatório
           </span>
@@ -73,8 +72,11 @@
     <h2 class="form-title">Concluir Sessão — {{ selectedSession.patientName }}</h2>
     <div class="field">
       <label>Notas Clínicas</label>
-      <textarea [(ngModel)]="clinicalNotesText" rows="5"
-        placeholder="Resumo da consulta, diagnóstico, indicações..."></textarea>
+      <textarea
+        [(ngModel)]="clinicalNotesText"
+        rows="5"
+        placeholder="Resumo da consulta, diagnóstico, indicações..."
+      ></textarea>
     </div>
     <div class="form-actions">
       <button class="btn-secondary" (click)="showNotes = false">Cancelar</button>
@@ -90,25 +92,30 @@
   <ng-container *ngIf="!loading">
     <div class="empty-state" *ngIf="sessions.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <rect x="4" y="10" width="32" height="22" rx="3" stroke="currentColor" stroke-width="2"/>
-        <path d="M36 17l8-5v18l-8-5V17z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M4 38h22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="4" y="10" width="32" height="22" rx="3" stroke="currentColor" stroke-width="2" />
+        <path
+          d="M36 17l8-5v18l-8-5V17z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linejoin="round"
+        />
+        <path d="M4 38h22" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       <p>Sem sessões activas.</p>
       <button class="btn-primary" (click)="showForm = true">Criar sessão</button>
     </div>
 
     <div class="sessions-grid">
-      <div class="session-card" *ngFor="let s of sessions"
-        [class]="'status-' + s.status.toLowerCase()">
-
+      <div
+        class="session-card"
+        *ngFor="let s of sessions"
+        [class]="'status-' + s.status.toLowerCase()"
+      >
         <div class="session-header">
-          <div class="status-indicator"
-            [style.background]="statusColors[s.status]">
-          </div>
+          <div class="status-indicator" [style.background]="statusColors[s.status]"></div>
           <span class="status-label">{{ s.statusLabel }}</span>
           <span class="session-time">
-            {{ s.scheduledAt | date:'HH:mm' }}
+            {{ s.scheduledAt | date: 'HH:mm' }}
           </span>
         </div>
 
@@ -124,11 +131,24 @@
 
         <div class="session-date">
           <svg viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M1 6h14" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M5 1v2M11 1v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <rect
+              x="1"
+              y="2"
+              width="14"
+              height="12"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.2"
+            />
+            <path d="M1 6h14" stroke="currentColor" stroke-width="1.2" />
+            <path
+              d="M5 1v2M11 1v2"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
           </svg>
-          {{ s.scheduledAt | date:'dd/MM/yyyy HH:mm' }}
+          {{ s.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}
         </div>
 
         <!-- Link da sala -->
@@ -150,29 +170,42 @@
 
         <!-- Acções -->
         <div class="session-actions">
-          <button class="btn-join"
+          <button
+            class="btn-join"
             *ngIf="s.status === 'SCHEDULED' || s.status === 'WAITING'"
-            (click)="joinSession(s)">
+            (click)="joinSession(s)"
+          >
             <svg viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/>
-              <path d="M11 6l4-2v8l-4-2V6z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              <rect
+                x="1"
+                y="3"
+                width="10"
+                height="10"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="1.2"
+              />
+              <path
+                d="M11 6l4-2v8l-4-2V6z"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              />
             </svg>
             Entrar
           </button>
-          <button class="btn-end"
-            *ngIf="s.status === 'IN_PROGRESS'"
-            (click)="openEndForm(s)">
+          <button class="btn-end" *ngIf="s.status === 'IN_PROGRESS'" (click)="openEndForm(s)">
             ✓ Concluir
           </button>
-          <button class="btn-cancel"
+          <button
+            class="btn-cancel"
             *ngIf="s.status !== 'COMPLETED' && s.status !== 'CANCELLED'"
-            (click)="cancel(s)">
+            (click)="cancel(s)"
+          >
             Cancelar
           </button>
         </div>
-
       </div>
     </div>
   </ng-container>
-
 </div>

@@ -1,12 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-  HttpTestingController
-} from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import {
   PrescriptionService,
   PrescriptionResponse,
-  PrescriptionStatus
+  PrescriptionStatus,
 } from './prescription.service';
 import { environment } from '../../../environments/environment';
 
@@ -34,19 +31,21 @@ describe('PrescriptionService', () => {
     cancelledReason: '',
     items: [],
     dispensations: [],
-    createdAt: '2026-08-01T10:00:00Z'
+    createdAt: '2026-08-01T10:00:00Z',
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [PrescriptionService]
+      providers: [PrescriptionService],
     });
-    service     = TestBed.inject(PrescriptionService);
-    httpMock    = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(PrescriptionService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => { httpMock.verify(); });
+  afterEach(() => {
+    httpMock.verify();
+  });
 
   // ------------------------------------------------
   // getStats()
@@ -54,10 +53,13 @@ describe('PrescriptionService', () => {
 
   it('deve chamar GET /stats e retornar estatísticas', () => {
     const mockStats = {
-      totalActive: 5, totalToday: 2, pendingDispense: 3, expiringSoon: 1
+      totalActive: 5,
+      totalToday: 2,
+      pendingDispense: 3,
+      expiringSoon: 1,
     };
 
-    service.getStats().subscribe(stats => {
+    service.getStats().subscribe((stats) => {
       expect(stats.totalActive).toBe(5);
       expect(stats.pendingDispense).toBe(3);
     });
@@ -76,16 +78,16 @@ describe('PrescriptionService', () => {
       content: [mockPrescription],
       totalElements: 1,
       totalPages: 1,
-      number: 0
+      number: 0,
     };
 
-    service.findAll('2026-08-01', '2026-08-31', 0).subscribe(page => {
+    service.findAll('2026-08-01', '2026-08-31', 0).subscribe((page) => {
       expect(page.content.length).toBe(1);
       expect(page.content[0].prescriptionNumber).toBe('RX-2026-00001');
     });
 
-    const req = httpMock.expectOne(r =>
-      r.url === apiUrl && r.params.has('from') && r.params.has('to')
+    const req = httpMock.expectOne(
+      (r) => r.url === apiUrl && r.params.has('from') && r.params.has('to'),
     );
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('from')).toBe('2026-08-01');
@@ -95,16 +97,17 @@ describe('PrescriptionService', () => {
 
   it('deve chamar GET / sem filtro de data', () => {
     const mockPage = {
-      content: [], totalElements: 0, totalPages: 0, number: 0
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
     };
 
-    service.findAll(undefined, undefined, 0).subscribe(page => {
+    service.findAll(undefined, undefined, 0).subscribe((page) => {
       expect(page.content).toEqual([]);
     });
 
-    const req = httpMock.expectOne(r =>
-      r.url === apiUrl && !r.params.has('from')
-    );
+    const req = httpMock.expectOne((r) => r.url === apiUrl && !r.params.has('from'));
     expect(req.request.method).toBe('GET');
     req.flush(mockPage);
   });
@@ -116,7 +119,7 @@ describe('PrescriptionService', () => {
   it('deve chamar GET /{id}', () => {
     const id = mockPrescription.id;
 
-    service.findById(id).subscribe(p => {
+    service.findById(id).subscribe((p) => {
       expect(p.id).toBe(id);
       expect(p.status).toBe('ACTIVE');
     });
@@ -132,15 +135,13 @@ describe('PrescriptionService', () => {
 
   it('deve chamar GET /patient/{patientId}', () => {
     const patientId = 'patient-uuid';
-    const mockPage  = { content: [mockPrescription], totalElements: 1, totalPages: 1, number: 0 };
+    const mockPage = { content: [mockPrescription], totalElements: 1, totalPages: 1, number: 0 };
 
-    service.findByPatient(patientId).subscribe(page => {
+    service.findByPatient(patientId).subscribe((page) => {
       expect(page.content[0].patientId).toBe(patientId);
     });
 
-    const req = httpMock.expectOne(r =>
-      r.url === `${apiUrl}/patient/${patientId}`
-    );
+    const req = httpMock.expectOne((r) => r.url === `${apiUrl}/patient/${patientId}`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPage);
   });
@@ -153,14 +154,16 @@ describe('PrescriptionService', () => {
     const reqBody = {
       patientId: 'patient-uuid',
       validityDays: 30,
-      items: [{
-        medicationId: 'med-uuid',
-        quantityPrescribed: 10,
-        dosage: '1 comprimido 3x ao dia'
-      }]
+      items: [
+        {
+          medicationId: 'med-uuid',
+          quantityPrescribed: 10,
+          dosage: '1 comprimido 3x ao dia',
+        },
+      ],
     };
 
-    service.create(reqBody).subscribe(p => {
+    service.create(reqBody).subscribe((p) => {
       expect(p.prescriptionNumber).toBe('RX-2026-00001');
     });
 
@@ -179,8 +182,9 @@ describe('PrescriptionService', () => {
     const id = mockPrescription.id;
     const dispensed = { ...mockPrescription, status: 'DISPENSED' as PrescriptionStatus };
 
-    service.dispense(id, { prescriptionItemId: 'item-uuid', quantityToDispense: 5 })
-      .subscribe(p => {
+    service
+      .dispense(id, { prescriptionItemId: 'item-uuid', quantityToDispense: 5 })
+      .subscribe((p) => {
         expect(p.status).toBe('DISPENSED');
       });
 
@@ -195,10 +199,10 @@ describe('PrescriptionService', () => {
   // ------------------------------------------------
 
   it('deve chamar PATCH /{id}/cancel com motivo', () => {
-    const id        = mockPrescription.id;
+    const id = mockPrescription.id;
     const cancelled = { ...mockPrescription, status: 'CANCELLED' as PrescriptionStatus };
 
-    service.cancel(id, 'Alergia ao medicamento').subscribe(p => {
+    service.cancel(id, 'Alergia ao medicamento').subscribe((p) => {
       expect(p.status).toBe('CANCELLED');
     });
 
@@ -215,7 +219,7 @@ describe('PrescriptionService', () => {
   it('deve chamar GET /episode/{episodeId}', () => {
     const episodeId = 'episode-uuid';
 
-    service.findByEpisode(episodeId).subscribe(list => {
+    service.findByEpisode(episodeId).subscribe((list) => {
       expect(list.length).toBe(1);
     });
 

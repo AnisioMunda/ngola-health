@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <h1>Laboratory</h1>
@@ -7,7 +6,7 @@
     </div>
     <button class="btn-primary" (click)="goToCreate()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       New Request
     </button>
@@ -22,7 +21,8 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>Loading...</span>
+    <div class="spinner-lg"></div>
+    <span>Loading...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
@@ -47,8 +47,12 @@
           </td>
           <td>
             <div class="test-tags">
-              <span class="test-tag" *ngFor="let item of r.items.slice(0, 2)">{{ item.testCode }}</span>
-              <span class="test-tag-more" *ngIf="r.items.length > 2">+{{ r.items.length - 2 }}</span>
+              <span class="test-tag" *ngFor="let item of r.items.slice(0, 2)">{{
+                item.testCode
+              }}</span>
+              <span class="test-tag-more" *ngIf="r.items.length > 2"
+                >+{{ r.items.length - 2 }}</span
+              >
             </div>
           </td>
           <td>
@@ -56,16 +60,18 @@
               {{ priorityLabels[r.priority] }}
             </span>
           </td>
-          <td class="text-muted">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="text-muted">{{ r.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
           <td>
             <span class="status-badge" [class]="'status-' + r.status.toLowerCase()">
               {{ statusLabels[r.status] }}
             </span>
           </td>
           <td>
-            <button class="btn-action"
+            <button
+              class="btn-action"
               *ngIf="r.status === 'PENDING' || r.status === 'COLLECTED'"
-              (click)="advanceStatus(r, $event)">
+              (click)="advanceStatus(r, $event)"
+            >
               {{ getNextActionLabel(r.status) }}
             </button>
           </td>
@@ -74,8 +80,13 @@
         <tr *ngIf="requests.length === 0">
           <td colspan="6" class="empty-state">
             <svg viewBox="0 0 48 48" fill="none">
-              <path d="M16 6h16v10l8 20a4 4 0 01-4 6H12a4 4 0 01-4-6l8-20V6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M14 28h20" stroke="currentColor" stroke-width="2"/>
+              <path
+                d="M16 6h16v10l8 20a4 4 0 01-4 6H12a4 4 0 01-4-6l8-20V6z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
+              <path d="M14 28h20" stroke="currentColor" stroke-width="2" />
             </svg>
             <p>No lab requests found</p>
             <button class="btn-primary" (click)="goToCreate()">Create first request</button>
@@ -85,10 +96,13 @@
     </table>
 
     <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Previous</button>
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Previous
+      </button>
       <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Next →</button>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        Next →
+      </button>
     </div>
   </div>
-
 </div>

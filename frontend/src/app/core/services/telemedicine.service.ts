@@ -34,12 +34,12 @@ export interface TelemedicineStatsDto {
 }
 
 export const SESSION_STATUS_COLORS: Record<SessionStatus, string> = {
-  SCHEDULED:   '#3b82f6',
-  WAITING:     '#f59e0b',
+  SCHEDULED: '#3b82f6',
+  WAITING: '#f59e0b',
   IN_PROGRESS: '#16a34a',
-  COMPLETED:   '#6b7280',
-  CANCELLED:   '#dc2626',
-  NO_SHOW:     '#9ca3af'
+  COMPLETED: '#6b7280',
+  CANCELLED: '#dc2626',
+  NO_SHOW: '#9ca3af',
 };
 
 @Injectable({ providedIn: 'root' })

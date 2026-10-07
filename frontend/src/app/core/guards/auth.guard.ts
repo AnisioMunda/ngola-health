@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
  */
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  const router      = inject(Router);
+  const router = inject(Router);
 
   if (authService.isLoggedIn()) {
     return true;
@@ -26,7 +26,7 @@ export const authGuard: CanActivateFn = () => {
  */
 export const publicGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  const router      = inject(Router);
+  const router = inject(Router);
 
   if (authService.isLoggedIn()) {
     router.navigate(['/dashboard']);

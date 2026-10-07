@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <h1>Prescrições</h1>
@@ -7,7 +6,7 @@
     </div>
     <button class="btn-primary" (click)="goToNew()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       Nova Prescrição
     </button>
@@ -36,25 +35,30 @@
   <!-- Filtros -->
   <div class="filters">
     <div class="date-range">
-      <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()"/>
+      <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()" />
       <span>—</span>
-      <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()"/>
+      <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()" />
     </div>
   </div>
 
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
-
     <div class="empty-state" *ngIf="prescriptions.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M16 14h16M16 20h16M16 26h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M28 32l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2" />
+        <path
+          d="M16 14h16M16 20h16M16 26h10"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <path d="M28 32l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       <p>Nenhuma prescrição encontrada.</p>
       <button class="btn-primary" (click)="goToNew()">Criar prescrição</button>
@@ -73,31 +77,39 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of prescriptions"
-          (click)="goToDetail(p.id)" class="clickable"
-          [class.expiring]="daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'">
-
+        <tr
+          *ngFor="let p of prescriptions"
+          (click)="goToDetail(p.id)"
+          class="clickable"
+          [class.expiring]="daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'"
+        >
           <td class="rx-number">{{ p.prescriptionNumber }}</td>
           <td>
             <span class="patient-name">{{ p.patientName }}</span>
           </td>
           <td class="doctor-name">{{ p.doctorName }}</td>
-          <td class="date">{{ p.prescriptionDate | date:'dd/MM/yyyy' }}</td>
+          <td class="date">{{ p.prescriptionDate | date: 'dd/MM/yyyy' }}</td>
           <td>
-            <span class="expiry"
+            <span
+              class="expiry"
               [class.expiring-soon]="daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'"
-              [class.expired]="p.expired">
-              {{ p.expiryDate | date:'dd/MM/yyyy' }}
-              <span *ngIf="!p.expired && daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'">
+              [class.expired]="p.expired"
+            >
+              {{ p.expiryDate | date: 'dd/MM/yyyy' }}
+              <span
+                *ngIf="!p.expired && daysUntilExpiry(p.expiryDate) <= 3 && p.status === 'ACTIVE'"
+              >
                 ({{ daysUntilExpiry(p.expiryDate) }}d)
               </span>
             </span>
           </td>
           <td class="items-count">{{ p.items.length }} item(s)</td>
           <td>
-            <span class="status-badge"
+            <span
+              class="status-badge"
               [style.background]="statusColors[p.status] + '22'"
-              [style.color]="statusColors[p.status]">
+              [style.color]="statusColors[p.status]"
+            >
               {{ statusLabels[p.status] }}
             </span>
           </td>
@@ -106,10 +118,13 @@
     </table>
 
     <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Anterior
+      </button>
       <span>Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        Próxima →
+      </button>
     </div>
   </div>
-
 </div>

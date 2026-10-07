@@ -11,10 +11,9 @@ import { UserManagementService } from '../../../core/services/user-management.se
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './episode-form.component.html',
-  styleUrls: ['./episode-form.component.scss']
+  styleUrls: ['./episode-form.component.scss'],
 })
 export class EpisodeFormComponent implements OnInit {
-
   form!: FormGroup;
   isEdit = false;
   episodeId: string | null = null;
@@ -23,14 +22,14 @@ export class EpisodeFormComponent implements OnInit {
   error = '';
 
   patients: { id: string; fullName: string }[] = [];
-  doctors:  { id: string; fullName: string }[] = [];
+  doctors: { id: string; fullName: string }[] = [];
 
   episodeTypes: { value: EpisodeType; label: string }[] = [
-    { value: 'OUTPATIENT',         label: 'Outpatient Consultation' },
-    { value: 'EMERGENCY',          label: 'Emergency' },
-    { value: 'INPATIENT',          label: 'Inpatient / Admission' },
+    { value: 'OUTPATIENT', label: 'Outpatient Consultation' },
+    { value: 'EMERGENCY', label: 'Emergency' },
+    { value: 'INPATIENT', label: 'Inpatient / Admission' },
     { value: 'OUTPATIENT_SURGERY', label: 'Outpatient Surgery' },
-    { value: 'EXAM',               label: 'Exam / Diagnostic' }
+    { value: 'EXAM', label: 'Exam / Diagnostic' },
   ];
 
   constructor(
@@ -39,7 +38,7 @@ export class EpisodeFormComponent implements OnInit {
     private router: Router,
     private episodeService: EpisodeService,
     private patientService: PatientService,
-    private userService: UserManagementService
+    private userService: UserManagementService,
   ) {}
 
   ngOnInit(): void {
@@ -53,27 +52,27 @@ export class EpisodeFormComponent implements OnInit {
 
   buildForm(): void {
     this.form = this.fb.group({
-      patientId:    ['', Validators.required],
-      doctorId:     [''],
-      episodeType:  ['OUTPATIENT', Validators.required],
-      scheduledAt:  [''],
-      reason:       [''],
-      symptoms:     [''],
-      diagnosis:    [''],
+      patientId: ['', Validators.required],
+      doctorId: [''],
+      episodeType: ['OUTPATIENT', Validators.required],
+      scheduledAt: [''],
+      reason: [''],
+      symptoms: [''],
+      diagnosis: [''],
       prescription: [''],
-      notes:        [''],
-      bloodPressure:[''],
-      heartRate:    [null],
-      temperature:  [null],
-      weightKg:     [null]
+      notes: [''],
+      bloodPressure: [''],
+      heartRate: [null],
+      temperature: [null],
+      weightKg: [null],
     });
   }
 
   loadPatients(): void {
     this.patientService.findAll('', 0, 100).subscribe({
       next: (page) => {
-        this.patients = page.content.map(p => ({ id: p.id, fullName: p.fullName }));
-      }
+        this.patients = page.content.map((p) => ({ id: p.id, fullName: p.fullName }));
+      },
     });
   }
 
@@ -81,9 +80,9 @@ export class EpisodeFormComponent implements OnInit {
     this.userService.findAll(0, 100).subscribe({
       next: (page) => {
         this.doctors = page.content
-          .filter(u => u.roles.includes('DOCTOR'))
-          .map(u => ({ id: u.id, fullName: u.fullName }));
-      }
+          .filter((u) => u.roles.includes('DOCTOR'))
+          .map((u) => ({ id: u.id, fullName: u.fullName }));
+      },
     });
   }
 
@@ -92,28 +91,34 @@ export class EpisodeFormComponent implements OnInit {
     this.episodeService.findById(this.episodeId!).subscribe({
       next: (e) => {
         this.form.patchValue({
-          patientId:    e.patientId,
-          doctorId:     e.doctorId ?? '',
-          episodeType:  e.episodeType,
-          scheduledAt:  e.scheduledAt ? e.scheduledAt.substring(0, 16) : '',
-          reason:       e.reason,
-          symptoms:     e.symptoms,
-          diagnosis:    e.diagnosis,
+          patientId: e.patientId,
+          doctorId: e.doctorId ?? '',
+          episodeType: e.episodeType,
+          scheduledAt: e.scheduledAt ? e.scheduledAt.substring(0, 16) : '',
+          reason: e.reason,
+          symptoms: e.symptoms,
+          diagnosis: e.diagnosis,
           prescription: e.prescription,
-          notes:        e.notes,
-          bloodPressure:e.bloodPressure,
-          heartRate:    e.heartRate,
-          temperature:  e.temperature,
-          weightKg:     e.weightKg
+          notes: e.notes,
+          bloodPressure: e.bloodPressure,
+          heartRate: e.heartRate,
+          temperature: e.temperature,
+          weightKg: e.weightKg,
         });
         this.loading = false;
       },
-      error: () => { this.error = 'Failed to load episode.'; this.loading = false; }
+      error: () => {
+        this.error = 'Failed to load episode.';
+        this.loading = false;
+      },
     });
   }
 
   onSubmit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.saving = true;
     this.error = '';
@@ -121,7 +126,7 @@ export class EpisodeFormComponent implements OnInit {
 
     // Limpar campos vazios
     const payload = Object.fromEntries(
-      Object.entries(value).filter(([_, v]) => v !== '' && v !== null)
+      Object.entries(value).filter(([, v]) => v !== '' && v !== null),
     );
 
     // Formatar scheduledAt para ISO string
@@ -138,11 +143,15 @@ export class EpisodeFormComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.error = err.error?.message ?? 'Failed to save episode.';
-      }
+      },
     });
   }
 
-  goBack(): void { this.router.navigate(['/episodes']); }
+  goBack(): void {
+    this.router.navigate(['/episodes']);
+  }
 
-  get f() { return this.form.controls; }
+  get f() {
+    return this.form.controls;
+  }
 }

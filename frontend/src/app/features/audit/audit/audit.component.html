@@ -1,5 +1,4 @@
 <div class="page">
-
   <header class="page-header">
     <div>
       <h1>Auditoria e Segurança</h1>
@@ -12,9 +11,22 @@
     <div class="stat-card">
       <div class="stat-icon blue">
         <svg viewBox="0 0 20 20" fill="none">
-          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M4 6h12M4 10h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          <path
+            d="M4 6h12M4 10h8"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <rect
+            x="2"
+            y="2"
+            width="16"
+            height="16"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
         </svg>
       </div>
       <div class="stat-body">
@@ -24,11 +36,28 @@
     </div>
 
     <div class="stat-card" [class.alert-card]="stats.failedLoginsLast7Days > 0">
-      <div class="stat-icon" [class.red]="stats.failedLoginsLast7Days > 0" [class.green]="stats.failedLoginsLast7Days === 0">
+      <div
+        class="stat-icon"
+        [class.red]="stats.failedLoginsLast7Days > 0"
+        [class.green]="stats.failedLoginsLast7Days === 0"
+      >
         <svg viewBox="0 0 20 20" fill="none">
-          <rect x="3" y="8" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M7 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="10" cy="13" r="1.5" fill="currentColor"/>
+          <rect
+            x="3"
+            y="8"
+            width="14"
+            height="10"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M7 8V6a3 3 0 0 1 6 0v2"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <circle cx="10" cy="13" r="1.5" fill="currentColor" />
         </svg>
       </div>
       <div class="stat-body">
@@ -40,8 +69,13 @@
     <div class="stat-card top-users-card" *ngIf="(stats.topActiveUsers?.length ?? 0) > 0">
       <div class="stat-icon purple">
         <svg viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
         </svg>
       </div>
       <div class="stat-body">
@@ -68,16 +102,26 @@
       </select>
 
       <div class="date-range">
-        <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()"
-          placeholder="De"/>
+        <input
+          type="date"
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="onFilterChange()"
+          placeholder="De"
+        />
         <span>—</span>
-        <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()"
-          placeholder="Até"/>
+        <input
+          type="date"
+          [(ngModel)]="dateTo"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Até"
+        />
       </div>
 
-      <button class="btn-clear"
+      <button
+        class="btn-clear"
         *ngIf="actionFilter || entityTypeFilter || dateFrom || dateTo"
-        (click)="clearFilters()">
+        (click)="clearFilters()"
+      >
         Limpar
       </button>
     </div>
@@ -88,16 +132,21 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar logs...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar logs...</span>
   </div>
 
   <!-- Tabela de logs -->
   <div class="logs-card" *ngIf="!loading">
-
     <div class="empty-state" *ngIf="logs.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M12 18h24M12 24h18M12 30h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2" />
+        <path
+          d="M12 18h24M12 24h18M12 30h12"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
       </svg>
       <p>Sem logs de auditoria encontrados</p>
     </div>
@@ -135,27 +184,34 @@
           <td class="ip-cell">{{ log.ipAddress || '—' }}</td>
           <td>
             <span class="result-badge" [class]="'result-' + resultClass(log.result)">
-              {{ log.result === 'SUCCESS' ? '✓' :
-                 log.result === 'FAILURE' ? '✗' : '⚠' }}
-              {{ log.result === 'SUCCESS' ? 'OK' :
-                 log.result === 'FAILURE' ? 'Erro' : 'Não autorizado' }}
+              {{ log.result === 'SUCCESS' ? '✓' : log.result === 'FAILURE' ? '✗' : '⚠' }}
+              {{
+                log.result === 'SUCCESS'
+                  ? 'OK'
+                  : log.result === 'FAILURE'
+                    ? 'Erro'
+                    : 'Não autorizado'
+              }}
             </span>
           </td>
           <td>
-            <span class="time-ago" [title]="log.createdAt | date:'dd/MM/yyyy HH:mm:ss'">
+            <span class="time-ago" [title]="log.createdAt | date: 'dd/MM/yyyy HH:mm:ss'">
               {{ timeAgo(log.createdAt) }}
             </span>
-            <span class="time-full">{{ log.createdAt | date:'dd/MM HH:mm' }}</span>
+            <span class="time-full">{{ log.createdAt | date: 'dd/MM HH:mm' }}</span>
           </td>
         </tr>
       </tbody>
     </table>
 
     <div class="pagination" *ngIf="totalPages > 1">
-      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">← Anterior</button>
+      <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
+        ← Anterior
+      </button>
       <span>Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Próxima →</button>
+      <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+        Próxima →
+      </button>
     </div>
   </div>
-
 </div>

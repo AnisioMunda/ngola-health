@@ -3,7 +3,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export type DosageForm = 'TABLET' | 'CAPSULE' | 'SYRUP' | 'INJECTION' | 'CREAM' | 'OINTMENT' | 'DROPS' | 'INHALER' | 'OTHER';
+export type DosageForm =
+  | 'TABLET'
+  | 'CAPSULE'
+  | 'SYRUP'
+  | 'INJECTION'
+  | 'CREAM'
+  | 'OINTMENT'
+  | 'DROPS'
+  | 'INHALER'
+  | 'OTHER';
 
 export interface MedicationResponse {
   id: string;
@@ -66,20 +75,19 @@ export interface Page<T> {
 }
 
 export const DOSAGE_FORM_LABELS: Record<DosageForm, string> = {
-  TABLET:    'Tablet',
-  CAPSULE:   'Capsule',
-  SYRUP:     'Syrup',
+  TABLET: 'Tablet',
+  CAPSULE: 'Capsule',
+  SYRUP: 'Syrup',
   INJECTION: 'Injection',
-  CREAM:     'Cream',
-  OINTMENT:  'Ointment',
-  DROPS:     'Drops',
-  INHALER:   'Inhaler',
-  OTHER:     'Other'
+  CREAM: 'Cream',
+  OINTMENT: 'Ointment',
+  DROPS: 'Drops',
+  INHALER: 'Inhaler',
+  OTHER: 'Other',
 };
 
 @Injectable({ providedIn: 'root' })
 export class PharmacyService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/pharmacy`;
 
@@ -94,7 +102,9 @@ export class PharmacyService {
   }
 
   findBatches(medicationId: string): Observable<StockBatchResponse[]> {
-    return this.http.get<StockBatchResponse[]>(`${this.apiUrl}/medications/${medicationId}/batches`);
+    return this.http.get<StockBatchResponse[]>(
+      `${this.apiUrl}/medications/${medicationId}/batches`,
+    );
   }
 
   receiveStock(request: ReceiveStockRequest): Observable<StockBatchResponse> {
@@ -103,7 +113,7 @@ export class PharmacyService {
 
   findExpiringSoon(days = 30): Observable<StockBatchResponse[]> {
     return this.http.get<StockBatchResponse[]>(`${this.apiUrl}/stock/expiring`, {
-      params: new HttpParams().set('days', days)
+      params: new HttpParams().set('days', days),
     });
   }
 

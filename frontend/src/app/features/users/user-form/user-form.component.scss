@@ -1,4 +1,6 @@
-:host { display: block; }
+:host {
+  display: block;
+}
 
 .page {
   padding: 2rem;
@@ -33,8 +35,14 @@
   cursor: pointer;
   transition: all 0.15s;
 
-  svg { width: 16px; height: 16px; }
-  &:hover { background: #f9fafb; color: #374151; }
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  &:hover {
+    background: #f9fafb;
+    color: #374151;
+  }
 }
 
 // Form layout
@@ -90,13 +98,15 @@
   gap: 1rem;
   margin-bottom: 1rem;
 
-  .field { margin-bottom: 0; }
+  .field {
+    margin-bottom: 0;
+  }
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"] {
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='tel'] {
   width: 100%;
   height: 42px;
   padding: 0 12px;
@@ -107,16 +117,24 @@ input[type="tel"] {
   background: white;
   box-sizing: border-box;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 
-  &::placeholder { color: #c4c9d4; }
+  &::placeholder {
+    color: #c4c9d4;
+  }
 
   &:focus {
     border-color: #203a43;
     box-shadow: 0 0 0 3px rgba(32, 58, 67, 0.08);
   }
 
-  &:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+  &:disabled {
+    background: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
 }
 
 .field-checkbox {
@@ -131,7 +149,7 @@ input[type="tel"] {
   font-size: 0.875rem;
   color: #374151;
 
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     width: 16px;
     height: 16px;
     accent-color: #203a43;
@@ -168,7 +186,10 @@ input[type="tel"] {
   transition: all 0.15s;
   text-align: left;
 
-  &:hover { border-color: #203a43; color: #203a43; }
+  &:hover {
+    border-color: #203a43;
+    color: #203a43;
+  }
 }
 
 .role-selected {
@@ -187,7 +208,10 @@ input[type="tel"] {
   justify-content: center;
   flex-shrink: 0;
 
-  svg { width: 12px; height: 12px; }
+  svg {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 // Alert
@@ -220,8 +244,13 @@ input[type="tel"] {
   min-width: 140px;
   transition: opacity 0.2s;
 
-  &:hover:not(:disabled) { opacity: 0.88; }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .btn-secondary {
@@ -235,7 +264,9 @@ input[type="tel"] {
   cursor: pointer;
   transition: all 0.15s;
 
-  &:hover { background: #f9fafb; }
+  &:hover {
+    background: #f9fafb;
+  }
 }
 
 .loading-state {
@@ -266,10 +297,14 @@ input[type="tel"] {
 .spinner-sm {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

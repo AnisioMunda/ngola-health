@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type TriagePriority = 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN' | 'BLUE';
-export type TriageStatus   = 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'TRANSFERRED' | 'LEFT';
+export type TriageStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'TRANSFERRED' | 'LEFT';
 
 export interface TriageResponse {
   id: string;
@@ -50,40 +50,39 @@ export interface TriageStatsDto {
 }
 
 export const PRIORITY_LABELS: Record<TriagePriority, string> = {
-  RED:    'Imediato',
+  RED: 'Imediato',
   ORANGE: 'Muito Urgente',
   YELLOW: 'Urgente',
-  GREEN:  'Pouco Urgente',
-  BLUE:   'Não Urgente'
+  GREEN: 'Pouco Urgente',
+  BLUE: 'Não Urgente',
 };
 
 export const PRIORITY_COLORS: Record<TriagePriority, string> = {
-  RED:    '#dc2626',
+  RED: '#dc2626',
   ORANGE: '#ea580c',
   YELLOW: '#ca8a04',
-  GREEN:  '#16a34a',
-  BLUE:   '#2563eb'
+  GREEN: '#16a34a',
+  BLUE: '#2563eb',
 };
 
 export const PRIORITY_MAX_WAIT: Record<TriagePriority, number> = {
-  RED:    0,
+  RED: 0,
   ORANGE: 10,
   YELLOW: 60,
-  GREEN:  120,
-  BLUE:   240
+  GREEN: 120,
+  BLUE: 240,
 };
 
 export const STATUS_LABELS: Record<TriageStatus, string> = {
-  WAITING:     'Em Espera',
+  WAITING: 'Em Espera',
   IN_PROGRESS: 'Em Atendimento',
-  COMPLETED:   'Concluído',
+  COMPLETED: 'Concluído',
   TRANSFERRED: 'Transferido',
-  LEFT:        'Saiu'
+  LEFT: 'Saiu',
 };
 
 @Injectable({ providedIn: 'root' })
 export class TriageService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/triage`;
 
@@ -109,7 +108,11 @@ export class TriageService {
     return this.http.post<TriageResponse>(this.apiUrl, req);
   }
 
-  updatePriority(id: string, priority: TriagePriority, reason?: string): Observable<TriageResponse> {
+  updatePriority(
+    id: string,
+    priority: TriagePriority,
+    reason?: string,
+  ): Observable<TriageResponse> {
     return this.http.patch<TriageResponse>(`${this.apiUrl}/${id}/priority`, { priority, reason });
   }
 

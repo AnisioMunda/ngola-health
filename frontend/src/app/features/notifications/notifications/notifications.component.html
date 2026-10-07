@@ -1,15 +1,10 @@
 <div class="page">
-
   <header class="page-header">
     <div class="header-left">
       <h1>Notificações</h1>
-      <span class="unread-badge" *ngIf="unreadCount > 0">
-        {{ unreadCount }} não lida(s)
-      </span>
+      <span class="unread-badge" *ngIf="unreadCount > 0"> {{ unreadCount }} não lida(s) </span>
     </div>
-    <button class="btn-read-all"
-      *ngIf="unreadCount > 0"
-      (click)="markAllAsRead()">
+    <button class="btn-read-all" *ngIf="unreadCount > 0" (click)="markAllAsRead()">
       ✓ Marcar todas como lidas
     </button>
   </header>
@@ -17,32 +12,37 @@
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
-    <div class="spinner-lg"></div><span>A carregar...</span>
+    <div class="spinner-lg"></div>
+    <span>A carregar...</span>
   </div>
 
   <ng-container *ngIf="!loading">
-
     <div class="empty-state" *ngIf="notifications.length === 0">
       <svg viewBox="0 0 48 48" fill="none">
-        <path d="M36 16A12 12 0 0 0 12 16c0 14-6 18-6 18h36s-6-4-6-18"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M27.46 42a4 4 0 0 1-6.92 0"
-          stroke="currentColor" stroke-width="2"/>
+        <path
+          d="M36 16A12 12 0 0 0 12 16c0 14-6 18-6 18h36s-6-4-6-18"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+        <path d="M27.46 42a4 4 0 0 1-6.92 0" stroke="currentColor" stroke-width="2" />
       </svg>
       <p>Sem notificações</p>
     </div>
 
     <div class="notifications-list" *ngIf="notifications.length > 0">
-
-      <div class="notification-card"
+      <div
+        class="notification-card"
         *ngFor="let n of notifications"
         [class.unread]="!n.read"
-        (click)="openNotification(n)">
-
+        (click)="openNotification(n)"
+      >
         <!-- Ícone e prioridade -->
-        <div class="notif-icon"
+        <div
+          class="notif-icon"
           [style.background]="priorityColors[n.priority] + '18'"
-          [style.border-color]="priorityColors[n.priority]">
+          [style.border-color]="priorityColors[n.priority]"
+        >
           {{ typeIcons[n.type] }}
         </div>
 
@@ -51,9 +51,11 @@
           <div class="notif-header">
             <span class="notif-title">{{ n.title }}</span>
             <div class="notif-meta">
-              <span class="priority-chip"
+              <span
+                class="priority-chip"
                 [style.background]="priorityColors[n.priority] + '22'"
-                [style.color]="priorityColors[n.priority]">
+                [style.color]="priorityColors[n.priority]"
+              >
                 {{ PRIORITY_LABELS[n.priority] }}
               </span>
               <span class="type-chip">{{ TYPE_LABELS[n.type] }}</span>
@@ -62,36 +64,51 @@
           <p class="notif-message">{{ n.message }}</p>
           <div class="notif-footer">
             <span class="notif-time">{{ timeAgo(n.createdAt) }}</span>
-            <span class="notif-date">{{ n.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="notif-date">{{ n.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
             <span class="read-label" *ngIf="n.read">✓ Lida</span>
           </div>
         </div>
 
         <!-- Acção -->
         <div class="notif-actions">
-          <button class="btn-mark"
+          <button
+            class="btn-mark"
             *ngIf="!n.read"
             (click)="markAsRead(n); $event.stopPropagation()"
-            title="Marcar como lida">
+            title="Marcar como lida"
+          >
             <svg viewBox="0 0 20 20" fill="none">
-              <path d="M5 10l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path
+                d="M5 10l4 4 6-6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
-          <button class="btn-open"
+          <button
+            class="btn-open"
             *ngIf="n.actionUrl"
             (click)="openNotification(n); $event.stopPropagation()"
-            title="Abrir">
+            title="Abrir"
+          >
             <svg viewBox="0 0 20 20" fill="none">
-              <path d="M8 4H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M11 3h6v6M17 3l-8 8"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path
+                d="M8 4H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M11 3h6v6M17 3l-8 8"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>
-
       </div>
-
     </div>
 
     <!-- Paginação -->
@@ -104,7 +121,5 @@
         Próxima →
       </button>
     </div>
-
   </ng-container>
-
 </div>

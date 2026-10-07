@@ -74,36 +74,42 @@ export interface Page<T> {
 }
 
 export const PRESCRIPTION_STATUS_LABELS: Record<PrescriptionStatus, string> = {
-  ACTIVE:               'Activa',
-  PARTIALLY_DISPENSED:  'Parcialmente Dispensada',
-  DISPENSED:            'Dispensada',
-  CANCELLED:            'Cancelada',
-  EXPIRED:              'Expirada'
+  ACTIVE: 'Activa',
+  PARTIALLY_DISPENSED: 'Parcialmente Dispensada',
+  DISPENSED: 'Dispensada',
+  CANCELLED: 'Cancelada',
+  EXPIRED: 'Expirada',
 };
 
 export const ITEM_STATUS_LABELS: Record<ItemStatus, string> = {
-  PENDING:   'Pendente',
+  PENDING: 'Pendente',
   DISPENSED: 'Dispensado',
-  PARTIAL:   'Parcial',
-  CANCELLED: 'Cancelado'
+  PARTIAL: 'Parcial',
+  CANCELLED: 'Cancelado',
 };
 
 export const STATUS_COLORS: Record<PrescriptionStatus, string> = {
-  ACTIVE:              '#3b82f6',
+  ACTIVE: '#3b82f6',
   PARTIALLY_DISPENSED: '#f59e0b',
-  DISPENSED:           '#16a34a',
-  CANCELLED:           '#dc2626',
-  EXPIRED:             '#9ca3af'
+  DISPENSED: '#16a34a',
+  CANCELLED: '#dc2626',
+  EXPIRED: '#9ca3af',
 };
 
 export const ROUTES = [
-  'Oral', 'Intravenosa', 'Intramuscular', 'Subcutânea',
-  'Tópica', 'Inalatória', 'Sublingual', 'Rectal', 'Oftálmica'
+  'Oral',
+  'Intravenosa',
+  'Intramuscular',
+  'Subcutânea',
+  'Tópica',
+  'Inalatória',
+  'Sublingual',
+  'Rectal',
+  'Oftálmica',
 ];
 
 @Injectable({ providedIn: 'root' })
 export class PrescriptionService {
-
   private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/prescriptions`;
 
@@ -114,7 +120,7 @@ export class PrescriptionService {
   findAll(from?: string, to?: string, page = 0): Observable<Page<PrescriptionResponse>> {
     let params = new HttpParams().set('page', page).set('size', 20);
     if (from) params = params.set('from', from);
-    if (to)   params = params.set('to',   to);
+    if (to) params = params.set('to', to);
     return this.http.get<Page<PrescriptionResponse>>(this.apiUrl, { params });
   }
 
@@ -124,8 +130,9 @@ export class PrescriptionService {
 
   findByPatient(patientId: string, page = 0): Observable<Page<PrescriptionResponse>> {
     const params = new HttpParams().set('page', page).set('size', 20);
-    return this.http.get<Page<PrescriptionResponse>>(
-      `${this.apiUrl}/patient/${patientId}`, { params });
+    return this.http.get<Page<PrescriptionResponse>>(`${this.apiUrl}/patient/${patientId}`, {
+      params,
+    });
   }
 
   findByEpisode(episodeId: string): Observable<PrescriptionResponse[]> {
@@ -145,7 +152,6 @@ export class PrescriptionService {
   }
 
   cancel(id: string, reason: string): Observable<PrescriptionResponse> {
-    return this.http.patch<PrescriptionResponse>(
-      `${this.apiUrl}/${id}/cancel`, { reason });
+    return this.http.patch<PrescriptionResponse>(`${this.apiUrl}/${id}/cancel`, { reason });
   }
 }

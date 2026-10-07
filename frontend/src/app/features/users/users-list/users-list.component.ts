@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   UserManagementService,
-  UserResponse
+  UserResponse,
 } from '../../../core/services/user-management.service';
 
 @Component({
@@ -11,10 +11,9 @@ import {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './users-list.component.html',
-  styleUrls: ['./users-list.component.scss']
+  styleUrls: ['./users-list.component.scss'],
 })
 export class UsersListComponent implements OnInit {
-
   users: UserResponse[] = [];
   loading = true;
   error = '';
@@ -26,7 +25,7 @@ export class UsersListComponent implements OnInit {
 
   constructor(
     private userService: UserManagementService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -45,7 +44,7 @@ export class UsersListComponent implements OnInit {
       error: () => {
         this.error = 'Failed to load users.';
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -58,38 +57,41 @@ export class UsersListComponent implements OnInit {
   }
 
   toggleStatus(user: UserResponse): void {
-    const action = user.registerStatus === 'ACTIVE'
-      ? this.userService.deactivate(user.id)
-      : this.userService.activate(user.id);
+    const action =
+      user.registerStatus === 'ACTIVE'
+        ? this.userService.deactivate(user.id)
+        : this.userService.activate(user.id);
 
     action.subscribe({
       next: (updated) => {
-        const index = this.users.findIndex(u => u.id === updated.id);
+        const index = this.users.findIndex((u) => u.id === updated.id);
         if (index !== -1) this.users[index] = updated;
       },
-      error: () => { this.error = 'Failed to update status.'; }
+      error: () => {
+        this.error = 'Failed to update status.';
+      },
     });
   }
 
   getStatusLabel(status: string): string {
     const map: Record<string, string> = {
-      'ACTIVE': 'Active',
-      'INACTIVE': 'Inactive',
-      'SUSPENDED': 'Suspended'
+      ACTIVE: 'Active',
+      INACTIVE: 'Inactive',
+      SUSPENDED: 'Suspended',
     };
     return map[status] ?? status;
   }
 
   getRoleLabel(role: string): string {
     const map: Record<string, string> = {
-      'ADMIN': 'Admin',
-      'DOCTOR': 'Doctor',
-      'NURSE': 'Nurse',
-      'RECEPTIONIST': 'Receptionist',
-      'PHARMACIST': 'Pharmacist',
-      'FINANCIAL': 'Financial',
-      'MANAGER': 'Manager',
-      'LAB_TECHNICIAN': 'Lab Tech'
+      ADMIN: 'Admin',
+      DOCTOR: 'Doctor',
+      NURSE: 'Nurse',
+      RECEPTIONIST: 'Receptionist',
+      PHARMACIST: 'Pharmacist',
+      FINANCIAL: 'Financial',
+      MANAGER: 'Manager',
+      LAB_TECHNICIAN: 'Lab Tech',
     };
     return map[role] ?? role;
   }
