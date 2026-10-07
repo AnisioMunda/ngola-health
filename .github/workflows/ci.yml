@@ -98,3 +98,20 @@ jobs:
       - name: Compilar produção
         working-directory: frontend
         run: npm run build:prod
+
+  secret-scan:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout histórico completo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Procurar segredos
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_VERSION: 8.30.1
