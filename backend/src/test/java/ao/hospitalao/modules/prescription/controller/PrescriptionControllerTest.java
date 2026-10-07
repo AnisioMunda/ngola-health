@@ -13,6 +13,7 @@ import ao.hospitalao.modules.auth.service.TokenBlackListService;
 import ao.hospitalao.modules.prescription.dto.PrescriptionDtos.*;
 import ao.hospitalao.modules.prescription.entity.Prescription.PrescriptionStatus;
 import ao.hospitalao.modules.prescription.service.PrescriptionService;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.UserDetailsServiceImpl;
 import ao.hospitalao.security.jwt.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +21,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -177,6 +181,20 @@ class PrescriptionControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
         .andExpect(status().isForbidden());
+  }
+
+  @ParameterizedTest
+  @EnumSource(RoleName.class)
+  @DisplayName("GET /stats — deve aplicar a matriz de perfis")
+  void shouldEnforceStatsRoleMatrix(RoleName role) throws Exception {
+    Set<RoleName> allowedRoles =
+        Set.of(RoleName.ADMIN, RoleName.MANAGER, RoleName.DOCTOR, RoleName.PHARMACIST);
+    int expectedStatus = allowedRoles.contains(role) ? 200 : 403;
+    when(prescriptionService.getStats()).thenReturn(PrescriptionStatsDto.builder().build());
+
+    mockMvc
+        .perform(api(get("/api/prescriptions/stats"), role.name().toLowerCase(), role.name()))
+        .andExpect(status().is(expectedStatus));
   }
 
   // ------------------------------------------------

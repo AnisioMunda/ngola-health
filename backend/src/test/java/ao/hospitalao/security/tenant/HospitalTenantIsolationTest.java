@@ -94,6 +94,8 @@ class HospitalTenantIsolationTest {
         .doesNotContain(secondPatient.getId());
 
     TenantContext.setCurrentHospital(OTHER_HOSPITAL);
+    assertThat(patientRepository.findById(firstPatient.getId())).isEmpty();
+    assertThat(patientRepository.findById(secondPatient.getId())).isPresent();
     patientRepository.deleteById(firstPatient.getId());
 
     TenantContext.setCurrentHospital(DEFAULT_HOSPITAL);
