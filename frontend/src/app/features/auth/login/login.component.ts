@@ -63,7 +63,7 @@ export class LoginComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.loading = false;
         if (err.status === 401) {
-          this.errorMessage = 'Email ou password incorrectos.';
+          this.errorMessage = 'Email ou palavra-passe incorrectos.';
         } else if (err.status === 400) {
           this.errorMessage = 'Dados inválidos. Verifique os campos.';
         } else {
