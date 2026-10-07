@@ -1,7 +1,9 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import {
   EpisodeService,
   EpisodeResponse,
@@ -27,16 +29,17 @@ export class EpisodesListComponent implements OnInit {
   totalPages = 0;
   currentPage = 0;
   pageSize = 20;
+  updatingEpisodeId: string | null = null;
 
   typeLabels = EPISODE_TYPE_LABELS;
   statusLabels = EPISODE_STATUS_LABELS;
 
   statuses: { value: EpisodeStatus | ''; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'SCHEDULED', label: 'Scheduled' },
-    { value: 'IN_PROGRESS', label: 'In Progress' },
-    { value: 'COMPLETED', label: 'Completed' },
-    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: '', label: 'Todos os estados' },
+    { value: 'SCHEDULED', label: 'Agendado' },
+    { value: 'IN_PROGRESS', label: 'Em curso' },
+    { value: 'COMPLETED', label: 'Concluído' },
+    { value: 'CANCELLED', label: 'Cancelado' },
   ];
 
   constructor(
@@ -50,6 +53,7 @@ export class EpisodesListComponent implements OnInit {
 
   loadEpisodes(): void {
     this.loading = true;
+    this.error = '';
     this.episodeService
       .findAll(
         undefined,
@@ -65,8 +69,11 @@ export class EpisodesListComponent implements OnInit {
           this.totalPages = page.totalPages;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Failed to load episodes.';
+        error: (error: HttpErrorResponse) => {
+          this.error =
+            error.error?.detail ??
+            error.error?.message ??
+            'Não foi possível carregar os episódios clínicos.';
           this.loading = false;
         },
       });
@@ -81,8 +88,8 @@ export class EpisodesListComponent implements OnInit {
     this.router.navigate(['/episodes/new']);
   }
 
-  goToDetail(id: string): void {
-    this.router.navigate(['/episodes', id]);
+  goToEdit(id: string): void {
+    this.router.navigate(['/episodes', id, 'edit']);
   }
 
   changeStatus(
@@ -98,13 +105,18 @@ export class EpisodesListComponent implements OnInit {
           ? this.episodeService.complete(episode.id)
           : this.episodeService.cancel(episode.id);
 
-    obs.subscribe({
+    this.error = '';
+    this.updatingEpisodeId = episode.id;
+    obs.pipe(finalize(() => (this.updatingEpisodeId = null))).subscribe({
       next: (updated) => {
         const idx = this.episodes.findIndex((e) => e.id === updated.id);
         if (idx !== -1) this.episodes[idx] = updated;
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Failed to update episode.';
+      error: (error: HttpErrorResponse) => {
+        this.error =
+          error.error?.detail ??
+          error.error?.message ??
+          'Não foi possível actualizar o estado do episódio.';
       },
     });
   }
