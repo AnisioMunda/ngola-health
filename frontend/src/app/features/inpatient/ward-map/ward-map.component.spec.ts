@@ -140,4 +140,13 @@ describe('WardMapComponent', () => {
       component.getBedAriaLabel({ ...bed, status: 'OCCUPIED', patientName: 'Ana Silva' }),
     ).toBe('Cama 01, Ocupada, paciente Ana Silva');
   });
+
+  it('envia a enfermaria e a cama ao iniciar uma admissão pelo mapa', () => {
+    component.selectBed(bed);
+    component.goToAdmit();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/inpatient/admissions/new'], {
+      queryParams: { bedId: bed.id, wardId: ward.id },
+    });
+  });
 });

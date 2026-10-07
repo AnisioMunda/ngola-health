@@ -84,8 +84,8 @@ export interface TransferResponse {
   fromWardName: string;
   toBedNumber: string;
   toWardName: string;
-  reason: string;
-  transferredByName: string;
+  reason: string | null;
+  transferredByName: string | null;
   transferredAt: string;
 }
 
@@ -93,7 +93,7 @@ export interface AdmissionResponse {
   id: string;
   patientId: string;
   patientName: string;
-  patientPhone: string;
+  patientPhone: string | null;
   bedId: string;
   bedNumber: string;
   wardId: string;
@@ -104,17 +104,36 @@ export interface AdmissionResponse {
   status: AdmissionStatus;
   statusLabel: string;
   admissionDate: string;
-  expectedDischargeDate: string;
-  dischargeDate: string;
+  expectedDischargeDate: string | null;
+  dischargeDate: string | null;
   admissionReason: string;
-  diagnosis: string;
-  dischargeNotes: string;
-  dischargeCondition: DischargeCondition;
+  diagnosis: string | null;
+  dischargeNotes: string | null;
+  dischargeCondition: DischargeCondition | null;
   daysAdmitted: number;
   admittedByName: string;
-  dischargedByName: string;
+  dischargedByName: string | null;
   createdAt: string;
   transfers: TransferResponse[];
+}
+
+export interface CreateAdmissionRequest {
+  patientId: string;
+  bedId: string;
+  episodeId?: string | null;
+  responsibleDoctorId: string;
+  admissionReason: string;
+  expectedDischargeDate: string | null;
+}
+
+export interface DischargeRequest {
+  dischargeNotes: string | null;
+  dischargeCondition: DischargeCondition;
+}
+
+export interface TransferRequest {
+  toBedId: string;
+  reason: string | null;
 }
 
 export interface Page<T> {
@@ -214,15 +233,15 @@ export class InpatientService {
     return this.http.get<AdmissionResponse>(`${this.apiUrl}/admissions/${id}`);
   }
 
-  admit(req: any): Observable<AdmissionResponse> {
+  admit(req: CreateAdmissionRequest): Observable<AdmissionResponse> {
     return this.http.post<AdmissionResponse>(`${this.apiUrl}/admissions`, req);
   }
 
-  discharge(id: string, req: any): Observable<AdmissionResponse> {
+  discharge(id: string, req: DischargeRequest): Observable<AdmissionResponse> {
     return this.http.patch<AdmissionResponse>(`${this.apiUrl}/admissions/${id}/discharge`, req);
   }
 
-  transfer(id: string, req: any): Observable<AdmissionResponse> {
+  transfer(id: string, req: TransferRequest): Observable<AdmissionResponse> {
     return this.http.patch<AdmissionResponse>(`${this.apiUrl}/admissions/${id}/transfer`, req);
   }
 }

@@ -121,6 +121,7 @@ export class WardMapComponent implements OnInit {
   }
 
   selectBed(bed: BedResponse): void {
+    this.error = '';
     this.selectedBed = bed;
     if (bed.status === 'AVAILABLE') {
       this.showAdmitModal = true;
@@ -160,7 +161,7 @@ export class WardMapComponent implements OnInit {
     this.closeModal();
     if (bedId) {
       this.router.navigate(['/inpatient/admissions/new'], {
-        queryParams: { bedId },
+        queryParams: { bedId, wardId: this.selectedWardId },
       });
     }
   }

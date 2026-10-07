@@ -1,7 +1,6 @@
-<!-- admission-detail.component.html -->
 <div class="page">
   <header class="page-header">
-    <button class="btn-back" (click)="goBack()">
+    <button type="button" class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -10,16 +9,15 @@
     <h1>Detalhe do Internamento</h1>
   </header>
 
-  <div class="loading-state" *ngIf="loading">
+  <div class="loading-state" *ngIf="loading" role="status">
     <div class="spinner-lg"></div>
     <span>A carregar...</span>
   </div>
 
-  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" *ngIf="success" role="status">✓ {{ success }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <ng-container *ngIf="admission && !loading">
-    <!-- Card principal -->
     <div class="detail-card">
       <div class="card-header">
         <div>
@@ -33,24 +31,26 @@
                 stroke-linecap="round"
               />
             </svg>
-            <span class="patient-name link" (click)="goToPatient()">
+            <button type="button" class="patient-name link" (click)="goToPatient()">
               {{ admission.patientName }}
-            </span>
+            </button>
             <span *ngIf="admission.patientPhone" class="patient-phone">
               {{ admission.patientPhone }}
             </span>
           </div>
           <div class="badges">
-            <span class="status-badge" [class]="'status-' + admission.status.toLowerCase()">
+            <span class="status-badge" [ngClass]="'status-' + admission.status.toLowerCase()">
               {{ statusLabels[admission.status] }}
             </span>
             <span class="overdue-badge" *ngIf="isOverdue()">Alta em Atraso</span>
           </div>
         </div>
 
-        <div class="card-actions" *ngIf="admission.status === 'ACTIVE'">
-          <button class="btn-transfer" (click)="openTransferForm()">Transferir Cama</button>
-          <button class="btn-discharge" (click)="showDischargeForm = !showDischargeForm">
+        <div class="card-actions" *ngIf="canDischarge()">
+          <button type="button" class="btn-transfer" (click)="openTransferForm()">
+            Transferir Cama
+          </button>
+          <button type="button" class="btn-discharge" (click)="openDischargeForm()">
             Dar Alta
           </button>
         </div>
@@ -99,7 +99,6 @@
         <p class="reason-text">{{ admission.diagnosis }}</p>
       </div>
 
-      <!-- Info de alta -->
       <div class="discharge-info" *ngIf="admission.status === 'DISCHARGED'">
         <div class="discharge-header">
           <svg viewBox="0 0 20 20" fill="none">
@@ -120,81 +119,128 @@
       </div>
     </div>
 
-    <!-- Formulário de Alta -->
-    <div class="action-card" *ngIf="showDischargeForm">
+    <section class="action-card" *ngIf="showDischargeForm">
       <h3>Registar Alta</h3>
       <div class="field">
-        <label>Condição de Alta</label>
-        <select [(ngModel)]="dischargeCondition">
-          <option *ngFor="let c of dischargeConditions" [value]="c.value">{{ c.label }}</option>
+        <label for="discharge-condition">Condição de Alta</label>
+        <select id="discharge-condition" [(ngModel)]="dischargeCondition">
+          <option *ngFor="let condition of dischargeConditions" [value]="condition.value">
+            {{ condition.label }}
+          </option>
         </select>
       </div>
       <div class="field">
-        <label>Notas de Alta</label>
+        <label for="discharge-notes">Notas de Alta</label>
         <textarea
+          id="discharge-notes"
           [(ngModel)]="dischargeNotes"
           rows="3"
+          maxlength="10000"
           placeholder="Instruções pós-alta, medicação, próxima consulta..."
         ></textarea>
       </div>
       <div class="action-buttons">
-        <button class="btn-secondary" (click)="showDischargeForm = false">Cancelar</button>
-        <button class="btn-discharge" [disabled]="savingDischarge" (click)="discharge()">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="savingDischarge"
+          (click)="showDischargeForm = false"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn-discharge"
+          [disabled]="savingDischarge"
+          (click)="discharge()"
+        >
           {{ savingDischarge ? 'A processar...' : 'Confirmar Alta' }}
         </button>
       </div>
-    </div>
+    </section>
 
-    <!-- Formulário de Transferência -->
-    <div class="action-card" *ngIf="showTransferForm">
+    <section class="action-card" *ngIf="showTransferForm">
       <h3>Transferir Paciente</h3>
 
-      <div class="beds-loading" *ngIf="loadingBeds">
+      <div class="beds-loading" *ngIf="loadingWards || loadingBeds" role="status">
         <div class="spinner-sm"></div>
-        A carregar camas disponíveis...
+        {{ loadingWards ? 'A carregar enfermarias...' : 'A carregar camas disponíveis...' }}
       </div>
 
-      <div class="beds-grid" *ngIf="!loadingBeds && availableBeds.length > 0">
+      <div class="field" *ngIf="!loadingWards && wards.length > 0">
+        <label for="transfer-ward">Enfermaria de destino</label>
+        <select
+          id="transfer-ward"
+          [(ngModel)]="selectedWardId"
+          (ngModelChange)="onTransferWardChange()"
+        >
+          <option *ngFor="let ward of wards" [value]="ward.id">{{ ward.name }}</option>
+        </select>
+      </div>
+
+      <div class="beds-grid" *ngIf="!loadingWards && !loadingBeds && availableBeds.length > 0">
         <button
           type="button"
-          *ngFor="let b of availableBeds"
+          *ngFor="let bed of availableBeds"
           class="bed-btn"
-          [class.selected]="selectedBedId === b.id"
-          (click)="selectedBedId = b.id"
+          [class.selected]="selectedBedId === bed.id"
+          [attr.aria-pressed]="selectedBedId === bed.id"
+          [attr.aria-label]="'Cama ' + bed.bedNumber + ', ' + bed.wardName"
+          (click)="selectedBedId = bed.id"
         >
-          <span class="bed-num">{{ b.bedNumber }}</span>
-          <span class="bed-lbl">{{ b.wardName }}</span>
+          <span class="bed-num">{{ bed.bedNumber }}</span>
+          <span class="bed-lbl"
+            >{{ bed.wardName }} · {{ bed.status === 'RESERVED' ? 'Reservada' : 'Livre' }}</span
+          >
         </button>
       </div>
 
-      <div class="no-beds" *ngIf="!loadingBeds && availableBeds.length === 0">
+      <div
+        class="no-beds"
+        *ngIf="!loadingWards && !loadingBeds && !error && availableBeds.length === 0"
+      >
         Sem camas disponíveis nesta enfermaria.
       </div>
 
-      <div class="field" style="margin-top: 1rem">
-        <label>Motivo da Transferência</label>
-        <input type="text" [(ngModel)]="transferReason" placeholder="Motivo..." />
+      <div class="field transfer-reason-field">
+        <label for="transfer-reason">Motivo da Transferência</label>
+        <input
+          id="transfer-reason"
+          type="text"
+          maxlength="300"
+          [(ngModel)]="transferReason"
+          placeholder="Motivo..."
+        />
       </div>
 
       <div class="action-buttons">
-        <button class="btn-secondary" (click)="showTransferForm = false">Cancelar</button>
         <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="savingTransfer"
+          (click)="closeTransferForm()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
           class="btn-transfer-confirm"
-          [disabled]="!selectedBedId || savingTransfer"
+          [disabled]="!selectedBedId || savingTransfer || loadingWards || loadingBeds"
           (click)="transfer()"
         >
           {{ savingTransfer ? 'A transferir...' : 'Confirmar Transferência' }}
         </button>
       </div>
-    </div>
+    </section>
 
-    <!-- Histórico de transferências -->
-    <div class="section-card" *ngIf="(admission.transfers?.length ?? 0) > 0">
+    <section class="section-card" *ngIf="admission.transfers.length > 0">
       <h3 class="section-title">Histórico de Transferências</h3>
       <div class="transfer-list">
-        <div class="transfer-item" *ngFor="let t of admission.transfers">
+        <div class="transfer-item" *ngFor="let transfer of admission.transfers">
           <div class="transfer-arrow">
-            <span class="from-bed">{{ t.fromWardName }} — Cama {{ t.fromBedNumber }}</span>
+            <span class="from-bed"
+              >{{ transfer.fromWardName }} — Cama {{ transfer.fromBedNumber }}</span
+            >
             <svg viewBox="0 0 20 20" fill="none">
               <path
                 d="M4 10h12M12 6l4 4-4 4"
@@ -203,15 +249,15 @@
                 stroke-linecap="round"
               />
             </svg>
-            <span class="to-bed">{{ t.toWardName }} — Cama {{ t.toBedNumber }}</span>
+            <span class="to-bed">{{ transfer.toWardName }} — Cama {{ transfer.toBedNumber }}</span>
           </div>
           <div class="transfer-meta">
-            <span>{{ t.transferredAt | date: 'dd/MM/yyyy HH:mm' }}</span>
-            <span *ngIf="t.transferredByName">— {{ t.transferredByName }}</span>
-            <span *ngIf="t.reason" class="transfer-reason">{{ t.reason }}</span>
+            <span>{{ transfer.transferredAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            <span *ngIf="transfer.transferredByName">— {{ transfer.transferredByName }}</span>
+            <span *ngIf="transfer.reason" class="transfer-reason">{{ transfer.reason }}</span>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </ng-container>
 </div>

@@ -305,7 +305,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 4.11 | `feat(internamento): adicionar API de enfermarias e camas` | Pedidos validados, camas não ocupadas fora do fluxo de internamento, dados do paciente carregados sem consulta por cama e testes focados |
 | 4.12 | `feat(internamento): adicionar API de admissões, transferências e altas` | Admissões activas únicas por cama e paciente na BD; bloqueios concorrentes e testes; serviços de enfermarias/camas separados do ciclo de internamento (R12, R17) |
 | 4.13 | `feat(internamento): adicionar ecrãs de enfermarias e mapa de camas` | Gestão de enfermarias/camas e mapa de ocupação acessíveis, com estados de carregamento, erros e testes focados |
-| 4.14 | `feat(internamento): adicionar admissões, detalhe e alta no frontend` | |
+| 4.14 | `feat(internamento): adicionar admissões, detalhe e alta no frontend` | Admissão validada com pré-selecção de enfermaria/cama; detalhe e alta com estados e erros tratados; transferências entre enfermarias e testes focados |
 | 4.15 | `docs(agendamento): documentar agendamento, notificações e internamento` | |
 
 ### Fase 5 — Financeiro e facturação electrónica AGT → `v0.6.0`
