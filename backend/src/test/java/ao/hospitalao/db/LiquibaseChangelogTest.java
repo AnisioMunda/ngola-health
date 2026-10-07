@@ -78,6 +78,31 @@ class LiquibaseChangelogTest {
             });
   }
 
+  @Test
+  void pharmacyTableMigrationsAreIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "009-01-criar-tabela-medications", "changes/pharmacy/001-pharmacy.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "009-02-criar-tabela-stock-batches", "changes/pharmacy/001-pharmacy.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "009-03-criar-tabela-stock-movements", "changes/pharmacy/001-pharmacy.sql");
+  }
+
+  private void assertChangesetIsIncludedAndReversible(
+      DatabaseChangeLog changelog, String id, String filePath) {
+    assertThat(changelog.getChangeSets())
+        .filteredOn(changeSet -> changeSet.getId().equals(id))
+        .singleElement()
+        .satisfies(
+            changeSet -> {
+              assertThat(changeSet.getFilePath()).endsWith(filePath);
+              assertThat(changeSet.getRollback()).isNotNull();
+              assertThat(changeSet.getRollback().getChanges()).isNotEmpty();
+            });
+  }
+
   private DatabaseChangeLog parseMasterChangelog() throws Exception {
     try (var resources = new ClassLoaderResourceAccessor()) {
       var path = "db/changelog/db.changelog-master.xml";
