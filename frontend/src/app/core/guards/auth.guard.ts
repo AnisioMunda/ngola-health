@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
  * Protege rotas que requerem autenticação.
  * Se o utilizador não tiver token válido, redirige para /login.
  */
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -15,8 +15,7 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
-  router.navigate(['/login']);
-  return false;
+  return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 
 /**
@@ -28,10 +27,5 @@ export const publicGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn()) {
-    router.navigate(['/dashboard']);
-    return false;
-  }
-
-  return true;
+  return authService.isLoggedIn() ? router.createUrlTree(['/dashboard']) : true;
 };

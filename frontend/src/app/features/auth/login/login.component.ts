@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit {
   // evita problemas com strict mode e standalone components
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
 
   form!: FormGroup;
@@ -58,7 +59,14 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const destination =
+          returnUrl?.startsWith('/') &&
+          !returnUrl.startsWith('//') &&
+          !returnUrl.startsWith('/login')
+            ? returnUrl
+            : '/dashboard';
+        void this.router.navigateByUrl(destination);
       },
       error: (err: HttpErrorResponse) => {
         this.loading = false;

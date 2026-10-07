@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { finalize, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface AuthRequest {
@@ -19,9 +19,17 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface AuthUser {
+  id: string;
+  fullName: string;
+  username: string;
+  email: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`;
+  private refreshInFlight$: Observable<AuthResponse> | null = null;
 
   constructor(
     private http: HttpClient,
@@ -29,29 +37,39 @@ export class AuthService {
   ) {}
 
   login(request: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, request).pipe(
-      tap((response) => {
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            id: response.id,
-            fullName: response.fullName,
-            username: response.username,
-            email: response.email,
-          }),
-        );
-      }),
-    );
+    return this.http
+      .post<AuthResponse>(`${this.apiUrl}/login`, request)
+      .pipe(tap((response) => this.storeSession(response)));
+  }
+
+  refreshSession(): Observable<AuthResponse> {
+    if (this.refreshInFlight$) {
+      return this.refreshInFlight$;
+    }
+
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      throw new Error('Cannot refresh session without a refresh token.');
+    }
+
+    this.refreshInFlight$ = this.http
+      .post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken })
+      .pipe(
+        tap((response) => this.storeSession(response)),
+        finalize(() => {
+          this.refreshInFlight$ = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    return this.refreshInFlight$;
   }
 
   logout(): void {
     const accessToken = this.getAccessToken();
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = this.getRefreshToken();
     if (refreshToken) {
       this.http
-        .post(
+        .post<void>(
           `${this.apiUrl}/logout`,
           { refreshToken },
           {
@@ -63,22 +81,44 @@ export class AuthService {
             console.error('Token revocation failed during logout:', error.status),
         });
     }
+    this.clearSession();
+    void this.router.navigate(['/login']);
+  }
+
+  clearSession(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    this.router.navigate(['/login']);
   }
 
   getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
   }
 
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
+  }
+
   isLoggedIn(): boolean {
     return !!this.getAccessToken();
   }
 
-  getCurrentUser(): any {
+  getCurrentUser(): AuthUser | null {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    return user ? (JSON.parse(user) as AuthUser) : null;
+  }
+
+  private storeSession(response: AuthResponse): void {
+    localStorage.setItem('accessToken', response.accessToken);
+    localStorage.setItem('refreshToken', response.refreshToken);
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        id: response.id,
+        fullName: response.fullName,
+        username: response.username,
+        email: response.email,
+      }),
+    );
   }
 }
