@@ -2,13 +2,17 @@ package ao.hospitalao.modules.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ao.hospitalao.modules.auth.dto.AuthRequest;
 import ao.hospitalao.modules.auth.dto.AuthResponse;
+import ao.hospitalao.modules.auth.dto.ChangePasswordRequest;
 import ao.hospitalao.modules.auth.entity.Role;
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.mapper.AuthMapper;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
@@ -26,6 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -119,11 +124,60 @@ class AuthServiceTest {
     verify(tokenBlackListService).addToBlacklist(accessToken, accessExpiration);
   }
 
+  @Test
+  void fifthFailedLoginTemporarilyLocksTheAccount() {
+    User user = hospitalAdmin(UUID.randomUUID());
+    user.setEmail("hospital-admin@example.com");
+    user.setRegisterStatus(RegisterStatus.ACTIVE);
+    user.setFailedLoginAttempts(4);
+    AuthRequest request = new AuthRequest();
+    request.setEmail(user.getEmail());
+    request.setPassword("wrong-password");
+    when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+    doThrow(new BadCredentialsException("Invalid credentials"))
+        .when(authenticationManager)
+        .authenticate(org.mockito.ArgumentMatchers.any(Authentication.class));
+
+    assertThatThrownBy(() -> authService.authenticate(request))
+        .isInstanceOf(BadCredentialsException.class)
+        .hasMessage("Invalid email or password");
+
+    assertThat(user.getFailedLoginAttempts()).isEqualTo(5);
+    assertThat(user.getLockedUntil()).isNotNull();
+    assertThat(user.isAccountNonLocked()).isFalse();
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  void passwordChangeClearsTheForcedChangeAndLockoutState() {
+    User user = hospitalAdmin(UUID.randomUUID());
+    user.setPasswordHash("old-hash");
+    user.setMustChangePassword(true);
+    user.setFailedLoginAttempts(5);
+    user.setLockedUntil(java.time.OffsetDateTime.now().plusMinutes(15));
+    ChangePasswordRequest request = new ChangePasswordRequest();
+    request.setCurrentPassword("temporary-password");
+    request.setNewPassword("new-secure-password");
+    when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("temporary-password", "old-hash")).thenReturn(true);
+    when(passwordEncoder.matches("new-secure-password", "old-hash")).thenReturn(false);
+    when(passwordEncoder.encode("new-secure-password")).thenReturn("new-hash");
+
+    authService.changePassword(user.getUsername(), request);
+
+    assertThat(user.getPasswordHash()).isEqualTo("new-hash");
+    assertThat(user.isMustChangePassword()).isFalse();
+    assertThat(user.getFailedLoginAttempts()).isZero();
+    assertThat(user.getLockedUntil()).isNull();
+    verify(userRepository).save(user);
+  }
+
   private User hospitalAdmin(UUID hospitalId) {
     User user =
         User.builder()
             .username("hospital-admin")
             .passwordHash("encoded")
+            .registerStatus(RegisterStatus.ACTIVE)
             .roles(Set.of(Role.builder().name(RoleName.ADMIN.name()).build()))
             .build();
     user.setHospitalId(hospitalId);

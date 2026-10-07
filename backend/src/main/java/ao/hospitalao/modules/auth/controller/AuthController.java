@@ -2,6 +2,7 @@ package ao.hospitalao.modules.auth.controller;
 
 import ao.hospitalao.modules.auth.dto.AuthRequest;
 import ao.hospitalao.modules.auth.dto.AuthResponse;
+import ao.hospitalao.modules.auth.dto.ChangePasswordRequest;
 import ao.hospitalao.modules.auth.dto.LogoutRequest;
 import ao.hospitalao.modules.auth.dto.RefreshTokenRequest;
 import ao.hospitalao.modules.auth.dto.RegisterRequest;
@@ -18,6 +19,8 @@ import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -99,6 +102,21 @@ public class AuthController {
   public ResponseEntity<Void> logout(
       @Valid @RequestBody LogoutRequest logoutRequest, HttpServletRequest request) {
     authService.logout(request.getHeader("Authorization"), logoutRequest.getRefreshToken());
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/change-password")
+  @Operation(summary = "Alterar senha da conta autenticada")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "204", description = "Senha alterada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Nova senha inválida"),
+        @ApiResponse(responseCode = "401", description = "Senha actual inválida")
+      })
+  public ResponseEntity<Void> changePassword(
+      @AuthenticationPrincipal UserDetails user,
+      @Valid @RequestBody ChangePasswordRequest request) {
+    authService.changePassword(user.getUsername(), request);
     return ResponseEntity.noContent().build();
   }
 }

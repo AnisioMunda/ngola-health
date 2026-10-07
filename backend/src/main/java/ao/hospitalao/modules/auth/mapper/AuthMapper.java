@@ -20,6 +20,7 @@ public class AuthMapper {
     dto.setEmail(user.getEmail());
     dto.setAccessToken(accessToken);
     dto.setRefreshToken(refreshToken);
+    dto.setMustChangePassword(user.isMustChangePassword());
     return dto;
   }
 }

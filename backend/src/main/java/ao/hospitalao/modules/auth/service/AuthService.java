@@ -1,8 +1,10 @@
 package ao.hospitalao.modules.auth.service;
 
 import ao.hospitalao.exceptions.EmailAlreadyExistsException;
+import ao.hospitalao.exceptions.PasswordPolicyException;
 import ao.hospitalao.modules.auth.dto.AuthRequest;
 import ao.hospitalao.modules.auth.dto.AuthResponse;
+import ao.hospitalao.modules.auth.dto.ChangePasswordRequest;
 import ao.hospitalao.modules.auth.dto.RegisterRequest;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
@@ -14,6 +16,7 @@ import ao.hospitalao.security.jwt.JwtService;
 import ao.hospitalao.security.tenant.TenantContext;
 import io.jsonwebtoken.JwtException;
 import jakarta.transaction.Transactional;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -23,6 +26,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,6 +35,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+  private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+  private static final Duration ACCOUNT_LOCK_DURATION = Duration.ofMinutes(15);
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
@@ -90,6 +97,10 @@ public class AuthService {
             new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
       } catch (BadCredentialsException e) {
         log.warn("Authentication failed for email: {}", request.getEmail());
+        recordFailedLogin(user);
+        throw new BadCredentialsException("Invalid email or password");
+      } catch (AuthenticationException e) {
+        log.warn("Authentication rejected for email: {}", request.getEmail());
         throw new BadCredentialsException("Invalid email or password");
       }
 
@@ -102,6 +113,8 @@ public class AuthService {
       }
 
       user.setLastLogin(OffsetDateTime.now());
+      user.setFailedLoginAttempts(0);
+      user.setLockedUntil(null);
       userRepository.save(user);
 
       String accessToken = jwtService.generateToken(user);
@@ -112,6 +125,27 @@ public class AuthService {
     } finally {
       TenantContext.clear();
     }
+  }
+
+  @Transactional
+  public void changePassword(String username, ChangePasswordRequest request) {
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+    if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+      throw new BadCredentialsException("Invalid current password");
+    }
+    if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+      throw new PasswordPolicyException("A nova senha deve ser diferente da senha actual");
+    }
+
+    user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+    user.setMustChangePassword(false);
+    user.setFailedLoginAttempts(0);
+    user.setLockedUntil(null);
+    userRepository.save(user);
   }
 
   @Transactional
@@ -147,6 +181,8 @@ public class AuthService {
                   && Objects.equals(tokenHospitalId, user.getHospitalId());
 
       if (!jwtService.isTokenValid(refreshToken, user)
+          || !user.isAccountNonLocked()
+          || !user.isEnabled()
           || tokenPlatformAdmin != platformAdmin
           || !hospitalMatches) {
         throw new BadCredentialsException("Invalid refresh token");
@@ -190,6 +226,24 @@ public class AuthService {
       } catch (JwtException exception) {
         log.debug("Skipping invalid or expired access token during logout");
       }
+    }
+  }
+
+  private void recordFailedLogin(User user) {
+    OffsetDateTime now = OffsetDateTime.now();
+    if (user.getLockedUntil() != null && !user.getLockedUntil().isAfter(now)) {
+      user.setFailedLoginAttempts(0);
+      user.setLockedUntil(null);
+    }
+
+    if (user.isAccountNonLocked()) {
+      int failedAttempts = user.getFailedLoginAttempts() + 1;
+      user.setFailedLoginAttempts(failedAttempts);
+      if (failedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+        user.setLockedUntil(now.plus(ACCOUNT_LOCK_DURATION));
+        log.warn("Account temporarily locked after failed login attempts: {}", user.getId());
+      }
+      userRepository.save(user);
     }
   }
 }

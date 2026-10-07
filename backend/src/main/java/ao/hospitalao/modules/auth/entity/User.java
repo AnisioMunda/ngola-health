@@ -52,6 +52,12 @@ public class User extends TenantScopedEntity implements UserDetails {
   @Column(name = "must_change_password", nullable = false)
   private boolean mustChangePassword;
 
+  @Column(name = "failed_login_attempts", nullable = false)
+  private int failedLoginAttempts;
+
+  @Column(name = "locked_until")
+  private OffsetDateTime lockedUntil;
+
   @Column(name = "last_login")
   private OffsetDateTime lastLogin;
 
@@ -102,7 +108,8 @@ public class User extends TenantScopedEntity implements UserDetails {
 
   @Override
   public boolean isAccountNonLocked() {
-    return this.registerStatus != RegisterStatus.SUSPENDED;
+    return this.registerStatus != RegisterStatus.SUSPENDED
+        && (this.lockedUntil == null || !this.lockedUntil.isAfter(OffsetDateTime.now()));
   }
 
   @Override

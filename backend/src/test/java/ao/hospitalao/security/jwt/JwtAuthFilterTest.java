@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.service.TokenBlackListService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -67,5 +70,39 @@ class JwtAuthFilterTest {
     assertThat(response.getStatus()).isEqualTo(403);
     assertThat(chainInvoked).isFalse();
     verify(jwtService, org.mockito.Mockito.never()).extractUsername("revoked-token");
+  }
+
+  @Test
+  void usersWithForcedPasswordChangeCannotAccessOtherRoutes() throws Exception {
+    UUID hospitalId = UUID.randomUUID();
+    User user =
+        User.builder()
+            .username("new-user")
+            .passwordHash("encoded")
+            .mustChangePassword(true)
+            .registerStatus(RegisterStatus.ACTIVE)
+            .build();
+    user.setHospitalId(hospitalId);
+    when(tokenBlackListService.isBlacklisted("access-token")).thenReturn(false);
+    when(jwtService.extractUsername("access-token")).thenReturn("new-user");
+    when(jwtService.isPatientPortalToken("access-token")).thenReturn(false);
+    when(jwtService.isAccessToken("access-token")).thenReturn(true);
+    when(jwtService.extractHospitalId("access-token")).thenReturn(hospitalId);
+    when(jwtService.isPlatformAdminToken("access-token")).thenReturn(false);
+    when(jwtService.isTokenValid("access-token", user)).thenReturn(true);
+    when(userDetailsService.loadUserByUsername("new-user")).thenReturn(user);
+    JwtAuthFilter filter =
+        new JwtAuthFilter(
+            jwtService, userDetailsService, new ObjectMapper(), tokenBlackListService);
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/patients");
+    request.addHeader("Authorization", "Bearer access-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    AtomicBoolean chainInvoked = new AtomicBoolean();
+
+    filter.doFilter(request, response, (servletRequest, servletResponse) -> chainInvoked.set(true));
+
+    assertThat(response.getStatus()).isEqualTo(403);
+    assertThat(response.getContentAsString()).contains("Altere a sua senha");
+    assertThat(chainInvoked).isFalse();
   }
 }

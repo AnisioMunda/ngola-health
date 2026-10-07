@@ -73,6 +73,14 @@ public class GlobalExceptionHandler {
         HttpStatus.CONFLICT, "Conflito", "Já existe um registo com os dados informados.");
   }
 
+  @ExceptionHandler(PasswordPolicyException.class)
+  public ProblemDetail handlePasswordPolicy(PasswordPolicyException exception) {
+    return problem(
+        HttpStatus.BAD_REQUEST,
+        "Senha inválida",
+        "A nova senha deve ser diferente da senha actual.");
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException exception) {
     return problem(

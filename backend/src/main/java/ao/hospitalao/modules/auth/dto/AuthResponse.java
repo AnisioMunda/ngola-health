@@ -28,4 +28,7 @@ public class AuthResponse {
 
   @Schema(description = "Refresh Token", example = "hhyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
   private String refreshToken;
+
+  @Schema(description = "Indica se o utilizador tem de alterar a senha antes de continuar")
+  private boolean mustChangePassword;
 }

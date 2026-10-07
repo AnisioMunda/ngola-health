@@ -97,10 +97,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     if (isPatientPortalToken(jwt)) {
       authenticatePatientPortal(jwt, username, request);
+      return true;
     } else {
-      authenticateInternalUser(jwt, username, request);
+      return authenticateInternalUser(jwt, username, request, response);
     }
-    return true;
   }
 
   // ----------------------------------------------------------------
@@ -148,7 +148,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   // Utilizador interno
   // ----------------------------------------------------------------
 
-  private void authenticateInternalUser(String jwt, String username, HttpServletRequest request) {
+  private boolean authenticateInternalUser(
+      String jwt, String username, HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
 
     if (!jwtService.isAccessToken(jwt)) {
       throw new UsernameNotFoundException("Expected an access token");
@@ -165,6 +167,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    if (!userDetails.isAccountNonLocked() || !userDetails.isEnabled()) {
+      throw new UsernameNotFoundException("User account is inactive or temporarily locked");
+    }
 
     boolean hasPlatformRole =
         userDetails.getAuthorities().stream()
@@ -181,6 +186,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       }
     }
 
+    if (userDetails instanceof ao.hospitalao.modules.auth.entity.User user
+        && user.isMustChangePassword()
+        && !(request.getMethod().equals("POST")
+            && request.getServletPath().equals("/auth/change-password"))) {
+      handleException(response, HttpStatus.FORBIDDEN, "Altere a sua senha antes de continuar.");
+      return false;
+    }
+
     UsernamePasswordAuthenticationToken authToken =
         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -189,6 +202,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     SecurityContextHolder.getContext().setAuthentication(authToken);
 
     log.debug("Interno autenticado: {} (hospital: {})", username, hospitalId);
+    return true;
   }
 
   // ----------------------------------------------------------------
