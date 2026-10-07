@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 1: Triagens                            -->
+    <!-- ================================================ -->
+    <changeSet id="018-01-triage" author="hospitalao">
+        <createTable tableName="triage_records">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_triage_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="patient_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_triage_patient"
+                             references="patients(id)"/>
+            </column>
+            <!-- Número de ordem na fila -->
+            <column name="queue_number" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Nome para triagem sem paciente registado -->
+            <column name="patient_name_temp" type="VARCHAR(200)"/>
+            <column name="patient_age_temp" type="INTEGER"/>
+            <column name="patient_gender_temp" type="VARCHAR(10)"/>
+            <!--
+                Prioridade Manchester:
+                RED    — imediato (0 min)
+                ORANGE — muito urgente (10 min)
+                YELLOW — urgente (60 min)
+                GREEN  — pouco urgente (120 min)
+                BLUE   — não urgente (240 min)
+            -->
+            <column name="priority" type="VARCHAR(10)" defaultValue="GREEN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chief_complaint" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Sinais vitais -->
+            <column name="blood_pressure" type="VARCHAR(20)"/>
+            <column name="heart_rate" type="INTEGER"/>
+            <column name="temperature" type="DECIMAL(4,1)"/>
+            <column name="oxygen_saturation" type="INTEGER"/>
+            <column name="respiratory_rate" type="INTEGER"/>
+            <column name="weight_kg" type="DECIMAL(5,2)"/>
+            <column name="pain_scale" type="INTEGER" remarks="0-10"/>
+            <!-- Notas do enfermeiro triador -->
+            <column name="triage_notes" type="TEXT"/>
+            <!--
+                Estado:
+                WAITING    — na fila de espera
+                IN_PROGRESS — a ser atendido
+                COMPLETED  — atendido/alta
+                TRANSFERRED — transferido p/ internamento
+                LEFT        — saiu sem ser atendido
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="WAITING">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Quem fez a triagem -->
+            <column name="triaged_by" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_triage_nurse"
+                             references="users(id)"/>
+            </column>
+            <column name="episode_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_triage_episode"
+                             references="episodes(id)"/>
+            </column>
+            <column name="triaged_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Quando começou a ser atendido -->
+            <column name="attended_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <!-- Quando saiu -->
+            <column name="completed_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+
+        <!-- Sequência para número de ordem diário -->
+        <createSequence sequenceName="queue_number_seq"
+            startValue="1" incrementBy="1"/>
+
+        <createIndex tableName="triage_records" indexName="idx_triage_hospital_status">
+            <column name="hospital_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="triage_records" indexName="idx_triage_priority">
+            <column name="priority"/>
+            <column name="triaged_at"/>
+        </createIndex>
+        <createIndex tableName="triage_records" indexName="idx_triage_patient">
+            <column name="patient_id"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="triage_records"/></rollback>
+    </changeSet>
+
+</databaseChangeLog>

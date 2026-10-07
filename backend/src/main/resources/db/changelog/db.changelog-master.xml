@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Sprint 1 - Authentication & Users -->
+    <include file="db/changelog/sprint-01/001-schema-base.xml"/>
+    <include file="db/changelog/sprint-01/002-criar-tabela-users.xml"/>
+    <include file="db/changelog/sprint-01/003-token-black-list.xml"/>
+
+    <!-- Sprint 2 - Patients, Episodes & Dashboard -->
+    <include file="db/changelog/sprint-02/001-criar-tabela-pacientes.xml"/>
+    <include file="db/changelog/sprint-02/002-fix-patients-gender.xml"/>
+    <include file="db/changelog/sprint-02/006-criar-tabela-episodes.xml"/>
+
+    <!-- Sprint 3 - Multi-hospital, Laboratory e Farmacia -->
+    <include file="db/changelog/sprint-03/007-multi-hospital.xml"/>
+    <include file="db/changelog/sprint-03/008-laboratorio.xml"/>
+    <include file="db/changelog/sprint-03/009-farmacia.xml"/>
+
+    <!-- Sprint 4 -->
+    <include file="db/changelog/sprint-04/010-financeiro.xml"/>
+    <include file="db/changelog/sprint-04/011-agt-campos-invoice.xml"/>
+
+     <!-- Sprint 6 -->
+    <include file="db/changelog/sprint-06/012-agendamento.xml"/>
+
+    <!-- Sprint 7 -->
+    <include file="db/changelog/sprint-07/013-notifications.xml"/>
+
+     <!-- Sprint 8 -->
+    <include file="db/changelog/sprint-08/014-internamentos.xml"/>
+
+    <!-- Sprint 9 -->
+    <include file="db/changelog/sprint-09/015-audit.xml"/>
+
+     <!-- Sprint 10 -->
+    <include file="db/changelog/sprint-10/016-recursos-humanos.xml"/>
+
+    <!-- Sprint 11 -->
+    <include file="db/changelog/sprint-11/017-prescricoes.xml"/>
+
+    <!-- Sprint 12 -->
+    <include file="db/changelog/sprint-12/018-triagem.xml"/>
+
+    <!-- Sprint 13 -->
+    <include file="db/changelog/sprint-13/019-portal-paciente.xml"/>
+
+    <!-- Sprint 14 -->
+    <include file="db/changelog/sprint-14/020-telemedicina.xml"/>
+
+    <!-- Sprint 15 -->
+    <include file="db/changelog/sprint-15/021-equipamentos.xml"/>
+</databaseChangeLog>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 1: Turnos de trabalho                  -->
+    <!-- ================================================ -->
+    <changeSet id="016-01-shifts" author="hospitalao">
+        <createTable tableName="shifts">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_shifts_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_shifts_user"
+                             references="users(id)"/>
+            </column>
+            <!--
+                Tipos de turno:
+                MORNING   — manhã (ex: 07h–15h)
+                AFTERNOON — tarde (ex: 15h–23h)
+                NIGHT     — noite (ex: 23h–07h)
+                FULL_DAY  — dia completo
+                ON_CALL   — escala de chamada
+            -->
+            <column name="shift_type" type="VARCHAR(15)" defaultValue="MORNING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="shift_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Departamento/enfermaria onde o turno decorre -->
+            <column name="department" type="VARCHAR(100)"/>
+            <column name="ward_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_shifts_ward"
+                             references="wards(id)"/>
+            </column>
+            <!--
+                Estado:
+                SCHEDULED — agendado
+                CONFIRMED — confirmado pelo funcionário
+                COMPLETED — concluído
+                CANCELLED — cancelado
+                SWAPPED   — trocado com outro funcionário
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="SCHEDULED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(300)"/>
+            <column name="created_by" type="UUID">
+                <constraints foreignKeyName="fk_shifts_created_by"
+                             references="users(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="shifts" indexName="idx_shifts_user_date">
+            <column name="user_id"/>
+            <column name="shift_date"/>
+        </createIndex>
+        <createIndex tableName="shifts" indexName="idx_shifts_hospital_date">
+            <column name="hospital_id"/>
+            <column name="shift_date"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="shifts"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 2: Pedidos de folga e férias           -->
+    <!-- ================================================ -->
+    <changeSet id="016-02-leave-requests" author="hospitalao">
+        <createTable tableName="leave_requests">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_leave_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_leave_user"
+                             references="users(id)"/>
+            </column>
+            <!--
+                Tipos de ausência:
+                VACATION        — férias anuais
+                SICK_LEAVE      — baixa médica
+                PERSONAL        — motivo pessoal
+                MATERNITY       — licença de maternidade
+                PATERNITY       — licença de paternidade
+                BEREAVEMENT     — luto
+                UNPAID          — sem vencimento
+                COMPENSATORY    — compensatória
+            -->
+            <column name="leave_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_days" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(500)"/>
+            <!--
+                Estado:
+                PENDING  — aguarda aprovação
+                APPROVED — aprovado
+                REJECTED — rejeitado
+                CANCELLED— cancelado
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="approved_by" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_leave_approved_by"
+                             references="users(id)"/>
+            </column>
+            <column name="approved_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="rejection_reason" type="VARCHAR(300)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="leave_requests" indexName="idx_leave_user">
+            <column name="user_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="leave_requests" indexName="idx_leave_hospital_dates">
+            <column name="hospital_id"/>
+            <column name="start_date"/>
+            <column name="end_date"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="leave_requests"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 3: Controlo de ponto                   -->
+    <!-- ================================================ -->
+    <changeSet id="016-03-attendance" author="hospitalao">
+        <createTable tableName="attendance_records">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_attendance_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_attendance_user"
+                             references="users(id)"/>
+            </column>
+            <column name="shift_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_attendance_shift"
+                             references="shifts(id)"/>
+            </column>
+            <column name="work_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="check_in" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="check_out" type="TIMESTAMP WITH TIME ZONE"/>
+            <!-- Minutos trabalhados -->
+            <column name="minutes_worked" type="INTEGER"/>
+            <!-- Minutos de horas extra -->
+            <column name="overtime_minutes" type="INTEGER" defaultValueNumeric="0"/>
+            <!--
+                Estado:
+                PRESENT  — presente
+                ABSENT   — ausente sem justificação
+                LATE     — chegou atrasado
+                ON_LEAVE — em licença aprovada
+                HOLIDAY  — feriado
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="PRESENT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(300)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="attendance_records"
+            columnNames="user_id, work_date"
+            constraintName="uq_attendance_user_date"/>
+
+        <createIndex tableName="attendance_records" indexName="idx_attendance_user_date">
+            <column name="user_id"/>
+            <column name="work_date"/>
+        </createIndex>
+        <createIndex tableName="attendance_records" indexName="idx_attendance_hospital_date">
+            <column name="hospital_id"/>
+            <column name="work_date"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="attendance_records"/></rollback>
+    </changeSet>
+
+</databaseChangeLog>

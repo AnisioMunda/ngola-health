@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 1: Horários dos médicos                -->
+    <!-- Define os dias e horas em que cada médico        -->
+    <!-- está disponível para consultas                   -->
+    <!-- ================================================ -->
+    <changeSet id="012-01-doctor-schedules" author="hospitalao">
+        <createTable tableName="doctor_schedules">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_doctor_schedules_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="doctor_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_doctor_schedules_doctor"
+                             references="users(id)"/>
+            </column>
+            <!-- 0=Segunda, 1=Terça, ..., 6=Domingo -->
+            <column name="day_of_week" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Duração de cada slot em minutos (ex: 30) -->
+            <column name="slot_duration_minutes" type="INTEGER" defaultValueNumeric="30">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Máximo de consultas por slot -->
+            <column name="max_patients_per_slot" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="doctor_schedules" indexName="idx_doctor_schedules_doctor">
+            <column name="doctor_id"/>
+        </createIndex>
+        <createIndex tableName="doctor_schedules" indexName="idx_doctor_schedules_hospital_day">
+            <column name="hospital_id"/>
+            <column name="day_of_week"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="doctor_schedules"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 2: Bloqueios de agenda                 -->
+    <!-- Férias, ausências, feriados, etc.               -->
+    <!-- ================================================ -->
+    <changeSet id="012-02-schedule-blocks" author="hospitalao">
+        <createTable tableName="schedule_blocks">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="doctor_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_schedule_blocks_doctor"
+                             references="users(id)"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_schedule_blocks_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="block_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME"/>
+            <column name="end_time" type="TIME"/>
+            <!-- Se true, bloqueia o dia inteiro -->
+            <column name="all_day" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(200)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="schedule_blocks" indexName="idx_schedule_blocks_doctor_date">
+            <column name="doctor_id"/>
+            <column name="block_date"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="schedule_blocks"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 3: Agendamentos                        -->
+    <!-- Marcações de consultas pelos pacientes/recepção  -->
+    <!-- ================================================ -->
+    <changeSet id="012-03-appointments" author="hospitalao">
+        <createTable tableName="appointments">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_appointments_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="patient_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_appointments_patient"
+                             references="patients(id)"/>
+            </column>
+            <column name="doctor_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_appointments_doctor"
+                             references="users(id)"/>
+            </column>
+            <!-- Episódio gerado quando a consulta é realizada -->
+            <column name="episode_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_appointments_episode"
+                             references="episodes(id)"/>
+            </column>
+            <column name="appointment_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <!-- SCHEDULED, CONFIRMED, COMPLETED, CANCELLED, NO_SHOW -->
+            <column name="status" type="VARCHAR(20)" defaultValue="SCHEDULED">
+                <constraints nullable="false"/>
+            </column>
+            <!-- OUTPATIENT, EMERGENCY, EXAM, SURGERY -->
+            <column name="appointment_type" type="VARCHAR(30)" defaultValue="OUTPATIENT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="TEXT"/>
+            <column name="cancellation_reason" type="VARCHAR(300)"/>
+            <column name="cancelled_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="confirmed_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="booked_by" type="UUID">
+                <constraints foreignKeyName="fk_appointments_booked_by"
+                             references="users(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="appointments" indexName="idx_appointments_date_doctor">
+            <column name="appointment_date"/>
+            <column name="doctor_id"/>
+        </createIndex>
+        <createIndex tableName="appointments" indexName="idx_appointments_patient">
+            <column name="patient_id"/>
+        </createIndex>
+        <createIndex tableName="appointments" indexName="idx_appointments_hospital_date">
+            <column name="hospital_id"/>
+            <column name="appointment_date"/>
+        </createIndex>
+        <createIndex tableName="appointments" indexName="idx_appointments_status">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Evitar dupla marcação no mesmo slot -->
+        <addUniqueConstraint
+            tableName="appointments"
+            columnNames="doctor_id, appointment_date, start_time"
+            constraintName="uq_appointment_slot"/>
+
+        <rollback><dropTable tableName="appointments"/></rollback>
+    </changeSet>
+
+</databaseChangeLog>

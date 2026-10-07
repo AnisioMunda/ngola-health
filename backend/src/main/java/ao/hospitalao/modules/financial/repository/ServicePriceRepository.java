@@ -1,0 +1,20 @@
+package ao.hospitalao.modules.financial.repository;
+
+import ao.hospitalao.modules.financial.entity.ServicePrice;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface ServicePriceRepository extends JpaRepository<ServicePrice, UUID> {
+
+    List<ServicePrice> findByHospitalIdAndActiveTrue(UUID hospitalId);
+
+    Page<ServicePrice> findByHospitalIdAndActiveTrue(UUID hospitalId, Pageable pageable);
+
+    boolean existsByHospitalIdAndCode(UUID hospitalId, String code);
+}

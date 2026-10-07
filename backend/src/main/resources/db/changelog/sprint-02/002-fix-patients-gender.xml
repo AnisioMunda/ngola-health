@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!--
+        Converter a coluna gender de tipo enum nativo do PostgreSQL
+        para VARCHAR. O Hibernate tem dificuldade em mapear enums Java
+        para tipos enum nativos do PostgreSQL sem configuração extra.
+        VARCHAR é mais simples e igualmente seguro quando validado no Java.
+    -->
+    <changeSet id="005-01-fix-patients-gender-type" author="hospitalao">
+        <sql>
+            ALTER TABLE patients
+            ALTER COLUMN gender TYPE VARCHAR(10)
+            USING gender::VARCHAR;
+        </sql>
+        <rollback>
+            <sql>
+                ALTER TABLE patients
+                ALTER COLUMN gender TYPE gender_enum
+                USING gender::gender_enum;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 1: Tabela de preços de serviços        -->
+    <!-- ================================================ -->
+    <changeSet id="010-01-criar-tabela-service-prices" author="hospitalao">
+        <createTable tableName="service_prices">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_service_prices_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="code" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="description" type="VARCHAR(300)"><constraints nullable="false"/></column>
+            <column name="category" type="VARCHAR(50)"><constraints nullable="false"/></column>
+            <column name="unit_price" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <!-- IVA em Angola: taxa geral 14%, serviços de saúde geralmente isentos (0%) -->
+            <column name="vat_rate" type="NUMERIC(5,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="service_prices"
+            columnNames="hospital_id, code"
+            constraintName="uq_service_prices_hospital_code"/>
+        <createIndex tableName="service_prices" indexName="idx_service_prices_hospital">
+            <column name="hospital_id"/>
+        </createIndex>
+        <rollback><dropTable tableName="service_prices"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 2: Tabela de documentos fiscais        -->
+    <!-- Nomenclatura AGT Angola — DP 50/19              -->
+    <!-- FT=Factura, FR=Factura/Recibo, NC=Nota Crédito  -->
+    <!-- ND=Nota Débito, RC=Recibo                       -->
+    <!-- ================================================ -->
+    <changeSet id="010-02-criar-tabela-invoices" author="hospitalao">
+        <createTable tableName="invoices">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_invoices_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <!-- Número fiscal: ex. "FR 2026/00001" -->
+            <column name="invoice_number" type="VARCHAR(30)">
+                <constraints nullable="false" unique="true"
+                             uniqueConstraintName="uq_invoice_number"/>
+            </column>
+            <!-- Tipo de documento AGT: FT, FR, NC, ND, RC -->
+            <column name="document_type" type="VARCHAR(5)" defaultValue="FR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="patient_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_invoices_patient"
+                             references="patients(id)"/>
+            </column>
+            <column name="episode_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_invoices_episode"
+                             references="episodes(id)"/>
+            </column>
+            <!-- Estado: RASCUNHO, EMITIDO, PAGO_PARCIALMENTE, PAGO, ANULADO, EM_ATRASO -->
+            <column name="status" type="VARCHAR(25)" defaultValue="RASCUNHO">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_method" type="VARCHAR(30)"/>
+
+            <!-- Dados fiscais do cliente (obrigatório NIF para facturas > 50.000 Kz) -->
+            <column name="patient_nif" type="VARCHAR(14)"/>
+            <column name="patient_fiscal_name" type="VARCHAR(200)"/>
+
+            <!-- Totais em Kwanzas (AOA) -->
+            <column name="subtotal" type="NUMERIC(12,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discount_amount" type="NUMERIC(12,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <!-- IVA — Imposto sobre o Valor Acrescentado -->
+            <column name="vat_amount" type="NUMERIC(12,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_amount" type="NUMERIC(12,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="paid_amount" type="NUMERIC(12,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Seguro de saúde (ENSA, AAA, Tranquilidade, etc.) -->
+            <column name="insurance_provider" type="VARCHAR(100)"/>
+            <column name="insurance_policy_number" type="VARCHAR(50)"/>
+            <column name="insurance_coverage_percent" type="NUMERIC(5,2)" defaultValueNumeric="0"/>
+
+            <!-- Datas -->
+            <column name="issued_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="due_date" type="DATE"/>
+            <column name="paid_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="notes" type="TEXT"/>
+
+            <!-- Auditoria -->
+            <column name="created_by" type="UUID">
+                <constraints foreignKeyName="fk_invoices_created_by"
+                             references="users(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="invoices" indexName="idx_invoices_patient">
+            <column name="patient_id"/>
+        </createIndex>
+        <createIndex tableName="invoices" indexName="idx_invoices_hospital">
+            <column name="hospital_id"/>
+        </createIndex>
+        <createIndex tableName="invoices" indexName="idx_invoices_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="invoices" indexName="idx_invoices_document_type">
+            <column name="document_type"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="invoices"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 3: Linhas do documento fiscal          -->
+    <!-- ================================================ -->
+    <changeSet id="010-03-criar-tabela-invoice-items" author="hospitalao">
+        <createTable tableName="invoice_items">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invoice_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_invoice_items_invoice"
+                             references="invoices(id)"/>
+            </column>
+            <column name="service_price_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_invoice_items_service"
+                             references="service_prices(id)"/>
+            </column>
+            <column name="description" type="VARCHAR(300)"><constraints nullable="false"/></column>
+            <column name="quantity" type="INTEGER" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_price" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <column name="discount_percent" type="NUMERIC(5,2)" defaultValueNumeric="0"/>
+            <!-- Taxa IVA por linha (0% para maioria dos serviços de saúde em Angola) -->
+            <column name="vat_rate" type="NUMERIC(5,2)" defaultValueNumeric="0"/>
+            <column name="line_total" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+        </createTable>
+
+        <createIndex tableName="invoice_items" indexName="idx_invoice_items_invoice">
+            <column name="invoice_id"/>
+        </createIndex>
+        <rollback><dropTable tableName="invoice_items"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 4: Recibos de pagamento                -->
+    <!-- ================================================ -->
+    <changeSet id="010-04-criar-tabela-payments" author="hospitalao">
+        <createTable tableName="payments">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="invoice_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_payments_invoice"
+                             references="invoices(id)"/>
+            </column>
+            <column name="amount" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <!-- NUMERARIO, TRANSFERENCIA, CARTAO, SEGURO, CHEQUE, DINHEIRO_MOVEL -->
+            <column name="payment_method" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="reference" type="VARCHAR(100)"
+                    remarks="Referência bancária, nº cheque, código Multicaixa Express, etc."/>
+            <column name="paid_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="received_by" type="UUID">
+                <constraints foreignKeyName="fk_payments_user"
+                             references="users(id)"/>
+            </column>
+            <column name="notes" type="VARCHAR(500)"/>
+        </createTable>
+
+        <createIndex tableName="payments" indexName="idx_payments_invoice">
+            <column name="invoice_id"/>
+        </createIndex>
+        <rollback><dropTable tableName="payments"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 5: Sequências por tipo de documento    -->
+    <!-- Uma sequência por ano/tipo garante numeração     -->
+    <!-- contínua conforme exigido pela AGT               -->
+    <!-- ================================================ -->
+    <changeSet id="010-05-invoice-sequences" author="hospitalao">
+        <sql>
+            CREATE SEQUENCE IF NOT EXISTS seq_ft START 1 INCREMENT 1;
+            CREATE SEQUENCE IF NOT EXISTS seq_fr START 1 INCREMENT 1;
+            CREATE SEQUENCE IF NOT EXISTS seq_nc START 1 INCREMENT 1;
+            CREATE SEQUENCE IF NOT EXISTS seq_nd START 1 INCREMENT 1;
+            CREATE SEQUENCE IF NOT EXISTS seq_rc START 1 INCREMENT 1;
+        </sql>
+        <rollback>
+            <sql>
+                DROP SEQUENCE IF EXISTS seq_ft;
+                DROP SEQUENCE IF EXISTS seq_fr;
+                DROP SEQUENCE IF EXISTS seq_nc;
+                DROP SEQUENCE IF EXISTS seq_nd;
+                DROP SEQUENCE IF EXISTS seq_rc;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

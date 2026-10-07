@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 1: Enfermarias                         -->
+    <!-- ================================================ -->
+    <changeSet id="014-01-wards" author="hospitalao">
+        <createTable tableName="wards">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_wards_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                Tipos de enfermaria:
+                GENERAL, PEDIATRIC, MATERNITY, ICU, SURGICAL,
+                CARDIOLOGY, ONCOLOGY, EMERGENCY, ISOLATION
+            -->
+            <column name="type" type="VARCHAR(20)" defaultValue="GENERAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="floor" type="VARCHAR(10)"/>
+            <column name="total_beds" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="responsible_doctor_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_wards_doctor"
+                             references="users(id)"/>
+            </column>
+            <column name="notes" type="TEXT"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="wards"
+            columnNames="hospital_id, code"
+            constraintName="uq_wards_hospital_code"/>
+
+        <createIndex tableName="wards" indexName="idx_wards_hospital">
+            <column name="hospital_id"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="wards"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 2: Camas                               -->
+    <!-- ================================================ -->
+    <changeSet id="014-02-beds" author="hospitalao">
+        <createTable tableName="beds">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ward_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_beds_ward"
+                             references="wards(id)"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_beds_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="bed_number" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                Estados da cama:
+                AVAILABLE   — disponível para internamento
+                OCCUPIED    — ocupada por paciente
+                MAINTENANCE — em manutenção/limpeza
+                RESERVED    — reservada para admissão pendente
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="AVAILABLE">
+                <constraints nullable="false"/>
+            </column>
+            <!--
+                Tipos de cama:
+                STANDARD, PRIVATE, SEMI_PRIVATE, ICU, ISOLATION
+            -->
+            <column name="type" type="VARCHAR(15)" defaultValue="STANDARD">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(300)"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="beds"
+            columnNames="ward_id, bed_number"
+            constraintName="uq_bed_ward_number"/>
+
+        <createIndex tableName="beds" indexName="idx_beds_ward_status">
+            <column name="ward_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="beds"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 3: Internamentos                       -->
+    <!-- ================================================ -->
+    <changeSet id="014-03-admissions" author="hospitalao">
+        <createTable tableName="admissions">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hospital_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_admissions_hospital"
+                             references="hospitals(id)"/>
+            </column>
+            <column name="patient_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_admissions_patient"
+                             references="patients(id)"/>
+            </column>
+            <column name="episode_id" type="UUID">
+                <constraints nullable="true"
+                             foreignKeyName="fk_admissions_episode"
+                             references="episodes(id)"/>
+            </column>
+            <column name="bed_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_admissions_bed"
+                             references="beds(id)"/>
+            </column>
+            <column name="ward_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_admissions_ward"
+                             references="wards(id)"/>
+            </column>
+            <column name="responsible_doctor_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_admissions_doctor"
+                             references="users(id)"/>
+            </column>
+            <!--
+                Estados:
+                ACTIVE      — paciente internado
+                DISCHARGED  — alta dada
+                TRANSFERRED — transferido para outra cama/enfermaria
+                DECEASED    — óbito
+            -->
+            <column name="status" type="VARCHAR(15)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="admission_date" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_discharge_date" type="DATE"/>
+            <column name="discharge_date" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="admission_reason" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="diagnosis" type="TEXT"/>
+            <column name="discharge_notes" type="TEXT"/>
+            <column name="discharge_condition" type="VARCHAR(30)"
+                    remarks="IMPROVED, STABLE, CRITICAL, DECEASED"/>
+            <column name="admitted_by" type="UUID">
+                <constraints foreignKeyName="fk_admissions_admitted_by"
+                             references="users(id)"/>
+            </column>
+            <column name="discharged_by" type="UUID">
+                <constraints foreignKeyName="fk_admissions_discharged_by"
+                             references="users(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="admissions" indexName="idx_admissions_patient">
+            <column name="patient_id"/>
+        </createIndex>
+        <createIndex tableName="admissions" indexName="idx_admissions_bed">
+            <column name="bed_id"/>
+        </createIndex>
+        <createIndex tableName="admissions" indexName="idx_admissions_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="admissions" indexName="idx_admissions_hospital_status">
+            <column name="hospital_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="admissions"/></rollback>
+    </changeSet>
+
+    <!-- ================================================ -->
+    <!-- CHANGESET 4: Transferências                      -->
+    <!-- ================================================ -->
+    <changeSet id="014-04-transfers" author="hospitalao">
+        <createTable tableName="bed_transfers">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="admission_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfers_admission"
+                             references="admissions(id)"/>
+            </column>
+            <column name="from_bed_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfers_from_bed"
+                             references="beds(id)"/>
+            </column>
+            <column name="to_bed_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfers_to_bed"
+                             references="beds(id)"/>
+            </column>
+            <column name="from_ward_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfers_from_ward"
+                             references="wards(id)"/>
+            </column>
+            <column name="to_ward_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_transfers_to_ward"
+                             references="wards(id)"/>
+            </column>
+            <column name="reason" type="VARCHAR(300)"/>
+            <column name="transferred_by" type="UUID">
+                <constraints foreignKeyName="fk_transfers_user"
+                             references="users(id)"/>
+            </column>
+            <column name="transferred_at" type="TIMESTAMP WITH TIME ZONE"
+                     defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="bed_transfers" indexName="idx_transfers_admission">
+            <column name="admission_id"/>
+        </createIndex>
+
+        <rollback><dropTable tableName="bed_transfers"/></rollback>
+    </changeSet>
+
+</databaseChangeLog>

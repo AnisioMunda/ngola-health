@@ -1,0 +1,264 @@
+# ============================================================
+# HospitalAO — application.yml
+# ============================================================
+# As variáveis ${NOME_VARIAVEL} são injectadas pelo Docker
+# a partir do ficheiro .env via docker-compose.yml.
+#
+# Estrutura:
+#   - Configurações base (activas em todos os perfis)
+#   - Secção "---" separa o perfil "dev" com overrides
+# ============================================================
+
+spring:
+  application:
+    name: hospitalao-backend
+
+  # Perfil activo: injectado pelo docker-compose (dev ou prod)
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ------------------------------------------------------------
+  # BASE DE DADOS
+  # ------------------------------------------------------------
+  datasource:
+    # Dentro da rede Docker, usamos o nome do serviço "postgres"
+    # em vez de "localhost". O Docker resolve o nome para o IP do container.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hospitalao}
+    username: ${DB_USER:hospitalao}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Pool de ligações: reutiliza ligações à BD em vez de
+      # abrir uma nova para cada pedido (muito mais eficiente)
+      pool-name: HospitalaoPool
+      maximum-pool-size: 20      # máximo de ligações simultâneas
+      minimum-idle: 5            # manter 5 ligações sempre prontas
+      idle-timeout: 30000        # fechar ligações inactivas após 30s
+      connection-timeout: 20000  # esperar 20s antes de desistir
+
+  jpa:
+    hibernate:
+      # "validate": o Hibernate verifica se as tabelas correspondem
+      # às entidades Java, mas NÃO cria nem altera tabelas.
+      # O Liquibase é quem gere as tabelas.
+      ddl-auto: validate
+    show-sql: false  # true no perfil dev (ver abaixo)
+    open-in-view: false  # boa prática: não manter sessão JPA aberta na view
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        # Batch inserts: em vez de 20 INSERTs separados,
+        # envia todos de uma vez — muito mais rápido
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # ------------------------------------------------------------
+  # LIQUIBASE — Migrations da base de dados
+  # ------------------------------------------------------------
+  liquibase:
+    # Ficheiro master que lista todos os migrations por ordem
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  # ------------------------------------------------------------
+  # REDIS
+  # ------------------------------------------------------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 1
+
+  # ------------------------------------------------------------
+  # RABBITMQ
+  # ------------------------------------------------------------
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hospitalao}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/hospitalao}
+    listener:
+      simple:
+        # "manual": o código confirma manualmente que processou
+        # a mensagem. Se falhar, a mensagem volta à fila.
+        acknowledge-mode: manual
+        prefetch: 1  # processar 1 mensagem de cada vez por consumer
+
+  # ------------------------------------------------------------
+  # EMAIL
+  # ------------------------------------------------------------
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  # ------------------------------------------------------------
+  # UPLOAD DE FICHEIROS
+  # ------------------------------------------------------------
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB      # tamanho máximo por ficheiro
+      max-request-size: 25MB   # tamanho máximo do pedido total
+
+
+# ============================================================
+# SERVIDOR
+# ============================================================
+server:
+  port: 8080
+  servlet:
+    # Todos os endpoints começam com /api
+    # Ex: /api/pacientes, /api/auth/login
+    context-path: /api
+  error:
+    # Mostrar mensagens de erro detalhadas (útil em dev)
+    include-message: always
+    include-binding-errors: always
+
+
+# ============================================================
+# JWT — Configurações dos tokens de autenticação
+# ============================================================
+jwt:
+  secret: ${JWT_SECRET}
+  # Access token: 15 minutos (em milissegundos)
+  # Curto por segurança — se for roubado, expira rapidamente
+  expiration-ms: ${JWT_EXPIRATION_MS:900000}
+  # Refresh token: 7 dias
+  # Usado para obter um novo access token sem fazer login de novo
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  expiration: ${JWT_EXPIRATION_MS:900000}
+
+
+# ============================================================
+# MINIO — Armazenamento de ficheiros
+# ============================================================
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:hospitalao}
+  secret-key: ${MINIO_SECRET_KEY}
+  buckets:
+    faturas: faturas
+    fotos-pacientes: fotos-pacientes
+    resultados-exames: resultados-exames
+    documentos: documentos
+    backups: backups
+
+
+# ============================================================
+# DADOS DO HOSPITAL — Usados na faturação AGT
+# ============================================================
+hospital:
+  nome: ${HOSPITAL_NOME:Hospital AO}
+  nif: ${HOSPITAL_NIF:5000000001HA044}
+  morada: ${HOSPITAL_MORADA:Luanda, Angola}
+  telefone: ${HOSPITAL_TELEFONE:}
+  email: ${HOSPITAL_EMAIL:}
+  serie-fatura: ${HOSPITAL_SERIE_FATURA:HA2024}
+
+
+# ============================================================
+# Configuração AGT Angola — Facturação Electrónica
+# ============================================================
+agt:
+  # Ambiente: sandbox (testes) ou produção
+  sandbox: true
+  api-url: https://sandbox.portaldoparceiro.minfin.gov.ao
+
+  # Credenciais — obtidas no Portal do Parceiro
+  client-id: ${AGT_CLIENT_ID:test-client-id}
+  client-secret: ${AGT_CLIENT_SECRET:test-client-secret}
+
+  # NIF do hospital (usar NIF de teste em sandbox)
+  nif: 5000413178
+
+  # Software registado na AGT
+  software-id: HospitalAO
+  software-version: 1.0.0
+  software-validation-number: ${AGT_SOFTWARE_VALIDATION:123456}
+
+  # Chave privada RSA (do ficheiro Excel do Portal do Parceiro)
+  private-key-path: ${AGT_PRIVATE_KEY_PATH:}
+# ============================================================
+# ACTUATOR — Health checks e métricas
+# ============================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expor apenas os endpoints necessários (segurança)
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+
+# ============================================================
+# SWAGGER UI — Documentação interactiva da API
+# ============================================================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # Ordenar endpoints por tag e depois por nome
+    tags-sorter: alpha
+    operations-sorter: alpha
+  # Mostrar também os endpoints do Actuator na documentação
+  show-actuator: false
+
+
+# ============================================================
+# LOGGING
+# ============================================================
+logging:
+  level:
+    # O nosso código: mostrar tudo (DEBUG)
+    ao.hospitalao: DEBUG
+    # Spring Security: só avisos e erros
+    org.springframework.security: WARN
+    # Hibernate SQL: só em dev (ver perfil abaixo)
+    org.hibernate.SQL: WARN
+  pattern:
+    # Formato legível: data hora [thread] nível classe - mensagem
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+
+# ============================================================
+# PERFIL: dev
+# Overrides específicos para desenvolvimento
+# ============================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: true  # Ver as queries SQL no terminal em dev
+
+logging:
+  level:
+    ao.hospitalao: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.security: TRACE

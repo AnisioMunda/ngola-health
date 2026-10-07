@@ -1,0 +1,44 @@
+# ================================================
+# application-test.yml
+# Colocar em: backend/src/test/resources/
+# ================================================
+
+spring:
+  datasource:
+    url:            jdbc:h2:mem:hospitalao_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # Cria e destrói o schema a cada teste
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+  liquibase:
+    enabled: false    # Desactivar Liquibase nos testes — JPA cria o schema
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# JWT de teste
+jwt:
+  secret: ${JWT_SECRET:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
+  expiration: 3600000
+
+# Logging mínimo nos testes
+logging:
+  level:
+    root: WARN
+    ao.hospitalao: DEBUG
+    org.springframework.security: WARN
+    org.hibernate: WARN
+
+# Desactivar agendador nos testes
+spring.task.scheduling.enabled: false
