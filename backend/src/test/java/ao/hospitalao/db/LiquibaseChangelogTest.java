@@ -110,6 +110,24 @@ class LiquibaseChangelogTest {
         "changes/hospitals/002-tenant-scoped-records.sql");
   }
 
+  @Test
+  void laboratoryTableMigrationsAreIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "008-01-criar-tabela-lab-tests", "changes/laboratory/001-laboratory.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "008-02-criar-tabela-lab-requests", "changes/laboratory/001-laboratory.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog,
+        "008-03-criar-tabela-lab-request-items",
+        "changes/laboratory/001-laboratory.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog,
+        "hospitals-010-lab-request-item-tenant",
+        "changes/hospitals/002-tenant-scoped-records.sql");
+  }
+
   private void assertChangesetIsIncludedAndReversible(
       DatabaseChangeLog changelog, String id, String filePath) {
     assertThat(changelog.getChangeSets())
