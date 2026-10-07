@@ -31,7 +31,8 @@ public class PharmacyController {
 
   @GetMapping("/medications")
   @Operation(summary = "List medications (paginated, searchable)")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<MedicationResponse>> findAllMedications(
       @RequestParam(required = false) String search,
       @PageableDefault(size = 20, sort = "name") Pageable pageable) {
@@ -40,7 +41,8 @@ public class PharmacyController {
 
   @PostMapping("/medications")
   @Operation(summary = "Add new medication to catalog")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<MedicationResponse> createMedication(
       @Valid @RequestBody CreateMedicationRequest request) {
     return ResponseEntity.ok(pharmacyService.createMedication(request));
@@ -52,14 +54,16 @@ public class PharmacyController {
 
   @GetMapping("/medications/{id}/batches")
   @Operation(summary = "List stock batches for a medication")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<StockBatchResponse>> findBatches(@PathVariable UUID id) {
     return ResponseEntity.ok(pharmacyService.findBatchesByMedication(id));
   }
 
   @PostMapping("/stock/receive")
   @Operation(summary = "Receive new stock batch")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<StockBatchResponse> receiveStock(
       @Valid @RequestBody ReceiveStockRequest request) {
     return ResponseEntity.ok(pharmacyService.receiveStock(request));
@@ -67,7 +71,8 @@ public class PharmacyController {
 
   @GetMapping("/stock/expiring")
   @Operation(summary = "List batches expiring soon")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<StockBatchResponse>> findExpiringSoon(
       @RequestParam(defaultValue = "30") int days) {
     return ResponseEntity.ok(pharmacyService.findExpiringSoon(days));
@@ -79,7 +84,8 @@ public class PharmacyController {
 
   @PostMapping("/dispense")
   @Operation(summary = "Dispense medication to a patient (FEFO)")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<DispenseResponse> dispense(@Valid @RequestBody DispenseRequest request) {
     return ResponseEntity.ok(pharmacyService.dispense(request));
   }

@@ -1,6 +1,7 @@
 package ao.hospitalao.security.jwt;
 
 import ao.hospitalao.modules.auth.service.TokenBlackListService;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -169,7 +170,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     boolean hasPlatformRole =
         userDetails.getAuthorities().stream()
-            .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+            .anyMatch(
+                authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
     if (!jwtService.isTokenValid(jwt, userDetails) || platformAdmin != hasPlatformRole) {
       throw new UsernameNotFoundException("Token authority does not match the user account");
     }

@@ -53,7 +53,7 @@ public class SecurityConfig {
                     .permitAll()
 
                     // ── Portal do paciente ────────────────────────────────
-                    // Endpoints do portal aplicam adicionalmente ROLE_PATIENT por método.
+                    // Endpoints do portal aplicam adicionalmente o papel de paciente por método.
                     .requestMatchers("/portal/**")
                     .authenticated()
 

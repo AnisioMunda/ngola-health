@@ -41,7 +41,8 @@ public class InpatientController {
 
   @PostMapping("/wards")
   @Operation(summary = "Criar enfermaria")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<WardResponse> createWard(@Valid @RequestBody CreateWardRequest request) {
     WardResponse created = inpatientService.createWard(request);
     URI uri =
@@ -76,14 +77,16 @@ public class InpatientController {
 
   @PostMapping("/beds")
   @Operation(summary = "Criar cama")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<BedResponse> createBed(@Valid @RequestBody CreateBedRequest request) {
     return ResponseEntity.ok(inpatientService.createBed(request));
   }
 
   @PatchMapping("/beds/{id}/status")
   @Operation(summary = "Actualizar estado da cama (AVAILABLE/MAINTENANCE/RESERVED)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<BedResponse> updateBedStatus(
       @PathVariable UUID id, @Valid @RequestBody UpdateBedStatusRequest request) {
     return ResponseEntity.ok(inpatientService.updateBedStatus(id, request));
@@ -119,7 +122,8 @@ public class InpatientController {
 
   @PostMapping("/admissions")
   @Operation(summary = "Admitir paciente (criar internamento)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<AdmissionResponse> admit(
       @Valid @RequestBody CreateAdmissionRequest request) {
     AdmissionResponse created = inpatientService.admit(request);
@@ -133,7 +137,8 @@ public class InpatientController {
 
   @PatchMapping("/admissions/{id}/discharge")
   @Operation(summary = "Dar alta ao paciente")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AdmissionResponse> discharge(
       @PathVariable UUID id, @Valid @RequestBody DischargeRequest request) {
     return ResponseEntity.ok(inpatientService.discharge(id, request));
@@ -141,7 +146,8 @@ public class InpatientController {
 
   @PatchMapping("/admissions/{id}/transfer")
   @Operation(summary = "Transferir paciente para outra cama/enfermaria")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AdmissionResponse> transfer(
       @PathVariable UUID id, @Valid @RequestBody TransferRequest request) {
     return ResponseEntity.ok(inpatientService.transfer(id, request));

@@ -34,7 +34,7 @@ public class HospitalController {
 
   @GetMapping("/management")
   @Operation(summary = "List all hospitals, including inactive")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<List<HospitalResponse>> findAllForManagement() {
     return ResponseEntity.ok(hospitalService.findAll(true));
   }
@@ -48,7 +48,7 @@ public class HospitalController {
 
   @PostMapping
   @Operation(summary = "Create new hospital")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<HospitalResponse> create(
       @Valid @RequestBody CreateHospitalRequest request) {
     HospitalResponse created = hospitalService.create(request);
@@ -62,7 +62,7 @@ public class HospitalController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update hospital")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<HospitalResponse> update(
       @PathVariable UUID id, @Valid @RequestBody CreateHospitalRequest request) {
     return ResponseEntity.ok(hospitalService.update(id, request));
@@ -70,21 +70,21 @@ public class HospitalController {
 
   @PatchMapping("/{id}/activate")
   @Operation(summary = "Activate hospital")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<HospitalResponse> activate(@PathVariable UUID id) {
     return ResponseEntity.ok(hospitalService.setActive(id, true));
   }
 
   @PatchMapping("/{id}/deactivate")
   @Operation(summary = "Deactivate hospital")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<HospitalResponse> deactivate(@PathVariable UUID id) {
     return ResponseEntity.ok(hospitalService.setActive(id, false));
   }
 
   @DeleteMapping("/{id}")
   @Operation(summary = "Deactivate hospital without deleting its records")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).SUPER_ADMIN.name())")
   public ResponseEntity<Void> delete(@PathVariable UUID id) {
     hospitalService.setActive(id, false);
     return ResponseEntity.noContent().build();

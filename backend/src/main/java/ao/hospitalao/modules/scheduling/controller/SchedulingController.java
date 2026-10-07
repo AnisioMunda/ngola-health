@@ -51,7 +51,8 @@ public class SchedulingController {
 
   @PostMapping("/schedules")
   @Operation(summary = "Definir horário de consultas de um médico")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<DoctorScheduleResponse> createSchedule(
       @Valid @RequestBody CreateScheduleRequest request) {
     return ResponseEntity.ok(schedulingService.createSchedule(request));
@@ -59,7 +60,8 @@ public class SchedulingController {
 
   @DeleteMapping("/schedules/{id}")
   @Operation(summary = "Remover horário de um médico")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Void> deleteSchedule(@PathVariable UUID id) {
     schedulingService.deleteSchedule(id);
     return ResponseEntity.noContent().build();
@@ -117,7 +119,8 @@ public class SchedulingController {
 
   @PostMapping("/appointments")
   @Operation(summary = "Criar novo agendamento")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AppointmentResponse> create(
       @Valid @RequestBody CreateAppointmentRequest request) {
     AppointmentResponse created = schedulingService.create(request);
@@ -131,21 +134,24 @@ public class SchedulingController {
 
   @PatchMapping("/appointments/{id}/confirm")
   @Operation(summary = "Confirmar agendamento (SCHEDULED → CONFIRMED)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AppointmentResponse> confirm(@PathVariable UUID id) {
     return ResponseEntity.ok(schedulingService.confirm(id));
   }
 
   @PatchMapping("/appointments/{id}/complete")
   @Operation(summary = "Marcar consulta como realizada (→ COMPLETED)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AppointmentResponse> complete(@PathVariable UUID id) {
     return ResponseEntity.ok(schedulingService.complete(id));
   }
 
   @PatchMapping("/appointments/{id}/cancel")
   @Operation(summary = "Cancelar agendamento")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AppointmentResponse> cancel(
       @PathVariable UUID id, @RequestParam String reason) {
     return ResponseEntity.ok(schedulingService.cancel(id, reason));
@@ -153,7 +159,8 @@ public class SchedulingController {
 
   @PatchMapping("/appointments/{id}/no-show")
   @Operation(summary = "Registar falta do paciente (NO_SHOW)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AppointmentResponse> noShow(@PathVariable UUID id) {
     return ResponseEntity.ok(schedulingService.noShow(id));
   }
@@ -164,7 +171,8 @@ public class SchedulingController {
 
   @PostMapping("/blocks")
   @Operation(summary = "Bloquear agenda de um médico (férias, ausência, feriado)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Void> createBlock(@Valid @RequestBody CreateBlockRequest request) {
     schedulingService.createBlock(request);
     return ResponseEntity.noContent().build();

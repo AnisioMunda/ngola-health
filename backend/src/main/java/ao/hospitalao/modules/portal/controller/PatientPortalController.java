@@ -53,33 +53,33 @@ public class PatientPortalController {
   }
 
   // ------------------------------------------------
-  // Autenticado — ROLE_PATIENT
+  // Autenticado — papel de paciente
   // ------------------------------------------------
 
   @GetMapping("/dashboard")
   @Operation(summary = "Dashboard do paciente")
-  @PreAuthorize("hasRole('PATIENT')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
   public ResponseEntity<PortalDashboardDto> getDashboard(Authentication auth) {
     return ResponseEntity.ok(portalService.getDashboard(extractPatientId(auth)));
   }
 
   @GetMapping("/episodes")
   @Operation(summary = "Histórico de consultas")
-  @PreAuthorize("hasRole('PATIENT')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
   public ResponseEntity<List<PortalEpisodeDto>> getEpisodes(Authentication auth) {
     return ResponseEntity.ok(portalService.getEpisodes(extractPatientId(auth)));
   }
 
   @GetMapping("/prescriptions")
   @Operation(summary = "Prescrições do paciente")
-  @PreAuthorize("hasRole('PATIENT')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
   public ResponseEntity<List<PortalPrescriptionDto>> getPrescriptions(Authentication auth) {
     return ResponseEntity.ok(portalService.getPrescriptions(extractPatientId(auth)));
   }
 
   @GetMapping("/invoices")
   @Operation(summary = "Facturas do paciente")
-  @PreAuthorize("hasRole('PATIENT')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
   public ResponseEntity<List<PortalInvoiceDto>> getInvoices(Authentication auth) {
     return ResponseEntity.ok(portalService.getInvoices(extractPatientId(auth)));
   }

@@ -31,7 +31,7 @@ public class AuthController {
 
   @PostMapping("/register")
   @Operation(summary = "Register new user", description = "Create a new user account")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   @ApiResponses(
       value = {
         @ApiResponse(

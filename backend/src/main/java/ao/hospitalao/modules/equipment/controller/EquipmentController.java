@@ -28,7 +28,8 @@ public class EquipmentController {
   private final EquipmentService equipmentService;
 
   @GetMapping("/stats")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<EquipmentStatsDto> getStats() {
     return ResponseEntity.ok(equipmentService.getStats());
   }
@@ -48,20 +49,23 @@ public class EquipmentController {
 
   @GetMapping("/maintenance-due")
   @Operation(summary = "Equipamentos com manutenção em atraso ou nos próximos 7 dias")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<EquipmentResponse>> findMaintenanceDue() {
     return ResponseEntity.ok(equipmentService.findMaintenanceDue());
   }
 
   @GetMapping("/calibration-due")
   @Operation(summary = "Equipamentos com calibração em atraso ou nos próximos 7 dias")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<EquipmentResponse>> findCalibrationDue() {
     return ResponseEntity.ok(equipmentService.findCalibrationDue());
   }
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<EquipmentResponse> create(
       @Valid @RequestBody CreateEquipmentRequest request) {
     EquipmentResponse created = equipmentService.create(request);
@@ -74,7 +78,8 @@ public class EquipmentController {
   }
 
   @PatchMapping("/{id}/status")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<EquipmentResponse> updateStatus(
       @PathVariable UUID id, @RequestBody UpdateStatusRequest request) {
     return ResponseEntity.ok(equipmentService.updateStatus(id, request));
@@ -82,7 +87,8 @@ public class EquipmentController {
 
   @PostMapping("/{id}/maintenance")
   @Operation(summary = "Registar manutenção / calibração")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<EquipmentResponse> addMaintenance(
       @PathVariable UUID id, @Valid @RequestBody CreateMaintenanceRequest request) {
     return ResponseEntity.ok(equipmentService.addMaintenance(id, request));

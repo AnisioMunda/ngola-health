@@ -11,6 +11,7 @@ import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.dto.UpdateUserRequest;
 import ao.hospitalao.modules.users.dto.UserResponse;
 import ao.hospitalao.modules.users.mapper.UserMapper;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.HashSet;
@@ -31,8 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
-  private static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
@@ -180,7 +179,7 @@ public class UserService {
           roleRepository
               .findById(roleId)
               .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleId));
-      if (SUPER_ADMIN_ROLE.equals(role.getName()) && !canManagePlatformRoles()) {
+      if (RoleName.SUPER_ADMIN.name().equals(role.getName()) && !canManagePlatformRoles()) {
         throw new AccessDeniedException("Only a platform super-administrator may assign this role");
       }
       roles.add(role);
@@ -192,6 +191,7 @@ public class UserService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     return authentication != null
         && authentication.getAuthorities().stream()
-            .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+            .anyMatch(
+                authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
   }
 }

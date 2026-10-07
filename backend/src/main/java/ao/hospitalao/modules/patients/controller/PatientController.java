@@ -29,7 +29,8 @@ public class PatientController {
 
   @GetMapping
   @Operation(summary = "List patients (paginated, searchable)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<PatientResponse>> findAll(
       @RequestParam(required = false) String search,
       @PageableDefault(size = 20, sort = "fullName") Pageable pageable) {
@@ -38,14 +39,16 @@ public class PatientController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Get patient by ID")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<PatientResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(patientService.findById(id));
   }
 
   @PostMapping
   @Operation(summary = "Register new patient")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<PatientResponse> create(@Valid @RequestBody CreatePatientRequest request) {
     PatientResponse created = patientService.create(request);
     URI uri =
@@ -58,7 +61,8 @@ public class PatientController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update patient")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<PatientResponse> update(
       @PathVariable UUID id, @Valid @RequestBody CreatePatientRequest request) {
     return ResponseEntity.ok(patientService.update(id, request));
@@ -66,7 +70,7 @@ public class PatientController {
 
   @DeleteMapping("/{id}")
   @Operation(summary = "Deactivate patient (soft delete)")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<PatientResponse> deactivate(@PathVariable UUID id) {
     return ResponseEntity.ok(patientService.deactivate(id));
   }

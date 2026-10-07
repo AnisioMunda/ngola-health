@@ -9,6 +9,7 @@ import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.mapper.AuthMapper;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.jwt.JwtService;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.transaction.Transactional;
@@ -94,7 +95,8 @@ public class AuthService {
 
       boolean platformAdmin =
           user.getAuthorities().stream()
-              .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+              .anyMatch(
+                  authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
       if (!platformAdmin && user.getHospitalId() == null) {
         throw new BadCredentialsException("Invalid email or password");
       }
@@ -128,7 +130,8 @@ public class AuthService {
 
       boolean platformAdmin =
           user.getAuthorities().stream()
-              .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+              .anyMatch(
+                  authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
       boolean tokenPlatformAdmin = jwtService.isPlatformAdminToken(refreshToken);
       UUID tokenHospitalId = jwtService.extractHospitalId(refreshToken);
       boolean hospitalMatches =

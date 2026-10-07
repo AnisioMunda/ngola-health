@@ -11,6 +11,7 @@ import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.mapper.UserMapper;
+import ao.hospitalao.security.RoleName;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -52,11 +53,13 @@ class UserServiceTest {
     when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
     when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
     when(roleRepository.findById(roleId))
-        .thenReturn(Optional.of(Role.builder().name("SUPER_ADMIN").build()));
+        .thenReturn(Optional.of(Role.builder().name(RoleName.SUPER_ADMIN.name()).build()));
     SecurityContextHolder.getContext()
         .setAuthentication(
             new UsernamePasswordAuthenticationToken(
-                "hospital-admin", null, Set.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+                "hospital-admin",
+                null,
+                Set.of(new SimpleGrantedAuthority(RoleName.ADMIN.authority()))));
 
     assertThatThrownBy(() -> userService.create(request))
         .isInstanceOf(AccessDeniedException.class)

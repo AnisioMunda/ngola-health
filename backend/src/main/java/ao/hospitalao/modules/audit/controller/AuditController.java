@@ -31,7 +31,8 @@ public class AuditController {
 
   @GetMapping("/logs")
   @Operation(summary = "Listar logs de auditoria com filtros")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<AuditLogDto>> findAll(
       @RequestParam(required = false) UUID userId,
       @RequestParam(required = false) AuditAction action,
@@ -46,7 +47,8 @@ public class AuditController {
 
   @GetMapping("/logs/entity/{type}/{id}")
   @Operation(summary = "Histórico de auditoria de uma entidade específica")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<AuditLogDto>> findByEntity(
       @PathVariable EntityType type, @PathVariable String id) {
     return ResponseEntity.ok(auditService.findByEntity(type, id));
@@ -54,7 +56,8 @@ public class AuditController {
 
   @GetMapping("/stats")
   @Operation(summary = "Estatísticas de auditoria — dashboard de segurança")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AuditStatsDto> getStats() {
     return ResponseEntity.ok(auditService.getStats());
   }

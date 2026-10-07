@@ -26,7 +26,8 @@ public class ReportController {
 
   @GetMapping("/patients/{id}")
   @Operation(summary = "Generate patient clinical record PDF")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> patientReport(@PathVariable UUID id) throws IOException {
     byte[] pdf = pdfReportService.generatePatientReport(id);
     return buildPdfResponse(pdf, "patient-report-" + id + ".pdf");
@@ -34,7 +35,8 @@ public class ReportController {
 
   @GetMapping("/stock")
   @Operation(summary = "Generate pharmacy stock report PDF")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> stockReport() throws IOException {
     byte[] pdf = pdfReportService.generateStockReport();
     return buildPdfResponse(pdf, "stock-report-" + LocalDate.now() + ".pdf");

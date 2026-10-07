@@ -31,7 +31,8 @@ public class EpisodeController {
 
   @GetMapping
   @Operation(summary = "List episodes with optional filters")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<EpisodeResponse>> findAll(
       @RequestParam(required = false) UUID patientId,
       @RequestParam(required = false) UUID doctorId,
@@ -42,14 +43,16 @@ public class EpisodeController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Get episode by ID")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<EpisodeResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(episodeService.findById(id));
   }
 
   @PostMapping
   @Operation(summary = "Schedule a new episode")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<EpisodeResponse> create(@Valid @RequestBody CreateEpisodeRequest request) {
     EpisodeResponse created = episodeService.create(request);
     URI uri =
@@ -62,7 +65,8 @@ public class EpisodeController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update episode clinical data")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<EpisodeResponse> update(
       @PathVariable UUID id, @RequestBody UpdateEpisodeRequest request) {
     return ResponseEntity.ok(episodeService.update(id, request));
@@ -70,21 +74,24 @@ public class EpisodeController {
 
   @PatchMapping("/{id}/start")
   @Operation(summary = "Start episode (SCHEDULED → IN_PROGRESS)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<EpisodeResponse> start(@PathVariable UUID id) {
     return ResponseEntity.ok(episodeService.start(id));
   }
 
   @PatchMapping("/{id}/complete")
   @Operation(summary = "Complete episode (IN_PROGRESS → COMPLETED)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<EpisodeResponse> complete(@PathVariable UUID id) {
     return ResponseEntity.ok(episodeService.complete(id));
   }
 
   @PatchMapping("/{id}/cancel")
   @Operation(summary = "Cancel episode")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<EpisodeResponse> cancel(@PathVariable UUID id) {
     return ResponseEntity.ok(episodeService.cancel(id));
   }

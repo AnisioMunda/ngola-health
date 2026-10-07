@@ -65,7 +65,8 @@ public class TriageController {
 
   @PostMapping
   @Operation(summary = "Criar triagem")
-  @PreAuthorize("hasAnyRole('ADMIN','NURSE','DOCTOR','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<TriageResponse> create(@Valid @RequestBody CreateTriageRequest request) {
     TriageResponse created = triageService.create(request);
     URI uri =
@@ -78,7 +79,8 @@ public class TriageController {
 
   @PatchMapping("/{id}/priority")
   @Operation(summary = "Actualizar prioridade de triagem")
-  @PreAuthorize("hasAnyRole('ADMIN','NURSE','DOCTOR','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<TriageResponse> updatePriority(
       @PathVariable UUID id, @Valid @RequestBody UpdatePriorityRequest request) {
     return ResponseEntity.ok(triageService.updatePriority(id, request));
@@ -86,21 +88,24 @@ public class TriageController {
 
   @PatchMapping("/{id}/call")
   @Operation(summary = "Chamar paciente — WAITING → IN_PROGRESS")
-  @PreAuthorize("hasAnyRole('ADMIN','NURSE','DOCTOR','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<TriageResponse> callNext(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.callNext(id));
   }
 
   @PatchMapping("/{id}/complete")
   @Operation(summary = "Completar atendimento — IN_PROGRESS → COMPLETED")
-  @PreAuthorize("hasAnyRole('ADMIN','NURSE','DOCTOR','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<TriageResponse> complete(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.complete(id));
   }
 
   @PatchMapping("/{id}/left")
   @Operation(summary = "Marcar paciente como saiu sem ser atendido")
-  @PreAuthorize("hasAnyRole('ADMIN','NURSE','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<TriageResponse> markAsLeft(@PathVariable UUID id) {
     return ResponseEntity.ok(triageService.markAsLeft(id));
   }

@@ -2,6 +2,7 @@ package ao.hospitalao.security.jwt;
 
 import ao.hospitalao.config.properties.JwtProperties;
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.security.RoleName;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,7 +16,6 @@ import java.util.function.Function;
 import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -56,7 +56,9 @@ public class JwtService {
   public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
     if (userDetails instanceof User user) {
       boolean platformAdmin =
-          user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+          user.getAuthorities().stream()
+              .anyMatch(
+                  authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
       if (platformAdmin) {
         extraClaims.put("platform_admin", true);
       } else if (user.getHospitalId() != null) {

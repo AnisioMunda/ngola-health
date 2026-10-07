@@ -39,7 +39,8 @@ public class HrController {
 
   @GetMapping("/stats")
   @Operation(summary = "Estatísticas RH — turnos hoje, ausências, presenças")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<HrStatsDto> getStats() {
     return ResponseEntity.ok(hrService.getStats());
   }
@@ -73,7 +74,8 @@ public class HrController {
 
   @PostMapping("/shifts")
   @Operation(summary = "Criar turno (ADMIN/MANAGER)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<ShiftResponse> createShift(@Valid @RequestBody CreateShiftRequest request) {
     ShiftResponse created = hrService.createShift(request);
     URI uri =
@@ -86,7 +88,8 @@ public class HrController {
 
   @PatchMapping("/shifts/{id}/status")
   @Operation(summary = "Actualizar estado do turno")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<ShiftResponse> updateShiftStatus(
       @PathVariable UUID id, @Valid @RequestBody UpdateShiftStatusRequest request) {
     return ResponseEntity.ok(hrService.updateShiftStatus(id, request));
@@ -94,7 +97,8 @@ public class HrController {
 
   @DeleteMapping("/shifts/{id}")
   @Operation(summary = "Eliminar turno")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Void> deleteShift(@PathVariable UUID id) {
     hrService.deleteShift(id);
     return ResponseEntity.noContent().build();
@@ -106,7 +110,8 @@ public class HrController {
 
   @GetMapping("/leaves/pending")
   @Operation(summary = "Pedidos de folga pendentes (para aprovação)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<LeaveRequestResponse>> getPendingLeaves() {
     return ResponseEntity.ok(hrService.getPendingLeaves());
   }
@@ -122,7 +127,8 @@ public class HrController {
 
   @GetMapping("/leaves/approved")
   @Operation(summary = "Ausências aprovadas num período — para mapa")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<LeaveRequestResponse>> getApprovedLeaves(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -146,7 +152,8 @@ public class HrController {
 
   @PatchMapping("/leaves/{id}/approve")
   @Operation(summary = "Aprovar ou rejeitar pedido de folga")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<LeaveRequestResponse> approveLeave(
       @PathVariable UUID id, @Valid @RequestBody ApproveLeaveRequest request) {
     return ResponseEntity.ok(hrService.approveLeave(id, request));
@@ -191,7 +198,8 @@ public class HrController {
 
   @GetMapping("/attendance/daily")
   @Operation(summary = "Presenças do dia (todos os funcionários)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<AttendanceResponse>> getDailyAttendance(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate date) {
