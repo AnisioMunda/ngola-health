@@ -5,7 +5,7 @@
       <p>Visão em tempo real da ocupação das enfermarias</p>
     </div>
     <div class="header-actions">
-      <button class="btn-secondary" (click)="goToSetup()">
+      <button type="button" class="btn-secondary" (click)="goToSetup()">
         <svg viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
           <path
@@ -17,7 +17,7 @@
         </svg>
         Configurar
       </button>
-      <button class="btn-secondary" (click)="goToAdmissions()">
+      <button type="button" class="btn-secondary" (click)="goToAdmissions()">
         <svg viewBox="0 0 20 20" fill="none">
           <rect
             x="2"
@@ -37,7 +37,7 @@
         </svg>
         Lista de Internamentos
       </button>
-      <button class="btn-primary" (click)="goToAdmit()">
+      <button type="button" class="btn-primary" (click)="goToAdmit()">
         <svg viewBox="0 0 20 20" fill="none">
           <path
             d="M10 4v12M4 10h12"
@@ -51,8 +51,8 @@
     </div>
   </header>
 
-  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" *ngIf="success" role="status">{{ success }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
@@ -63,9 +63,11 @@
     <!-- Selector de enfermaria -->
     <div class="ward-selector">
       <button
+        type="button"
         class="ward-tab"
         *ngFor="let w of wards"
         [class.active]="selectedWardId === w.id"
+        [attr.aria-pressed]="selectedWardId === w.id"
         (click)="selectedWardId = w.id; onWardChange()"
       >
         <span class="ward-name">{{ w.name }}</span>
@@ -74,6 +76,13 @@
           <span class="sep">/</span>
           <span class="stat total">{{ w.totalBeds }}</span>
         </span>
+      </button>
+    </div>
+
+    <div class="empty-state" *ngIf="wards.length === 0 && !error">
+      <p>Nenhuma enfermaria configurada.</p>
+      <button type="button" class="btn-secondary" (click)="goToSetup()">
+        Configurar enfermarias
       </button>
     </div>
 
@@ -108,18 +117,21 @@
     <!-- Loading mapa -->
     <div class="map-loading" *ngIf="loadingMap">
       <div class="spinner-lg"></div>
+      <span class="visually-hidden" role="status">A carregar mapa de camas...</span>
     </div>
 
     <!-- Mapa de camas -->
     <div class="bed-grid" *ngIf="wardMap && !loadingMap">
-      <div
+      <button
+        type="button"
         class="bed-card"
         *ngFor="let bed of wardMap.beds"
-        [class]="'bed-' + bed.status.toLowerCase()"
+        [ngClass]="'bed-' + bed.status.toLowerCase()"
+        [attr.aria-label]="getBedAriaLabel(bed)"
         (click)="selectBed(bed)"
         [title]="bed.status === 'OCCUPIED' ? bed.patientName : bedStatusLabels[bed.status]"
       >
-        <div class="bed-header">
+        <span class="bed-header">
           <span class="bed-number">Cama {{ bed.bedNumber }}</span>
           <span class="bed-type-icon">
             {{
@@ -132,18 +144,18 @@
                     : '🛏'
             }}
           </span>
-        </div>
+        </span>
 
-        <div class="bed-status-label">{{ bedStatusLabels[bed.status] }}</div>
+        <span class="bed-status-label">{{ bedStatusLabels[bed.status] }}</span>
 
-        <div class="bed-patient" *ngIf="bed.status === 'OCCUPIED'">
-          <div class="patient-name">{{ bed.patientName }}</div>
-          <div class="patient-days" *ngIf="bed.admissionDate">
+        <span class="bed-patient" *ngIf="bed.status === 'OCCUPIED'">
+          <span class="patient-name">{{ bed.patientName }}</span>
+          <span class="patient-days" *ngIf="bed.admissionDate">
             {{ getDaysAgo(bed.admissionDate) }}d internado
-          </div>
-        </div>
+          </span>
+        </span>
 
-        <div class="bed-icon" *ngIf="bed.status !== 'OCCUPIED'">
+        <span class="bed-icon" *ngIf="bed.status !== 'OCCUPIED'">
           <svg *ngIf="bed.status === 'AVAILABLE'" viewBox="0 0 20 20" fill="none">
             <path
               d="M2 10h16M2 10V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3M4 10v5M16 10v5M4 15h12"
@@ -164,12 +176,12 @@
             <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
             <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
-        </div>
-      </div>
+        </span>
+      </button>
 
       <div class="bed-empty" *ngIf="wardMap.beds.length === 0">
         <p>Nenhuma cama configurada nesta enfermaria.</p>
-        <button class="btn-secondary" (click)="goToSetup()">Configurar camas</button>
+        <button type="button" class="btn-secondary" (click)="goToSetup()">Configurar camas</button>
       </div>
     </div>
 
@@ -194,33 +206,75 @@
   </ng-container>
 
   <!-- Modal: Admitir paciente -->
-  <div class="modal-overlay" *ngIf="showAdmitModal" (click)="showAdmitModal = false">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h3>Cama {{ selectedBed?.bedNumber }} — Disponível</h3>
+  <div
+    class="modal-overlay"
+    *ngIf="showAdmitModal"
+    role="presentation"
+    (click)="closeModal()"
+    (keydown.escape)="closeModal()"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admit-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 id="admit-modal-title">Cama {{ selectedBed?.bedNumber }} — Disponível</h3>
       <p>Deseja admitir um paciente nesta cama?</p>
       <div class="modal-actions">
-        <button class="btn-secondary" (click)="showAdmitModal = false">Cancelar</button>
-        <button class="btn-primary" (click)="goToAdmit()">Iniciar Admissão</button>
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="button" class="btn-primary" (click)="goToAdmit()">Iniciar Admissão</button>
       </div>
     </div>
   </div>
 
   <!-- Modal: Alterar estado da cama -->
-  <div class="modal-overlay" *ngIf="showStatusModal" (click)="showStatusModal = false">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <h3>Cama {{ selectedBed?.bedNumber }}</h3>
+  <div
+    class="modal-overlay"
+    *ngIf="showStatusModal"
+    role="presentation"
+    (click)="closeModal()"
+    (keydown.escape)="closeModal()"
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="status-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 id="status-modal-title">Cama {{ selectedBed?.bedNumber }}</h3>
       <p>Alterar estado da cama:</p>
       <div class="status-buttons">
-        <button class="btn-status available" (click)="setBedStatus('AVAILABLE')">
+        <button
+          type="button"
+          class="btn-status available"
+          [disabled]="!!updatingBedId"
+          (click)="setBedStatus('AVAILABLE')"
+        >
           ✓ Disponível
         </button>
-        <button class="btn-status maintenance" (click)="setBedStatus('MAINTENANCE')">
+        <button
+          type="button"
+          class="btn-status maintenance"
+          [disabled]="!!updatingBedId"
+          (click)="setBedStatus('MAINTENANCE')"
+        >
           ⚙ Manutenção
         </button>
-        <button class="btn-status reserved" (click)="setBedStatus('RESERVED')">⏱ Reservada</button>
+        <button
+          type="button"
+          class="btn-status reserved"
+          [disabled]="!!updatingBedId"
+          (click)="setBedStatus('RESERVED')"
+        >
+          ⏱ Reservada
+        </button>
       </div>
+      <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
       <div class="modal-actions">
-        <button class="btn-secondary" (click)="showStatusModal = false">Cancelar</button>
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
       </div>
     </div>
   </div>

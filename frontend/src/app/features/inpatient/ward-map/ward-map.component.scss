@@ -279,9 +279,14 @@
 }
 
 .bed-card {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   border-radius: 12px;
   border: 2px solid;
   padding: 12px;
+  appearance: none;
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -349,14 +354,17 @@
 }
 
 .bed-patient {
+  display: block;
   flex: 1;
   .patient-name {
+    display: block;
     font-size: 0.78rem;
     font-weight: 700;
     color: #1a1f2e;
     line-height: 1.3;
   }
   .patient-days {
+    display: block;
     font-size: 0.68rem;
     color: #9ca3af;
     margin-top: 3px;
@@ -474,6 +482,23 @@
     color: #16a34a;
     &:hover {
       background: #dcfce7;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   }
   &.maintenance {

@@ -304,7 +304,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 4.10 | `feat(bd): criar tabelas de enfermarias, camas e internamentos` | Enfermarias, camas, admissões e transferências incluídas no changelog reversível e cobertas por teste |
 | 4.11 | `feat(internamento): adicionar API de enfermarias e camas` | Pedidos validados, camas não ocupadas fora do fluxo de internamento, dados do paciente carregados sem consulta por cama e testes focados |
 | 4.12 | `feat(internamento): adicionar API de admissões, transferências e altas` | Admissões activas únicas por cama e paciente na BD; bloqueios concorrentes e testes; serviços de enfermarias/camas separados do ciclo de internamento (R12, R17) |
-| 4.13 | `feat(internamento): adicionar ecrãs de enfermarias e mapa de camas` | |
+| 4.13 | `feat(internamento): adicionar ecrãs de enfermarias e mapa de camas` | Gestão de enfermarias/camas e mapa de ocupação acessíveis, com estados de carregamento, erros e testes focados |
 | 4.14 | `feat(internamento): adicionar admissões, detalhe e alta no frontend` | |
 | 4.15 | `docs(agendamento): documentar agendamento, notificações e internamento` | |
 

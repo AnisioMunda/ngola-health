@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   InpatientService,
   WardResponse,
   WardMapResponse,
   BedResponse,
-  BedStatus,
+  EditableBedStatus,
   WARD_TYPE_LABELS,
   BED_STATUS_LABELS,
 } from '../../../core/services/inpatient.service';
@@ -20,12 +22,17 @@ import {
   styleUrls: ['./ward-map.component.scss'],
 })
 export class WardMapComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private wardLoadSequence = 0;
+  private mapLoadSequence = 0;
+
   wards: WardResponse[] = [];
   selectedWardId = '';
   wardMap: WardMapResponse | null = null;
 
   loading = true;
   loadingMap = false;
+  updatingBedId: string | null = null;
   error = '';
   success = '';
 
@@ -47,37 +54,66 @@ export class WardMapComponent implements OnInit {
   }
 
   loadWards(): void {
+    const requestSequence = ++this.wardLoadSequence;
     this.loading = true;
-    this.inpatientService.findAllWards().subscribe({
-      next: (wards) => {
-        this.wards = wards;
-        this.loading = false;
-        if (wards.length > 0) {
-          this.selectedWardId = wards[0].id;
-          this.loadMap();
-        }
-      },
-      error: () => {
-        this.error = 'Erro ao carregar enfermarias.';
-        this.loading = false;
-      },
-    });
+    this.error = '';
+    this.inpatientService
+      .findAllWards()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (wards) => {
+          if (requestSequence !== this.wardLoadSequence) return;
+          this.wards = wards;
+          this.loading = false;
+          const selectedWard = wards.find((ward) => ward.id === this.selectedWardId) ?? wards[0];
+          this.selectedWardId = selectedWard?.id ?? '';
+          if (selectedWard) {
+            this.loadMap();
+          } else {
+            this.mapLoadSequence++;
+            this.wardMap = null;
+            this.loadingMap = false;
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          if (requestSequence !== this.wardLoadSequence) return;
+          this.error = this.errorMessage(error, 'Erro ao carregar enfermarias.');
+          this.wards = [];
+          this.selectedWardId = '';
+          this.wardMap = null;
+          this.mapLoadSequence++;
+          this.loading = false;
+          this.loadingMap = false;
+        },
+      });
   }
 
   loadMap(): void {
-    if (!this.selectedWardId) return;
+    const requestSequence = ++this.mapLoadSequence;
+    const wardId = this.selectedWardId;
+    if (!wardId) {
+      this.wardMap = null;
+      this.loadingMap = false;
+      return;
+    }
     this.loadingMap = true;
     this.wardMap = null;
-    this.inpatientService.getWardMap(this.selectedWardId).subscribe({
-      next: (map) => {
-        this.wardMap = map;
-        this.loadingMap = false;
-      },
-      error: () => {
-        this.error = 'Erro ao carregar mapa.';
-        this.loadingMap = false;
-      },
-    });
+    this.error = '';
+    this.inpatientService
+      .getWardMap(wardId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (map) => {
+          if (requestSequence !== this.mapLoadSequence || wardId !== this.selectedWardId) return;
+          this.wardMap = map;
+          this.loadingMap = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          if (requestSequence !== this.mapLoadSequence || wardId !== this.selectedWardId) return;
+          this.error = this.errorMessage(error, 'Erro ao carregar mapa.');
+          this.loadingMap = false;
+        },
+      });
   }
 
   onWardChange(): void {
@@ -90,30 +126,41 @@ export class WardMapComponent implements OnInit {
       this.showAdmitModal = true;
     } else if (bed.status === 'OCCUPIED' && bed.admissionId) {
       this.router.navigate(['/inpatient/admissions', bed.admissionId]);
+    } else if (bed.status === 'OCCUPIED') {
+      this.error = 'Não foi possível localizar o internamento associado a esta cama.';
     } else {
       this.showStatusModal = true;
     }
   }
 
-  setBedStatus(status: BedStatus): void {
-    if (!this.selectedBed) return;
-    this.inpatientService.updateBedStatus(this.selectedBed.id, status).subscribe({
-      next: () => {
-        this.showStatusModal = false;
-        this.flash('Estado da cama actualizado.');
-        this.loadMap();
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao actualizar cama.';
-      },
-    });
+  setBedStatus(status: EditableBedStatus): void {
+    if (!this.selectedBed || this.updatingBedId) return;
+    const bedId = this.selectedBed.id;
+    this.updatingBedId = bedId;
+    this.error = '';
+    this.inpatientService
+      .updateBedStatus(bedId, status)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.updatingBedId = null;
+          this.closeModal();
+          this.flash('Estado da cama actualizado.');
+          this.loadWards();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao actualizar cama.');
+          this.updatingBedId = null;
+        },
+      });
   }
 
   goToAdmit(): void {
-    this.showAdmitModal = false;
-    if (this.selectedBed) {
+    const bedId = this.selectedBed?.id;
+    this.closeModal();
+    if (bedId) {
       this.router.navigate(['/inpatient/admissions/new'], {
-        queryParams: { bedId: this.selectedBed.id },
+        queryParams: { bedId },
       });
     }
   }
@@ -130,17 +177,6 @@ export class WardMapComponent implements OnInit {
     setTimeout(() => (this.success = ''), 3000);
   }
 
-  bedColor(status: BedStatus): string {
-    return (
-      {
-        AVAILABLE: '#16a34a',
-        OCCUPIED: '#dc2626',
-        MAINTENANCE: '#f59e0b',
-        RESERVED: '#3b82f6',
-      }[status] ?? '#9ca3af'
-    );
-  }
-
   get occupancyRate(): number {
     if (!this.wardMap || this.wardMap.totalBeds === 0) return 0;
     return Math.round((this.wardMap.occupiedBeds / this.wardMap.totalBeds) * 100);
@@ -152,6 +188,21 @@ export class WardMapComponent implements OnInit {
 
   getDaysAgo(dateStr: string): number {
     const diff = Date.now() - new Date(dateStr).getTime();
-    return Math.floor(diff / 86400000);
+    return Math.max(0, Math.floor(diff / 86400000));
+  }
+
+  getBedAriaLabel(bed: BedResponse): string {
+    const occupant = bed.patientName ? `, paciente ${bed.patientName}` : '';
+    return `Cama ${bed.bedNumber}, ${this.bedStatusLabels[bed.status]}${occupant}`;
+  }
+
+  closeModal(): void {
+    this.showAdmitModal = false;
+    this.showStatusModal = false;
+    this.selectedBed = null;
+  }
+
+  private errorMessage(error: HttpErrorResponse, fallback: string): string {
+    return error.error?.detail ?? error.error?.message ?? fallback;
   }
 }
