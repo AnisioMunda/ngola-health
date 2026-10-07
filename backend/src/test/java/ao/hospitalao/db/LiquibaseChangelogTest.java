@@ -63,6 +63,21 @@ class LiquibaseChangelogTest {
             });
   }
 
+  @Test
+  void triageTableMigrationIsIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertThat(changelog.getChangeSets())
+        .filteredOn(changeSet -> changeSet.getId().equals("018-01-triage"))
+        .singleElement()
+        .satisfies(
+            changeSet -> {
+              assertThat(changeSet.getFilePath()).endsWith("changes/triage/001-triage.sql");
+              assertThat(changeSet.getRollback()).isNotNull();
+              assertThat(changeSet.getRollback().getChanges()).isNotEmpty();
+            });
+  }
+
   private DatabaseChangeLog parseMasterChangelog() throws Exception {
     try (var resources = new ClassLoaderResourceAccessor()) {
       var path = "db/changelog/db.changelog-master.xml";
