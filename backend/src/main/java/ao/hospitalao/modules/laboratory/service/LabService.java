@@ -3,6 +3,7 @@ package ao.hospitalao.modules.laboratory.service;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
+import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.laboratory.dto.LabDtos.*;
 import ao.hospitalao.modules.laboratory.entity.LabRequest;
@@ -15,16 +16,21 @@ import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -44,7 +50,7 @@ public class LabService {
 
   @Transactional(readOnly = true)
   public List<LabTestResponse> findAllTests() {
-    UUID hospitalId = TenantContext.getCurrentHospital();
+    UUID hospitalId = requireHospitalContext();
     return testRepository.findByHospitalIdAndActiveTrue(hospitalId).stream()
         .map(this::toTestResponse)
         .collect(Collectors.toList());
@@ -53,16 +59,17 @@ public class LabService {
   @SuppressWarnings("null")
   @Transactional
   public LabTestResponse createTest(CreateLabTestRequest req) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-    if (testRepository.existsByHospitalIdAndCode(hospitalId, req.getCode())) {
-      throw new IllegalArgumentException("Test code already exists: " + req.getCode());
+    UUID hospitalId = requireHospitalContext();
+    String code = req.getCode().trim().toUpperCase(Locale.ROOT);
+    if (testRepository.existsByHospitalIdAndCode(hospitalId, code)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "O código do exame já existe.");
     }
 
     LabTest test =
         LabTest.builder()
             .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .code(req.getCode().toUpperCase())
-            .name(req.getName())
+            .code(code)
+            .name(req.getName().trim())
             .category(req.getCategory())
             .sampleType(req.getSampleType())
             .turnaroundHours(req.getTurnaroundHours() != null ? req.getTurnaroundHours() : 24)
@@ -79,7 +86,7 @@ public class LabService {
 
   @Transactional(readOnly = true)
   public Page<LabRequestResponse> findAll(UUID patientId, RequestStatus status, Pageable pageable) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
+    UUID hospitalId = requireHospitalContext();
     return requestRepository
         .findWithFilters(hospitalId, patientId, status, pageable)
         .map(this::toRequestResponse);
@@ -88,6 +95,7 @@ public class LabService {
   @SuppressWarnings("null")
   @Transactional(readOnly = true)
   public LabRequestResponse findById(UUID id) {
+    requireHospitalContext();
     return requestRepository
         .findById(id)
         .map(this::toRequestResponse)
@@ -97,12 +105,15 @@ public class LabService {
   @SuppressWarnings("null")
   @Transactional
   public LabRequestResponse create(CreateLabRequestRequest req) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
+    UUID hospitalId = requireHospitalContext();
+    User currentUser = getCurrentUser();
+    requireHospital(currentUser, hospitalId, "Utilizador autenticado não encontrado.");
 
     var patient =
         patientRepository
             .findById(req.getPatientId())
-            .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado."));
+    requireHospital(patient, hospitalId, "Paciente não encontrado.");
 
     var request =
         LabRequest.builder()
@@ -111,26 +122,49 @@ public class LabService {
             .status(RequestStatus.PENDING)
             .priority(req.getPriority() != null ? req.getPriority() : LabRequest.Priority.NORMAL)
             .clinicalNotes(req.getClinicalNotes())
-            .createdBy(getCurrentUser())
+            .createdBy(currentUser)
             .build();
 
     if (req.getEpisodeId() != null) {
-      request.setEpisode(episodeRepository.getReferenceById(req.getEpisodeId()));
+      var episode =
+          episodeRepository
+              .findById(req.getEpisodeId())
+              .orElseThrow(() -> new EntityNotFoundException("Episódio não encontrado."));
+      requireHospital(episode, hospitalId, "Episódio não encontrado.");
+      if (!episode.getPatient().getId().equals(patient.getId())) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "O episódio não pertence ao paciente indicado.");
+      }
+      request.setEpisode(episode);
     }
     if (req.getRequestedById() != null) {
-      request.setRequestedBy(userRepository.getReferenceById(req.getRequestedById()));
+      var requester =
+          userRepository
+              .findById(req.getRequestedById())
+              .orElseThrow(() -> new EntityNotFoundException("Profissional não encontrado."));
+      requireHospital(requester, hospitalId, "Profissional não encontrado.");
+      request.setRequestedBy(requester);
+    } else {
+      request.setRequestedBy(currentUser);
     }
 
-    // Adicionar itens
-    if (req.getLabTestIds() != null) {
-      for (UUID testId : req.getLabTestIds()) {
-        LabTest test =
-            testRepository
-                .findById(testId)
-                .orElseThrow(() -> new EntityNotFoundException("Lab test not found: " + testId));
-        LabRequestItem item = LabRequestItem.builder().request(request).labTest(test).build();
-        request.getItems().add(item);
+    Set<UUID> uniqueTestIds = new HashSet<>();
+    for (UUID testId : req.getLabTestIds()) {
+      if (!uniqueTestIds.add(testId)) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Um exame não pode ser repetido no mesmo pedido.");
       }
+      LabTest test =
+          testRepository
+              .findById(testId)
+              .orElseThrow(() -> new EntityNotFoundException("Exame não encontrado."));
+      requireHospital(test, hospitalId, "Exame não encontrado.");
+      if (!test.isActive()) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "Não é possível solicitar um exame inactivo.");
+      }
+      LabRequestItem item = LabRequestItem.builder().request(request).labTest(test).build();
+      request.getItems().add(item);
     }
 
     LabRequest saved = requestRepository.save(request);
@@ -141,6 +175,7 @@ public class LabService {
   @Transactional
   public LabRequestResponse collect(UUID id) {
     LabRequest request = getOrThrow(id);
+    requireStatus(request, RequestStatus.PENDING, "recolher a amostra");
     request.setStatus(RequestStatus.COLLECTED);
     request.setCollectedAt(OffsetDateTime.now());
     return toRequestResponse(requestRepository.save(request));
@@ -149,6 +184,7 @@ public class LabService {
   @Transactional
   public LabRequestResponse startAnalysis(UUID id) {
     LabRequest request = getOrThrow(id);
+    requireStatus(request, RequestStatus.COLLECTED, "iniciar a análise");
     request.setStatus(RequestStatus.IN_ANALYSIS);
     return toRequestResponse(requestRepository.save(request));
   }
@@ -156,6 +192,7 @@ public class LabService {
   @Transactional
   public LabRequestResponse submitItemResult(UUID requestId, UUID itemId, SubmitResultRequest req) {
     LabRequest request = getOrThrow(requestId);
+    requireStatus(request, RequestStatus.IN_ANALYSIS, "registar resultados");
 
     LabRequestItem item =
         request.getItems().stream()
@@ -163,6 +200,10 @@ public class LabService {
             .findFirst()
             .orElseThrow(() -> new EntityNotFoundException("Item not found: " + itemId));
 
+    if (item.getResultValue() != null) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O resultado deste exame já foi registado.");
+    }
     item.setResultValue(req.getResultValue());
     item.setResultUnit(req.getResultUnit());
     item.setReferenceRange(req.getReferenceRange());
@@ -184,8 +225,10 @@ public class LabService {
   @Transactional
   public LabRequestResponse cancel(UUID id) {
     LabRequest request = getOrThrow(id);
-    if (request.getStatus() == RequestStatus.COMPLETED) {
-      throw new IllegalStateException("Cannot cancel a completed request.");
+    if (request.getStatus() == RequestStatus.COMPLETED
+        || request.getStatus() == RequestStatus.CANCELLED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível cancelar um pedido concluído ou já cancelado.");
     }
     request.setStatus(RequestStatus.CANCELLED);
     return toRequestResponse(requestRepository.save(request));
@@ -197,14 +240,42 @@ public class LabService {
 
   @SuppressWarnings("null")
   private LabRequest getOrThrow(UUID id) {
+    requireHospitalContext();
     return requestRepository
         .findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Lab request not found: " + id));
   }
 
   private User getCurrentUser() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    return userRepository.findByUsername(username).orElse(null);
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new EntityNotFoundException("Utilizador autenticado não encontrado.");
+    }
+    return userRepository
+        .findByUsername(authentication.getName())
+        .orElseThrow(() -> new EntityNotFoundException("Utilizador autenticado não encontrado."));
+  }
+
+  private void requireHospital(TenantScopedEntity entity, UUID hospitalId, String notFoundMessage) {
+    if (!hospitalId.equals(entity.getHospitalId())) {
+      throw new EntityNotFoundException(notFoundMessage);
+    }
+  }
+
+  private UUID requireHospitalContext() {
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null || TenantContext.hasPlatformAccess()) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "As operações de laboratório exigem um hospital activo.");
+    }
+    return hospitalId;
+  }
+
+  private void requireStatus(LabRequest request, RequestStatus expected, String action) {
+    if (request.getStatus() != expected) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível " + action + " neste estado do pedido.");
+    }
   }
 
   private LabTestResponse toTestResponse(LabTest t) {

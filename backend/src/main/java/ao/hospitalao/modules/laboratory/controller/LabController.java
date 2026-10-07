@@ -22,7 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RestController
 @RequestMapping("/lab")
 @RequiredArgsConstructor
-@Tag(name = "Laboratory", description = "Lab tests, requests and results")
+@Tag(name = "Laboratório", description = "Gestão de exames, pedidos e resultados laboratoriais")
 @SecurityRequirement(name = "bearerAuth")
 public class LabController {
 
@@ -33,14 +33,14 @@ public class LabController {
   // ------------------------------------------------
 
   @GetMapping("/tests")
-  @Operation(summary = "List available lab tests catalog")
+  @Operation(summary = "Listar exames disponíveis")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<List<LabTestResponse>> findAllTests() {
     return ResponseEntity.ok(labService.findAllTests());
   }
 
   @PostMapping("/tests")
-  @Operation(summary = "Add a new lab test to the catalog")
+  @Operation(summary = "Adicionar exame ao catálogo")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name())")
   public ResponseEntity<LabTestResponse> createTest(
@@ -53,7 +53,7 @@ public class LabController {
   // ------------------------------------------------
 
   @GetMapping("/requests")
-  @Operation(summary = "List lab requests with optional filters")
+  @Operation(summary = "Listar pedidos de laboratório com filtros opcionais")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<LabRequestResponse>> findAll(
@@ -64,7 +64,7 @@ public class LabController {
   }
 
   @GetMapping("/requests/{id}")
-  @Operation(summary = "Get lab request by ID")
+  @Operation(summary = "Consultar pedido de laboratório")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<LabRequestResponse> findById(@PathVariable UUID id) {
@@ -72,7 +72,7 @@ public class LabController {
   }
 
   @PostMapping("/requests")
-  @Operation(summary = "Create a new lab request")
+  @Operation(summary = "Criar pedido de laboratório")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<LabRequestResponse> create(
@@ -87,7 +87,7 @@ public class LabController {
   }
 
   @PatchMapping("/requests/{id}/collect")
-  @Operation(summary = "Mark sample as collected")
+  @Operation(summary = "Registar recolha da amostra")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name())")
   public ResponseEntity<LabRequestResponse> collect(@PathVariable UUID id) {
@@ -95,7 +95,7 @@ public class LabController {
   }
 
   @PatchMapping("/requests/{id}/start-analysis")
-  @Operation(summary = "Start sample analysis")
+  @Operation(summary = "Iniciar análise da amostra")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name())")
   public ResponseEntity<LabRequestResponse> startAnalysis(@PathVariable UUID id) {
@@ -103,7 +103,7 @@ public class LabController {
   }
 
   @PatchMapping("/requests/{requestId}/items/{itemId}/result")
-  @Operation(summary = "Submit result for a specific test item")
+  @Operation(summary = "Registar resultado de um exame")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name())")
   public ResponseEntity<LabRequestResponse> submitResult(
@@ -114,7 +114,7 @@ public class LabController {
   }
 
   @PatchMapping("/requests/{id}/cancel")
-  @Operation(summary = "Cancel lab request")
+  @Operation(summary = "Cancelar pedido de laboratório")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).LAB_TECHNICIAN.name())")
   public ResponseEntity<LabRequestResponse> cancel(@PathVariable UUID id) {
