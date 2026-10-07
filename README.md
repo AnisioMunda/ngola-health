@@ -50,4 +50,5 @@ projecto.
 ## Documentação
 
 - [Guia de desenvolvimento: instalar, executar, testar e depurar](docs/development.md)
+- [Segurança, autenticação, perfis e isolamento multi-hospital](docs/security.md)
 - [Roadmap, arquitectura e convenções de desenvolvimento](docs/ROADMAP.md)
