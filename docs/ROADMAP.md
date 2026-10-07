@@ -292,7 +292,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 
 | # | Commit | Pronto quando |
 |---|--------|---------------|
-| 4.1 | `feat(bd): criar tabela de notificações` | |
+| 4.1 | `feat(bd): criar tabela de notificações` | Tabela incluída e reversível no changelog; teste garante a migração |
 | 4.2 | `feat(notificacoes): adicionar API e serviço interno de notificações` | Outros módulos publicam eventos Spring; **sem broker** |
 | 4.3 | `feat(notificacoes): adicionar sino, lista e página de notificações` | |
 | 4.4 | `feat(bd): criar tabelas de horários e agendamentos` | |

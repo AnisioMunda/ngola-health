@@ -128,6 +128,14 @@ class LiquibaseChangelogTest {
         "changes/hospitals/002-tenant-scoped-records.sql");
   }
 
+  @Test
+  void notificationTableMigrationIsIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "013-01-notifications", "changes/notifications/001-notifications.sql");
+  }
+
   private void assertChangesetIsIncludedAndReversible(
       DatabaseChangeLog changelog, String id, String filePath) {
     assertThat(changelog.getChangeSets())
