@@ -14,16 +14,20 @@ import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -63,8 +67,7 @@ public class InpatientService {
     long occupied = beds.stream().filter(b -> b.getStatus() == BedStatus.OCCUPIED).count();
     long maintenance = beds.stream().filter(b -> b.getStatus() == BedStatus.MAINTENANCE).count();
 
-    List<BedResponse> bedResponses =
-        beds.stream().map(this::toBedResponseWithAdmission).collect(Collectors.toList());
+    List<BedResponse> bedResponses = toBedResponsesWithAdmission(beds, wardId);
 
     return WardMapResponse.builder()
         .wardId(ward.getId())
@@ -81,18 +84,20 @@ public class InpatientService {
   @Transactional
   public WardResponse createWard(CreateWardRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();
+    String code = req.getCode().trim().toUpperCase(java.util.Locale.ROOT);
 
-    if (wardRepository.existsByHospitalIdAndCode(hospitalId, req.getCode())) {
-      throw new IllegalArgumentException("Código de enfermaria já existe: " + req.getCode());
+    if (wardRepository.existsByHospitalIdAndCode(hospitalId, code)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Código de enfermaria já existe: " + code);
     }
 
     Ward ward =
         Ward.builder()
             .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .name(req.getName())
-            .code(req.getCode().toUpperCase())
+            .name(req.getName().trim())
+            .code(code)
             .type(req.getType() != null ? req.getType() : Ward.WardType.GENERAL)
-            .floor(req.getFloor())
+            .floor(req.getFloor() != null ? req.getFloor().trim() : null)
             .notes(req.getNotes())
             .build();
 
@@ -109,9 +114,8 @@ public class InpatientService {
 
   @Transactional(readOnly = true)
   public List<BedResponse> findBedsByWard(UUID wardId) {
-    return bedRepository.findByWardIdAndActiveTrueOrderByBedNumber(wardId).stream()
-        .map(this::toBedResponseWithAdmission)
-        .collect(Collectors.toList());
+    List<Bed> beds = bedRepository.findByWardIdAndActiveTrueOrderByBedNumber(wardId);
+    return toBedResponsesWithAdmission(beds, wardId);
   }
 
   @Transactional
@@ -126,7 +130,7 @@ public class InpatientService {
         Bed.builder()
             .ward(ward)
             .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .bedNumber(req.getBedNumber())
+            .bedNumber(req.getBedNumber().trim())
             .type(req.getType() != null ? req.getType() : Bed.BedType.STANDARD)
             .notes(req.getNotes())
             .build();
@@ -140,17 +144,23 @@ public class InpatientService {
 
   @Transactional
   public BedResponse updateBedStatus(UUID bedId, UpdateBedStatusRequest req) {
+    if (req.getStatus() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O estado da cama é obrigatório.");
+    }
+    if (req.getStatus() == BedStatus.OCCUPIED) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "O estado OCCUPIED só pode ser definido por um internamento.");
+    }
+
     Bed bed =
         bedRepository
             .findById(bedId)
             .orElseThrow(() -> new EntityNotFoundException("Cama não encontrada"));
 
-    // Não pode mudar status de cama ocupada directamente
-    if (bed.getStatus() == BedStatus.OCCUPIED && req.getStatus() != BedStatus.OCCUPIED) {
-      if (admissionRepository.isBedOccupied(bedId)) {
-        throw new IllegalStateException(
-            "Não é possível alterar o estado de uma cama ocupada. Dê alta ao paciente primeiro.");
-      }
+    if (admissionRepository.isBedOccupied(bedId)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Não é possível alterar o estado de uma cama ocupada. Dê alta ao paciente primeiro.");
     }
 
     bed.setStatus(req.getStatus());
@@ -367,6 +377,11 @@ public class InpatientService {
             w.getResponsibleDoctor() != null ? w.getResponsibleDoctor().getFullName() : null)
         .notes(w.getNotes())
         .active(w.isActive())
+        .beds(
+            w.getBeds().stream()
+                .filter(Bed::isActive)
+                .map(this::toBedResponse)
+                .collect(Collectors.toList()))
         .build();
   }
 
@@ -383,29 +398,26 @@ public class InpatientService {
         .build();
   }
 
-  private BedResponse toBedResponseWithAdmission(Bed b) {
-    BedResponse resp = toBedResponse(b);
-    if (b.getStatus() == BedStatus.OCCUPIED) {
-      admissionRepository.findByPatientIdAndStatus(null, AdmissionStatus.ACTIVE);
-      // Buscar internamento activo desta cama
+  private List<BedResponse> toBedResponsesWithAdmission(List<Bed> beds, UUID wardId) {
+    Map<UUID, Admission> admissionsByBed = new HashMap<>();
+    if (beds.stream().anyMatch(bed -> bed.getStatus() == BedStatus.OCCUPIED)) {
       admissionRepository
-          .findWithFilters(
-              b.getHospital().getId(),
-              AdmissionStatus.ACTIVE,
-              b.getWard().getId(),
-              org.springframework.data.domain.PageRequest.of(0, 100))
-          .getContent()
-          .stream()
-          .filter(a -> a.getBed().getId().equals(b.getId()))
-          .findFirst()
-          .ifPresent(
-              a -> {
-                resp.setPatientName(a.getPatient().getFullName());
-                resp.setAdmissionId(a.getId());
-                resp.setAdmissionDate(a.getAdmissionDate());
-              });
+          .findByWardIdAndStatus(wardId, AdmissionStatus.ACTIVE)
+          .forEach(admission -> admissionsByBed.putIfAbsent(admission.getBed().getId(), admission));
     }
-    return resp;
+    return beds.stream()
+        .map(
+            bed -> {
+              BedResponse response = toBedResponse(bed);
+              Admission admission = admissionsByBed.get(bed.getId());
+              if (bed.getStatus() == BedStatus.OCCUPIED && admission != null) {
+                response.setPatientName(admission.getPatient().getFullName());
+                response.setAdmissionId(admission.getId());
+                response.setAdmissionDate(admission.getAdmissionDate());
+              }
+              return response;
+            })
+        .collect(Collectors.toList());
   }
 
   private AdmissionResponse toAdmissionResponse(Admission a) {
