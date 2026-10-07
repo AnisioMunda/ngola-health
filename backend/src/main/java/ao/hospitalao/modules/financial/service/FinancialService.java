@@ -10,12 +10,12 @@ import ao.hospitalao.modules.financial.entity.*;
 import ao.hospitalao.modules.financial.entity.Invoice.*;
 import ao.hospitalao.modules.financial.repository.InvoiceRepository;
 import ao.hospitalao.modules.financial.repository.ServicePriceRepository;
+import ao.hospitalao.modules.financial.util.FinancialAmounts;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.Year;
 import java.util.List;
@@ -25,9 +25,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -58,17 +60,21 @@ public class FinancialService {
   @Transactional
   public ServicePriceResponse createPrice(CreateServicePriceRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();
-    if (servicePriceRepository.existsByHospitalIdAndCode(hospitalId, req.getCode())) {
-      throw new IllegalArgumentException("Código já existe: " + req.getCode());
+    String code = req.getCode().trim().toUpperCase();
+    if (servicePriceRepository.existsByHospitalIdAndCode(hospitalId, code)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Código já existe: " + code);
     }
+    BigDecimal unitPrice = FinancialAmounts.round(requireNonNegative(req.getUnitPrice(), "Preço"));
+    BigDecimal vatRate =
+        requirePercentage(req.getVatRate() != null ? req.getVatRate() : BigDecimal.ZERO, "IVA");
     ServicePrice price =
         ServicePrice.builder()
             .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .code(req.getCode().toUpperCase())
-            .description(req.getDescription())
+            .code(code)
+            .description(req.getDescription().trim())
             .category(req.getCategory())
-            .unitPrice(req.getUnitPrice())
-            .vatRate(req.getVatRate() != null ? req.getVatRate() : BigDecimal.ZERO)
+            .unitPrice(unitPrice)
+            .vatRate(vatRate)
             .build();
     return toPriceResponse(servicePriceRepository.save(price));
   }
@@ -99,9 +105,13 @@ public class FinancialService {
   public InvoiceResponse create(CreateInvoiceRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();
 
+    if (req.getItems() == null || req.getItems().isEmpty()) {
+      throw badRequest("A factura deve conter pelo menos um item.");
+    }
+
     var patient =
         patientRepository
-            .findById(req.getPatientId())
+            .findByHospitalIdAndId(hospitalId, req.getPatientId())
             .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
 
     DocumentType docType = req.getDocumentType() != null ? req.getDocumentType() : DocumentType.FR;
@@ -135,44 +145,64 @@ public class FinancialService {
             .build();
 
     if (req.getEpisodeId() != null) {
-      invoice.setEpisode(episodeRepository.getReferenceById(req.getEpisodeId()));
+      invoice.setEpisode(
+          episodeRepository
+              .findByHospitalIdAndId(hospitalId, req.getEpisodeId())
+              .orElseThrow(() -> new EntityNotFoundException("Episódio não encontrado")));
     }
 
     // Linhas
-    if (req.getItems() != null) {
-      for (CreateInvoiceItemRequest itemReq : req.getItems()) {
-        ServicePrice sp = null;
-        BigDecimal unitPrice = itemReq.getUnitPrice();
-        BigDecimal vatRate = itemReq.getVatRate() != null ? itemReq.getVatRate() : BigDecimal.ZERO;
-        String description = itemReq.getDescription();
-
-        if (itemReq.getServicePriceId() != null) {
-          sp =
-              servicePriceRepository
-                  .findById(itemReq.getServicePriceId())
-                  .orElseThrow(() -> new EntityNotFoundException("Preço não encontrado"));
-          if (unitPrice == null) unitPrice = sp.getUnitPrice();
-          if (vatRate.compareTo(BigDecimal.ZERO) == 0) vatRate = sp.getVatRate();
-          if (description == null) description = sp.getDescription();
-        }
-
-        InvoiceItem item =
-            InvoiceItem.builder()
-                .invoice(invoice)
-                .servicePrice(sp)
-                .description(description)
-                .quantity(itemReq.getQuantity() != null ? itemReq.getQuantity() : 1)
-                .unitPrice(unitPrice)
-                .discountPercent(
-                    itemReq.getDiscountPercent() != null
-                        ? itemReq.getDiscountPercent()
-                        : BigDecimal.ZERO)
-                .vatRate(vatRate)
-                .lineTotal(BigDecimal.ZERO)
-                .build();
-        item.calculateTotal();
-        invoice.getItems().add(item);
+    for (CreateInvoiceItemRequest itemReq : req.getItems()) {
+      if (itemReq == null) {
+        throw badRequest("A factura contém um item inválido.");
       }
+
+      ServicePrice price = null;
+      BigDecimal unitPrice;
+      BigDecimal vatRate;
+      String description;
+
+      if (itemReq.getServicePriceId() != null) {
+        price =
+            servicePriceRepository
+                .findByHospitalIdAndIdAndActiveTrue(hospitalId, itemReq.getServicePriceId())
+                .orElseThrow(() -> new EntityNotFoundException("Preço não encontrado"));
+        unitPrice = price.getUnitPrice();
+        vatRate = price.getVatRate();
+        description = price.getDescription();
+      } else {
+        unitPrice = requireNonNegative(itemReq.getUnitPrice(), "Preço unitário");
+        vatRate =
+            requirePercentage(
+                itemReq.getVatRate() != null ? itemReq.getVatRate() : BigDecimal.ZERO, "IVA");
+        description = itemReq.getDescription();
+        if (description == null || description.isBlank()) {
+          throw badRequest("A descrição do item é obrigatória.");
+        }
+      }
+
+      int quantity = itemReq.getQuantity() != null ? itemReq.getQuantity() : 1;
+      if (quantity < 1) {
+        throw badRequest("A quantidade do item deve ser maior que zero.");
+      }
+      BigDecimal discountPercent =
+          requirePercentage(
+              itemReq.getDiscountPercent() != null ? itemReq.getDiscountPercent() : BigDecimal.ZERO,
+              "Desconto");
+
+      InvoiceItem item =
+          InvoiceItem.builder()
+              .invoice(invoice)
+              .servicePrice(price)
+              .description(description.trim())
+              .quantity(quantity)
+              .unitPrice(FinancialAmounts.round(unitPrice))
+              .discountPercent(discountPercent)
+              .vatRate(vatRate)
+              .lineTotal(BigDecimal.ZERO)
+              .build();
+      item.calculateTotal();
+      invoice.getItems().add(item);
     }
 
     recalculateTotals(invoice);
@@ -187,7 +217,8 @@ public class FinancialService {
   public InvoiceResponse issue(UUID id) {
     Invoice invoice = getOrThrow(id);
     if (invoice.getStatus() != InvoiceStatus.RASCUNHO) {
-      throw new IllegalStateException("Apenas documentos em RASCUNHO podem ser emitidos.");
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Apenas documentos em RASCUNHO podem ser emitidos.");
     }
 
     invoice.setStatus(InvoiceStatus.EMITIDO);
@@ -205,21 +236,31 @@ public class FinancialService {
   public InvoiceResponse registerPayment(UUID id, RegisterPaymentRequest req) {
     Invoice invoice = getOrThrow(id);
 
-    if (invoice.getStatus() == InvoiceStatus.PAGO || invoice.getStatus() == InvoiceStatus.ANULADO) {
-      throw new IllegalStateException(
+    if (invoice.getStatus() == InvoiceStatus.RASCUNHO
+        || invoice.getStatus() == InvoiceStatus.PAGO
+        || invoice.getStatus() == InvoiceStatus.ANULADO) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
           "Não é possível registar pagamento para documento " + invoice.getStatus());
     }
 
+    BigDecimal amount = FinancialAmounts.round(requireNonNegative(req.getAmount(), "Pagamento"));
+    if (amount.signum() == 0) {
+      throw badRequest("O valor do pagamento deve ser superior a zero.");
+    }
+    if (req.getPaymentMethod() == null) {
+      throw badRequest("O método de pagamento é obrigatório.");
+    }
+
     BigDecimal balance = invoice.getBalance();
-    if (req.getAmount().compareTo(balance) > 0) {
-      throw new IllegalArgumentException(
-          "Valor excede o saldo em dívida. Saldo: " + balance + " AOA");
+    if (amount.compareTo(balance) > 0) {
+      throw badRequest("Valor excede o saldo em dívida. Saldo: " + balance + " AOA");
     }
 
     Payment payment =
         Payment.builder()
             .invoice(invoice)
-            .amount(req.getAmount())
+            .amount(amount)
             .paymentMethod(req.getPaymentMethod())
             .reference(req.getReference())
             .notes(req.getNotes())
@@ -227,7 +268,7 @@ public class FinancialService {
             .build();
 
     invoice.getPayments().add(payment);
-    invoice.setPaidAmount(invoice.getPaidAmount().add(req.getAmount()));
+    invoice.setPaidAmount(FinancialAmounts.round(invoice.getPaidAmount().add(amount)));
     invoice.setPaymentMethod(req.getPaymentMethod());
 
     if (invoice.getPaidAmount().compareTo(invoice.getTotalAmount()) >= 0) {
@@ -237,7 +278,7 @@ public class FinancialService {
       invoice.setStatus(InvoiceStatus.PAGO_PARCIALMENTE);
     }
 
-    log.info("Pagamento de {} AOA registado para {}", req.getAmount(), invoice.getInvoiceNumber());
+    log.info("Pagamento de {} AOA registado para {}", amount, invoice.getInvoiceNumber());
     return toInvoiceResponse(invoiceRepository.save(invoice));
   }
 
@@ -245,12 +286,17 @@ public class FinancialService {
   public InvoiceResponse void_(UUID id, String reason) {
     Invoice invoice = getOrThrow(id);
     if (invoice.getStatus() == InvoiceStatus.PAGO) {
-      throw new IllegalStateException(
-          "Não é possível anular documento pago. Emita uma Nota de Crédito.");
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível anular documento pago. Emita uma Nota de Crédito.");
+    }
+    if (reason == null || reason.isBlank()) {
+      throw badRequest("O motivo da anulação é obrigatório.");
     }
     invoice.setStatus(InvoiceStatus.ANULADO);
     invoice.setNotes(
-        (invoice.getNotes() != null ? invoice.getNotes() + "\n" : "") + "ANULADO: " + reason);
+        (invoice.getNotes() != null ? invoice.getNotes() + "\n" : "")
+            + "ANULADO: "
+            + reason.trim());
     log.info("Documento anulado: {}", invoice.getInvoiceNumber());
     return toInvoiceResponse(invoiceRepository.save(invoice));
   }
@@ -288,21 +334,37 @@ public class FinancialService {
     BigDecimal subtotal = BigDecimal.ZERO;
     BigDecimal vatAmount = BigDecimal.ZERO;
     for (InvoiceItem item : invoice.getItems()) {
-      BigDecimal base = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-      BigDecimal disc =
-          base.multiply(item.getDiscountPercent())
-              .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-      BigDecimal afterDisc = base.subtract(disc);
-      BigDecimal vat =
-          afterDisc
-              .multiply(item.getVatRate())
-              .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-      subtotal = subtotal.add(afterDisc);
-      vatAmount = vatAmount.add(vat);
+      subtotal = subtotal.add(item.getNetAmount());
+      vatAmount = vatAmount.add(item.getVatAmount());
     }
-    invoice.setSubtotal(subtotal);
-    invoice.setVatAmount(vatAmount);
-    invoice.setTotalAmount(subtotal.add(vatAmount).subtract(invoice.getDiscountAmount()));
+    invoice.setSubtotal(FinancialAmounts.round(subtotal));
+    invoice.setVatAmount(FinancialAmounts.round(vatAmount));
+    invoice.setTotalAmount(
+        FinancialAmounts.round(
+            invoice
+                .getSubtotal()
+                .add(invoice.getVatAmount())
+                .subtract(invoice.getDiscountAmount())));
+  }
+
+  private BigDecimal requireNonNegative(BigDecimal amount, String field) {
+    if (amount == null || amount.signum() < 0) {
+      throw badRequest(field + " não pode ser negativo ou nulo.");
+    }
+    return amount;
+  }
+
+  private BigDecimal requirePercentage(BigDecimal percentage, String field) {
+    if (percentage == null
+        || percentage.signum() < 0
+        || percentage.compareTo(BigDecimal.valueOf(100)) > 0) {
+      throw badRequest(field + " deve estar entre 0 e 100.");
+    }
+    return percentage;
+  }
+
+  private ResponseStatusException badRequest(String message) {
+    return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
   }
 
   @SuppressWarnings("null")

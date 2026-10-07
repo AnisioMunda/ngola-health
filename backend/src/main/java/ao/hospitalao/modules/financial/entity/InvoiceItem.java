@@ -1,5 +1,6 @@
 package ao.hospitalao.modules.financial.entity;
 
+import ao.hospitalao.modules.financial.util.FinancialAmounts;
 import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -48,12 +49,17 @@ public class InvoiceItem extends TenantScopedEntity {
   @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
   private BigDecimal lineTotal;
 
+  public BigDecimal getNetAmount() {
+    BigDecimal base = FinancialAmounts.round(unitPrice).multiply(BigDecimal.valueOf(quantity));
+    BigDecimal discount = FinancialAmounts.percentage(base, discountPercent);
+    return FinancialAmounts.round(base.subtract(discount));
+  }
+
+  public BigDecimal getVatAmount() {
+    return FinancialAmounts.percentage(getNetAmount(), vatRate);
+  }
+
   public void calculateTotal() {
-    BigDecimal qty = BigDecimal.valueOf(quantity);
-    BigDecimal base = unitPrice.multiply(qty);
-    BigDecimal disc = base.multiply(discountPercent).divide(BigDecimal.valueOf(100));
-    BigDecimal afterDiscount = base.subtract(disc);
-    BigDecimal vat = afterDiscount.multiply(vatRate).divide(BigDecimal.valueOf(100));
-    this.lineTotal = afterDiscount.add(vat);
+    this.lineTotal = FinancialAmounts.round(getNetAmount().add(getVatAmount()));
   }
 }

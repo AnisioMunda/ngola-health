@@ -4,6 +4,15 @@ import ao.hospitalao.modules.financial.entity.Invoice.DocumentType;
 import ao.hospitalao.modules.financial.entity.Invoice.InvoiceStatus;
 import ao.hospitalao.modules.financial.entity.Invoice.PaymentMethod;
 import ao.hospitalao.modules.financial.entity.ServicePrice.ServiceCategory;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -32,12 +41,25 @@ public class FinancialDtos {
 
   @Data
   public static class CreateServicePriceRequest {
+    @NotBlank
+    @Size(max = 30)
     private String code;
+
+    @NotBlank
+    @Size(max = 300)
     private String description;
-    private ServiceCategory category;
+
+    @NotNull private ServiceCategory category;
+
+    @NotNull
+    @DecimalMin("0.00")
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal unitPrice;
 
     /** Taxa IVA em % (0 para serviços de saúde isentos; 14 para taxa geral) */
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @Digits(integer = 3, fraction = 2)
     private BigDecimal vatRate;
   }
 
@@ -121,20 +143,36 @@ public class FinancialDtos {
 
   @Data
   public static class CreateInvoiceRequest {
-    private UUID patientId;
+    @NotNull private UUID patientId;
+
     private UUID episodeId;
 
     /** FT = Factura | FR = Factura/Recibo | NC = Nota de Crédito | ND = Nota de Débito */
     private DocumentType documentType;
 
+    @Size(max = 14)
     private String patientNif;
+
+    @Size(max = 200)
     private String patientFiscalName;
+
+    @Size(max = 100)
     private String insuranceProvider;
+
+    @Size(max = 50)
     private String insurancePolicyNumber;
+
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @Digits(integer = 3, fraction = 2)
     private BigDecimal insuranceCoveragePercent;
+
     private LocalDate dueDate;
+
+    @Size(max = 1000)
     private String notes;
-    private List<CreateInvoiceItemRequest> items;
+
+    @NotEmpty @Valid private List<@Valid CreateInvoiceItemRequest> items;
   }
 
   @Data
@@ -142,10 +180,24 @@ public class FinancialDtos {
     /** Se fornecido, copia descrição/preço/IVA da tabela de preços */
     private UUID servicePriceId;
 
+    @Size(max = 300)
     private String description;
+
+    @Min(1)
     private Integer quantity;
+
+    @DecimalMin("0.00")
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal unitPrice;
+
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @Digits(integer = 3, fraction = 2)
     private BigDecimal discountPercent;
+
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @Digits(integer = 3, fraction = 2)
     private BigDecimal vatRate;
   }
 
@@ -170,9 +222,17 @@ public class FinancialDtos {
 
   @Data
   public static class RegisterPaymentRequest {
+    @NotNull
+    @DecimalMin("0.01")
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal amount;
-    private PaymentMethod paymentMethod;
+
+    @NotNull private PaymentMethod paymentMethod;
+
+    @Size(max = 100)
     private String reference;
+
+    @Size(max = 500)
     private String notes;
   }
 }
