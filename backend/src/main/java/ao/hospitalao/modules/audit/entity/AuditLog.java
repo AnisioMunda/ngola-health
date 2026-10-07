@@ -109,6 +109,7 @@ public class AuditLog {
     REPORT,
     WARD,
     BED,
+    HOSPITAL,
     SYSTEM
   }
 

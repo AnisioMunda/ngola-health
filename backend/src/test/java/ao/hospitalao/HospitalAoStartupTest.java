@@ -44,7 +44,7 @@ class HospitalAoStartupTest {
     Long appliedChangesets =
         jdbcTemplate.queryForObject("SELECT COUNT(*) FROM databasechangelog", Long.class);
 
-    assertThat(appliedChangesets).isEqualTo(51L);
+    assertThat(appliedChangesets).isEqualTo(52L);
     assertThat(
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'hospitals'",
@@ -54,5 +54,9 @@ class HospitalAoStartupTest {
             jdbcTemplate.queryForObject(
                 "SELECT name FROM hospitals WHERE code = 'HCL-001'", String.class))
         .isEqualTo("Hospital Central de Luanda");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM roles WHERE name = 'SUPER_ADMIN'", Long.class))
+        .isEqualTo(1L);
   }
 }

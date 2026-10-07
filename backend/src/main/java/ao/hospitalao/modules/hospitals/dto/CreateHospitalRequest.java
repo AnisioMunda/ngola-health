@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.hospitals.dto;
 
 import ao.hospitalao.modules.hospitals.entity.Hospital.HospitalType;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -27,6 +28,9 @@ public class CreateHospitalRequest {
   private String municipality;
   private String address;
   private String phone;
+
+  @Email(message = "Email must be valid")
   private String email;
+
   private String taxId;
 }

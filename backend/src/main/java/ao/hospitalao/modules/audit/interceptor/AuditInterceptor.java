@@ -101,6 +101,7 @@ public class AuditInterceptor implements HandlerInterceptor {
     if (url.contains("/scheduling") || url.contains("/appointments")) return EntityType.APPOINTMENT;
     if (url.contains("/inpatient") || url.contains("/admissions")) return EntityType.ADMISSION;
     if (url.contains("/users")) return EntityType.USER;
+    if (url.contains("/hospitals")) return EntityType.HOSPITAL;
     if (url.contains("/notifications")) return EntityType.NOTIFICATION;
     if (url.contains("/reports")) return EntityType.REPORT;
     if (url.contains("/wards") || url.contains("/beds")) return EntityType.WARD;

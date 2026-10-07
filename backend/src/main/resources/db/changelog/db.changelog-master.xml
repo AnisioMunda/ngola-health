@@ -8,6 +8,7 @@
     <include file="changes/core/000-enable-uuid-ossp.sql" relativeToChangelogFile="true"/>
     <include file="changes/core/001-schema-base.sql" relativeToChangelogFile="true"/>
     <include file="changes/users/001-users-and-roles.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/002-super-admin-role.sql" relativeToChangelogFile="true"/>
     <include file="changes/auth/001-token-blacklist.sql" relativeToChangelogFile="true"/>
     <include file="changes/patients/001-create-patients.sql" relativeToChangelogFile="true"/>
     <include file="changes/patients/002-fix-patient-gender.sql" relativeToChangelogFile="true"/>

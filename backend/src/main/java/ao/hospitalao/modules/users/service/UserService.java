@@ -18,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+  private static final String SUPER_ADMIN_ROLE = "SUPER_ADMIN";
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
@@ -166,8 +171,18 @@ public class UserService {
           roleRepository
               .findById(roleId)
               .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleId));
+      if (SUPER_ADMIN_ROLE.equals(role.getName()) && !canManagePlatformRoles()) {
+        throw new AccessDeniedException("Only a platform super-administrator may assign this role");
+      }
       roles.add(role);
     }
     return roles;
+  }
+
+  private boolean canManagePlatformRoles() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null
+        && authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
   }
 }
