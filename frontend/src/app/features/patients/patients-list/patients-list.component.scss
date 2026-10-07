@@ -339,3 +339,33 @@ table {
   font-size: 0.875rem;
   color: #6b7280;
 }
+
+@media (max-width: 760px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    .header-left {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 850px;
+  }
+
+  .pagination {
+    min-width: 330px;
+    gap: 0.75rem;
+  }
+}

@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PatientService, PatientResponse } from '../../../core/services/patient.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-patients-list',
@@ -27,18 +29,22 @@ export class PatientsListComponent implements OnInit {
   constructor(
     private patientService: PatientService,
     private router: Router,
+    private destroyRef: DestroyRef,
   ) {}
 
   ngOnInit(): void {
     this.loadPatients();
-    this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
-      this.currentPage = 0;
-      this.loadPatients();
-    });
+    this.searchSubject
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.currentPage = 0;
+        this.loadPatients();
+      });
   }
 
   loadPatients(): void {
     this.loading = true;
+    this.error = '';
     this.patientService.findAll(this.searchQuery, this.currentPage, this.pageSize).subscribe({
       next: (page) => {
         this.patients = page.content;
@@ -46,8 +52,11 @@ export class PatientsListComponent implements OnInit {
         this.totalPages = page.totalPages;
         this.loading = false;
       },
-      error: () => {
-        this.error = 'Failed to load patients.';
+      error: (err: HttpErrorResponse) => {
+        this.error =
+          err.error?.detail ??
+          err.error?.message ??
+          'Não foi possível carregar a lista de pacientes.';
         this.loading = false;
       },
     });
@@ -71,7 +80,7 @@ export class PatientsListComponent implements OnInit {
   }
 
   getGenderLabel(gender: string): string {
-    return gender === 'MALE' ? 'Male' : 'Female';
+    return gender === 'MALE' ? 'Masculino' : 'Feminino';
   }
 
   getBloodTypeBadge(type: string): string {
