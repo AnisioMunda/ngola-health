@@ -16,6 +16,12 @@ spring:
   # Perfil activo: injectado pelo docker-compose (dev ou prod)
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  web:
+    error:
+      include-message: never
+      include-binding-errors: never
+      include-stacktrace: never
+      include-exception: false
 
   # ------------------------------------------------------------
   # BASE DE DADOS
@@ -125,11 +131,6 @@ server:
     # Todos os endpoints começam com /api
     # Ex: /api/pacientes, /api/auth/login
     context-path: /api
-  error:
-    include-message: never
-    include-binding-errors: never
-    include-stacktrace: never
-    include-exception: false
 
 
 # ============================================================
@@ -182,8 +183,10 @@ management:
 # ============================================================
 springdoc:
   api-docs:
+    enabled: false
     path: /api-docs
   swagger-ui:
+    enabled: false
     path: /swagger-ui.html
     # Ordenar endpoints por tag e depois por nome
     tags-sorter: alpha
@@ -221,11 +224,16 @@ spring:
     show-sql: true  # Ver as queries SQL no terminal em dev
   liquibase:
     contexts: dev
+  web:
+    error:
+      include-message: always
+      include-binding-errors: always
 
-server:
-  error:
-    include-message: always
-    include-binding-errors: always
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:4200}
