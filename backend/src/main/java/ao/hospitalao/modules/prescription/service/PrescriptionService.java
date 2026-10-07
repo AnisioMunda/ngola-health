@@ -5,6 +5,7 @@ import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.inpatient.repository.AdmissionRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
+import ao.hospitalao.modules.pharmacy.entity.Medication;
 import ao.hospitalao.modules.pharmacy.entity.StockBatch;
 import ao.hospitalao.modules.pharmacy.repository.MedicationRepository;
 import ao.hospitalao.modules.pharmacy.repository.StockBatchRepository;
@@ -18,7 +19,10 @@ import ao.hospitalao.modules.prescription.repository.PrescriptionRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +40,8 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @RequiredArgsConstructor
 public class PrescriptionService {
+
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
 
   private final PrescriptionRepository prescriptionRepository;
   private final PrescriptionItemRepository itemRepository;
@@ -55,66 +61,107 @@ public class PrescriptionService {
   @Transactional
   public PrescriptionResponse create(CreatePrescriptionRequest req) {
     UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null || TenantContext.hasPlatformAccess()) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "As prescrições exigem um hospital activo.");
+    }
 
     if (req.getItems() == null || req.getItems().isEmpty()) {
       throw new IllegalArgumentException("A prescrição deve ter pelo menos um medicamento.");
     }
+    if (req.getEpisodeId() != null && req.getAdmissionId() != null) {
+      throw new IllegalArgumentException(
+          "A prescrição deve estar associada a um episódio ou a um internamento, não a ambos.");
+    }
 
-    // Gerar número único
-    long seq = prescriptionRepository.nextPrescriptionNumber();
-    String number = "RX-" + LocalDate.now().getYear() + "-" + String.format("%05d", seq);
-
+    LocalDate today = today();
     int validityDays = req.getValidityDays() != null ? req.getValidityDays() : 30;
+    if (validityDays < 1 || validityDays > 365) {
+      throw new IllegalArgumentException("A validade da prescrição deve estar entre 1 e 365 dias.");
+    }
+
+    var patient =
+        patientRepository
+            .findByHospitalIdAndId(hospitalId, req.getPatientId())
+            .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
+    var medications = new HashMap<UUID, Medication>();
+    Map<UUID, Long> requestedByMedication = new HashMap<>();
+    for (var itemReq : req.getItems()) {
+      var medication =
+          medicationRepository
+              .findByHospitalIdAndId(hospitalId, itemReq.getMedicationId())
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "Medicamento não encontrado: " + itemReq.getMedicationId()));
+      if (!medication.isActive()) {
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT,
+            "Não é possível prescrever o medicamento inactivo " + medication.getName() + ".");
+      }
+      medications.putIfAbsent(medication.getId(), medication);
+      requestedByMedication.merge(
+          medication.getId(), (long) itemReq.getQuantityPrescribed(), Long::sum);
+    }
+
+    for (var requested : requestedByMedication.entrySet()) {
+      int available = stockBatchRepository.getTotalAvailableQuantity(requested.getKey(), today);
+      if (available < requested.getValue()) {
+        var medication = medications.get(requested.getKey());
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT,
+            "Stock insuficiente para "
+                + medication.getName()
+                + ". Disponível: "
+                + available
+                + ", necessário: "
+                + requested.getValue());
+      }
+    }
+
+    long seq = prescriptionRepository.nextPrescriptionNumber();
+    String number = "RX-" + today.getYear() + "-" + String.format("%05d", seq);
 
     var doctor = getCurrentUser();
 
     Prescription prescription =
         Prescription.builder()
             .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .patient(patientRepository.getReferenceById(req.getPatientId()))
+            .patient(patient)
             .doctor(doctor)
             .prescriptionNumber(number)
-            .prescriptionDate(LocalDate.now())
-            .expiryDate(LocalDate.now().plusDays(validityDays))
+            .prescriptionDate(today)
+            .expiryDate(today.plusDays(validityDays))
             .diagnosis(req.getDiagnosis())
             .notes(req.getNotes())
             .build();
 
     if (req.getEpisodeId() != null) {
-      prescription.setEpisode(episodeRepository.getReferenceById(req.getEpisodeId()));
+      var episode =
+          episodeRepository
+              .findById(req.getEpisodeId())
+              .orElseThrow(() -> new EntityNotFoundException("Episódio não encontrado"));
+      if (!episode.getPatient().getId().equals(patient.getId())) {
+        throw new IllegalArgumentException("O episódio não pertence ao paciente indicado.");
+      }
+      prescription.setEpisode(episode);
     }
     if (req.getAdmissionId() != null) {
-      prescription.setAdmission(admissionRepository.getReferenceById(req.getAdmissionId()));
+      var admission =
+          admissionRepository
+              .findByIdWithRelations(req.getAdmissionId())
+              .orElseThrow(() -> new EntityNotFoundException("Internamento não encontrado"));
+      if (!admission.getPatient().getId().equals(patient.getId())) {
+        throw new IllegalArgumentException("O internamento não pertence ao paciente indicado.");
+      }
+      prescription.setAdmission(admission);
     }
 
-    // Construir itens e verificar stock
     for (var itemReq : req.getItems()) {
-      var medication =
-          medicationRepository
-              .findById(itemReq.getMedicationId())
-              .orElseThrow(
-                  () ->
-                      new EntityNotFoundException(
-                          "Medicamento não encontrado: " + itemReq.getMedicationId()));
-
-      // Verificar stock disponível
-      int available =
-          stockBatchRepository.getTotalAvailableQuantity(
-              itemReq.getMedicationId(), LocalDate.now());
-      if (available < itemReq.getQuantityPrescribed()) {
-        throw new IllegalStateException(
-            "Stock insuficiente para "
-                + medication.getName()
-                + ". Disponível: "
-                + available
-                + ", Necessário: "
-                + itemReq.getQuantityPrescribed());
-      }
-
       PrescriptionItem item =
           PrescriptionItem.builder()
               .prescription(prescription)
-              .medication(medication)
+              .medication(medications.get(itemReq.getMedicationId()))
               .quantityPrescribed(itemReq.getQuantityPrescribed())
               .dosage(itemReq.getDosage())
               .frequencyHours(itemReq.getFrequencyHours())
@@ -168,8 +215,8 @@ public class PrescriptionService {
   @Transactional(readOnly = true)
   public Page<PrescriptionResponse> findAll(LocalDate from, LocalDate to, Pageable pageable) {
     UUID hospitalId = TenantContext.getCurrentHospital();
-    LocalDate f = from != null ? from : LocalDate.now().minusMonths(1);
-    LocalDate t = to != null ? to : LocalDate.now();
+    LocalDate f = from != null ? from : today().minusMonths(1);
+    LocalDate t = to != null ? to : today();
     return prescriptionRepository
         .findByHospitalAndPeriod(hospitalId, f, t, pageable)
         .map(this::toResponse);
@@ -178,7 +225,7 @@ public class PrescriptionService {
   @Transactional(readOnly = true)
   public PrescriptionStatsDto getStats() {
     UUID hospitalId = TenantContext.getCurrentHospital();
-    LocalDate today = LocalDate.now();
+    LocalDate today = today();
 
     long totalActive =
         prescriptionRepository
@@ -256,8 +303,7 @@ public class PrescriptionService {
 
     // Seleccionar lote FEFO
     var batches =
-        stockBatchRepository.findAvailableBatchesFefo(
-            item.getMedication().getId(), LocalDate.now());
+        stockBatchRepository.findAvailableBatchesFefo(item.getMedication().getId(), today());
 
     if (batches.isEmpty()) {
       throw new IllegalStateException(
@@ -346,7 +392,7 @@ public class PrescriptionService {
   // Job: marcar prescrições expiradas
   // ------------------------------------------------
 
-  @Scheduled(cron = "0 0 1 * * *") // todos os dias às 01h00
+  @Scheduled(cron = "0 0 1 * * *", zone = "Africa/Luanda") // todos os dias às 01h00
   @Transactional
   public void markExpiredPrescriptions() {
     log.info("Checking expired prescriptions...");
@@ -355,8 +401,7 @@ public class PrescriptionService {
         .forEach(
             hospital -> {
               var expiring =
-                  prescriptionRepository.findExpiringBefore(
-                      hospital.getId(), LocalDate.now().minusDays(1));
+                  prescriptionRepository.findExpiringBefore(hospital.getId(), today().minusDays(1));
               expiring.stream()
                   .filter(p -> p.getStatus() == PrescriptionStatus.ACTIVE)
                   .forEach(
@@ -394,6 +439,10 @@ public class PrescriptionService {
     return prescriptionRepository
         .findByIdWithRelations(id)
         .orElseThrow(() -> new EntityNotFoundException("Prescrição não encontrada: " + id));
+  }
+
+  private LocalDate today() {
+    return LocalDate.now(ANGOLA_ZONE);
   }
 
   private ao.hospitalao.modules.auth.entity.User getCurrentUser() {
@@ -443,13 +492,8 @@ public class PrescriptionService {
   }
 
   private PrescriptionItemResponse toItemResponse(PrescriptionItem i) {
-    int available = 0;
-    try {
-      available =
-          stockBatchRepository.getTotalAvailableQuantity(
-              i.getMedication().getId(), LocalDate.now());
-    } catch (Exception ignored) {
-    }
+    int available =
+        stockBatchRepository.getTotalAvailableQuantity(i.getMedication().getId(), today());
 
     return PrescriptionItemResponse.builder()
         .id(i.getId())

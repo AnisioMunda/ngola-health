@@ -112,7 +112,7 @@ public class PrescriptionController {
   @PostMapping("/{id}/dispense")
   @Operation(summary = "Dispensar medicamento de uma prescrição")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<PrescriptionResponse> dispense(
       @PathVariable UUID id, @Valid @RequestBody DispenseItemRequest request) {
     return ResponseEntity.ok(prescriptionService.dispense(id, request));

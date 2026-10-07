@@ -177,13 +177,35 @@ class PrescriptionControllerTest {
   @Test
   @DisplayName("POST / — deve rejeitar acesso sem role adequada")
   void shouldRejectCreationWithoutProperRole() throws Exception {
+    var item = new CreatePrescriptionItemRequest();
+    item.setMedicationId(UUID.randomUUID());
+    item.setQuantityPrescribed(1);
+    item.setDosage("1 comprimido");
+    var req = new CreatePrescriptionRequest();
+    req.setPatientId(UUID.randomUUID());
+    req.setItems(List.of(item));
+
     mockMvc
         .perform(
             api(post("/api/prescriptions"), "nurse", "NURSE")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("POST / — deve rejeitar prescrição sem paciente e itens")
+  void shouldRejectInvalidPrescriptionRequest() throws Exception {
+    mockMvc
+        .perform(
+            api(post("/api/prescriptions"), "doctor", "DOCTOR")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(prescriptionService);
   }
 
   @ParameterizedTest
@@ -227,6 +249,24 @@ class PrescriptionControllerTest {
                 .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("DISPENSED"));
+  }
+
+  @Test
+  @DisplayName("POST /{id}/dispense — deve recusar gestores")
+  void shouldRejectDispensingByManagers() throws Exception {
+    var req = new DispenseItemRequest();
+    req.setPrescriptionItemId(UUID.randomUUID());
+    req.setQuantityToDispense(1);
+
+    mockMvc
+        .perform(
+            api(post("/api/prescriptions/{id}/dispense", prescriptionId), "manager", "MANAGER")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isForbidden());
+
+    verifyNoInteractions(prescriptionService);
   }
 
   // ------------------------------------------------

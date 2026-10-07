@@ -9,6 +9,7 @@ import ao.hospitalao.modules.patients.entity.Patient;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Prescription extends TenantScopedEntity {
+
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -96,7 +99,7 @@ public class Prescription extends TenantScopedEntity {
   }
 
   public boolean isExpired() {
-    return expiryDate != null && LocalDate.now().isAfter(expiryDate);
+    return expiryDate != null && LocalDate.now(ANGOLA_ZONE).isAfter(expiryDate);
   }
 
   public enum PrescriptionStatus {

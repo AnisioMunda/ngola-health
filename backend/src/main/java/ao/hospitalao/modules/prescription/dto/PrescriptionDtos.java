@@ -2,6 +2,13 @@ package ao.hospitalao.modules.prescription.dto;
 
 import ao.hospitalao.modules.prescription.entity.Prescription.PrescriptionStatus;
 import ao.hospitalao.modules.prescription.entity.PrescriptionItem.ItemStatus;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -41,17 +48,27 @@ public class PrescriptionDtos {
 
   @Data
   public static class CreatePrescriptionRequest {
-    private UUID patientId;
+    @NotNull private UUID patientId;
+
     private UUID episodeId;
     private UUID admissionId;
+
+    @Size(max = 500)
     private String diagnosis;
+
     private String notes;
-    private Integer validityDays; // default 30
-    private List<CreatePrescriptionItemRequest> items;
+
+    @Min(1)
+    @Max(365)
+    private Integer validityDays;
+
+    @NotEmpty @Valid private List<CreatePrescriptionItemRequest> items;
   }
 
   @Data
   public static class CancelPrescriptionRequest {
+    @NotBlank
+    @Size(max = 300)
     private String reason;
   }
 
@@ -81,19 +98,36 @@ public class PrescriptionDtos {
 
   @Data
   public static class CreatePrescriptionItemRequest {
-    private UUID medicationId;
+    @NotNull private UUID medicationId;
+
+    @Min(1)
     private int quantityPrescribed;
+
+    @NotBlank
+    @Size(max = 200)
     private String dosage;
+
+    @Min(1)
     private Integer frequencyHours;
+
+    @Min(1)
     private Integer durationDays;
+
+    @Size(max = 50)
     private String route;
+
+    @Size(max = 300)
     private String instructions;
   }
 
   @Data
   public static class DispenseItemRequest {
-    private UUID prescriptionItemId;
+    @NotNull private UUID prescriptionItemId;
+
+    @Min(1)
     private int quantityToDispense;
+
+    @Size(max = 300)
     private String notes;
   }
 
