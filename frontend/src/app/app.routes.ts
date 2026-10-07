@@ -4,6 +4,11 @@ import { portalRoutes } from './portal.routes';
 
 export const routes: Routes = [
   ...portalRoutes,
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+  },
   // Página pública — login (sem shell)
   {
     path: 'login',

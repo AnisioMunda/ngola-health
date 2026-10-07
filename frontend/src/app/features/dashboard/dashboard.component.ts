@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } fr
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DashboardService, AdvancedDashboard } from '../../core/services/dashboard.service';
+import { formatAoaCompactCurrency, formatAoaCurrency } from '../../shared/utils/aoa-currency';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -244,18 +245,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   formatKz(val: number): string {
-    return (
-      new Intl.NumberFormat('pt-AO', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(val) + ' Kz'
-    );
+    return formatAoaCurrency(val);
   }
 
   formatKzShort(val: number): string {
-    if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M Kz';
-    if (val >= 1_000) return (val / 1_000).toFixed(0) + 'K Kz';
-    return val + ' Kz';
+    return formatAoaCompactCurrency(val);
   }
 
   goTo(path: string): void {

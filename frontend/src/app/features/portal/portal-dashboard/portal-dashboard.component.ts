@@ -11,6 +11,7 @@ import {
   PortalPrescriptionDto,
   PortalInvoiceDto,
 } from '../../../core/services/portal.service';
+import { formatAoaCurrency } from '../../../shared/utils/aoa-currency';
 
 @Component({
   selector: 'app-portal-dashboard',
@@ -109,11 +110,7 @@ export class PortalDashboardComponent implements OnInit {
   }
 
   formatCurrency(val: number): string {
-    return new Intl.NumberFormat('pt-AO', {
-      style: 'currency',
-      currency: 'AOA',
-      minimumFractionDigits: 2,
-    }).format(val);
+    return formatAoaCurrency(val);
   }
 
   getPatientFirstName(): string {

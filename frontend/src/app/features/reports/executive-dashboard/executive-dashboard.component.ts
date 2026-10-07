@@ -9,6 +9,7 @@ import {
   FinancialReportDto,
   MonthlyDataPoint,
 } from '../../../core/services/advanced-reports.service';
+import { formatAoaCompactCurrency } from '../../../shared/utils/aoa-currency';
 
 @Component({
   selector: 'app-executive-dashboard',
@@ -99,10 +100,7 @@ export class ExecutiveDashboardComponent implements OnInit {
   }
 
   formatCurrency(val: number): string {
-    if (!val) return '0 Kz';
-    if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M Kz';
-    if (val >= 1000) return (val / 1000).toFixed(0) + 'K Kz';
-    return val.toFixed(0) + ' Kz';
+    return formatAoaCompactCurrency(val);
   }
 
   formatGrowth(val: number): string {
