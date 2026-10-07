@@ -152,6 +152,20 @@ class LiquibaseChangelogTest {
         "changes/scheduling/002-appointment-slot-capacity.sql");
   }
 
+  @Test
+  void inpatientTableMigrationsAreIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "014-01-wards", "changes/inpatient/001-inpatient.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "014-02-beds", "changes/inpatient/001-inpatient.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "014-03-admissions", "changes/inpatient/001-inpatient.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "014-04-transfers", "changes/inpatient/001-inpatient.sql");
+  }
+
   private void assertChangesetIsIncludedAndReversible(
       DatabaseChangeLog changelog, String id, String filePath) {
     assertThat(changelog.getChangeSets())
