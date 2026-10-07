@@ -54,10 +54,27 @@ class HospitalAoStartupTest {
             jdbcTemplate.queryForObject(
                 "SELECT name FROM hospitals WHERE code = 'HCL-001'", String.class))
         .isEqualTo("Hospital Central de Luanda");
+    assertThat(jdbcTemplate.queryForList("SELECT name FROM roles", String.class))
+        .containsExactlyInAnyOrder(
+            "ADMIN",
+            "DOCTOR",
+            "NURSE",
+            "RECEPTIONIST",
+            "PHARMACIST",
+            "FINANCIAL",
+            "MANAGER",
+            "LAB_TECHNICIAN",
+            "SUPER_ADMIN");
     assertThat(
             jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM roles WHERE name = 'SUPER_ADMIN'", Long.class))
-        .isEqualTo(1L);
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.tables
+                    WHERE table_schema = current_schema()
+                      AND table_name IN ('users', 'roles', 'permissions', 'user_roles', 'role_permissions')
+                    """,
+                Long.class))
+        .isEqualTo(5L);
     assertThat(
             jdbcTemplate.queryForObject(
                 """
