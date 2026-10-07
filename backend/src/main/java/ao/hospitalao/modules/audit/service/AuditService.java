@@ -11,15 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuditService {
@@ -29,10 +26,9 @@ public class AuditService {
   private final HospitalRepository hospitalRepository;
 
   // ------------------------------------------------
-  // Registar acção (assíncrono para não atrasar requests)
+  // Registar acção
   // ------------------------------------------------
 
-  @Async
   @Transactional
   public void log(AuditAction action, EntityType entityType, String entityId, String description) {
     log(
@@ -45,10 +41,11 @@ public class AuditService {
         null,
         null,
         AuditResult.SUCCESS,
+        null,
+        null,
         null);
   }
 
-  @Async
   @Transactional
   public void log(
       AuditAction action,
@@ -61,46 +58,71 @@ public class AuditService {
       String userAgent,
       AuditResult result,
       String errorMessage) {
-    try {
-      String username = null;
-      String fullName = null;
-      UUID userId = null;
-      UUID hospitalId = TenantContext.getCurrentHospital();
+    log(
+        action,
+        entityType,
+        entityId,
+        description,
+        oldValues,
+        newValues,
+        ipAddress,
+        userAgent,
+        result,
+        errorMessage,
+        null,
+        null);
+  }
 
-      var auth = SecurityContextHolder.getContext().getAuthentication();
-      if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-        username = auth.getName();
+  @Transactional
+  public void log(
+      AuditAction action,
+      EntityType entityType,
+      String entityId,
+      String description,
+      String oldValues,
+      String newValues,
+      String ipAddress,
+      String userAgent,
+      AuditResult result,
+      String errorMessage,
+      String httpMethod,
+      String requestUrl) {
+    String username = null;
+    String fullName = null;
+    UUID userId = null;
+    UUID hospitalId = TenantContext.getCurrentHospital();
 
-        // Tentar obter UUID e nome do utilizador
-        if (auth.getPrincipal() instanceof ao.hospitalao.security.jwt.JwtUserDetails jwtUser) {
-          userId = jwtUser.getUserId();
-          fullName = userRepository.findById(userId).map(u -> u.getFullName()).orElse(username);
-        }
+    var auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+      username = auth.getName();
+
+      if (auth.getPrincipal() instanceof ao.hospitalao.security.jwt.JwtUserDetails jwtUser) {
+        userId = jwtUser.getUserId();
+        fullName = userRepository.findById(userId).map(u -> u.getFullName()).orElse(username);
       }
-
-      AuditLog.AuditLogBuilder builder =
-          AuditLog.builder()
-              .action(action)
-              .entityType(entityType)
-              .entityId(entityId)
-              .description(description)
-              .username(username)
-              .userFullName(fullName)
-              .oldValues(oldValues)
-              .newValues(newValues)
-              .ipAddress(ipAddress)
-              .userAgent(userAgent)
-              .result(result)
-              .errorMessage(errorMessage);
-
-      if (userId != null) builder.user(userRepository.getReferenceById(userId));
-      if (hospitalId != null) builder.hospital(hospitalRepository.getReferenceById(hospitalId));
-
-      auditLogRepository.save(builder.build());
-
-    } catch (Exception e) {
-      log.error("Failed to save audit log: {}", e.getMessage());
     }
+
+    AuditLog.AuditLogBuilder builder =
+        AuditLog.builder()
+            .action(action)
+            .entityType(entityType)
+            .entityId(entityId)
+            .description(description)
+            .username(username)
+            .userFullName(fullName)
+            .oldValues(oldValues)
+            .newValues(newValues)
+            .ipAddress(ipAddress)
+            .userAgent(userAgent)
+            .httpMethod(httpMethod)
+            .requestUrl(requestUrl)
+            .result(result)
+            .errorMessage(errorMessage);
+
+    if (userId != null) builder.user(userRepository.getReferenceById(userId));
+    if (hospitalId != null) builder.hospital(hospitalRepository.getReferenceById(hospitalId));
+
+    auditLogRepository.save(builder.build());
   }
 
   // ------------------------------------------------
@@ -135,24 +157,20 @@ public class AuditService {
   }
 
   public void logLogin(String username, String ip, boolean success) {
-    try {
-      AuditLog auditLog =
-          AuditLog.builder()
-              .action(success ? AuditAction.LOGIN : AuditAction.LOGIN_FAILED)
-              .entityType(EntityType.USER)
-              .entityId(username)
-              .description(
-                  success
-                      ? "Login bem-sucedido: " + username
-                      : "Tentativa de login falhada: " + username)
-              .username(username)
-              .ipAddress(ip)
-              .result(success ? AuditResult.SUCCESS : AuditResult.FAILURE)
-              .build();
-      auditLogRepository.save(auditLog);
-    } catch (Exception e) {
-      log.error("Failed to save login audit log: {}", e.getMessage());
-    }
+    AuditLog auditLog =
+        AuditLog.builder()
+            .action(success ? AuditAction.LOGIN : AuditAction.LOGIN_FAILED)
+            .entityType(EntityType.USER)
+            .entityId(username)
+            .description(
+                success
+                    ? "Login bem-sucedido: " + username
+                    : "Tentativa de login falhada: " + username)
+            .username(username)
+            .ipAddress(ip)
+            .result(success ? AuditResult.SUCCESS : AuditResult.FAILURE)
+            .build();
+    auditLogRepository.save(auditLog);
   }
 
   public void logPrint(EntityType type, String id, String description) {

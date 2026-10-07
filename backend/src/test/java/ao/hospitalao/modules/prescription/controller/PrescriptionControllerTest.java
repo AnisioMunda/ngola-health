@@ -8,6 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import ao.hospitalao.config.SecurityConfig;
+import ao.hospitalao.modules.audit.entity.AuditLog.AuditAction;
+import ao.hospitalao.modules.audit.entity.AuditLog.AuditResult;
+import ao.hospitalao.modules.audit.entity.AuditLog.EntityType;
 import ao.hospitalao.modules.audit.service.AuditService;
 import ao.hospitalao.modules.auth.service.TokenBlackListService;
 import ao.hospitalao.modules.prescription.dto.PrescriptionDtos.*;
@@ -251,6 +254,37 @@ class PrescriptionControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("CANCELLED"))
         .andExpect(jsonPath("$.cancelledReason").value("Paciente com alergia"));
+  }
+
+  @Test
+  @DisplayName("PATCH /{id}/cancel — deve registar auditoria com o ID da prescrição")
+  void shouldAuditPrescriptionMutationWithEntityId() throws Exception {
+    var req = new CancelPrescriptionRequest();
+    req.setReason("Registo de auditoria");
+    when(prescriptionService.cancel(eq(prescriptionId), any())).thenReturn(sampleResponse);
+
+    mockMvc
+        .perform(
+            api(patch("/api/prescriptions/{id}/cancel", prescriptionId), "doctor", "DOCTOR")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isOk());
+
+    verify(auditService)
+        .log(
+            eq(AuditAction.UPDATE),
+            eq(EntityType.PRESCRIPTION),
+            eq(prescriptionId.toString()),
+            anyString(),
+            isNull(),
+            isNull(),
+            any(),
+            nullable(String.class),
+            eq(AuditResult.SUCCESS),
+            isNull(),
+            eq("PATCH"),
+            contains("/prescriptions/" + prescriptionId));
   }
 
   // ------------------------------------------------
