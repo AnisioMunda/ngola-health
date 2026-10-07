@@ -9,7 +9,16 @@ import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(name = "patients")
+@Table(
+    name = "patients",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uq_patients_hospital_national_id",
+          columnNames = {"hospital_id", "national_id"}),
+      @UniqueConstraint(
+          name = "uq_patients_hospital_health_card",
+          columnNames = {"hospital_id", "health_card_number"})
+    })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,10 +42,10 @@ public class Patient extends TenantScopedEntity {
   @Enumerated(EnumType.STRING)
   private Gender gender;
 
-  @Column(name = "national_id", length = 20, unique = true)
+  @Column(name = "national_id", length = 20)
   private String nationalId;
 
-  @Column(name = "health_card_number", length = 30, unique = true)
+  @Column(name = "health_card_number", length = 30)
   private String healthCardNumber;
 
   @Column(name = "phone", length = 20)
