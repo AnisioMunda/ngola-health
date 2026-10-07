@@ -20,6 +20,8 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}"]
@@ -38,6 +40,9 @@ services:
   rabbitmq:
     image: rabbitmq:4-management-alpine
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hospitalao}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
