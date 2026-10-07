@@ -4,7 +4,7 @@
       <h1>Triagem e Urgência</h1>
       <p>Sistema Manchester — actualiza a cada 30 segundos</p>
     </div>
-    <button class="btn-primary" (click)="showForm = !showForm">
+    <button class="btn-primary" [disabled]="saving" (click)="showForm = !showForm">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -12,8 +12,8 @@
     </button>
   </header>
 
-  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" role="status" *ngIf="success">✓ {{ success }}</div>
+  <div class="alert-error" role="alert" *ngIf="error">{{ error }}</div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -78,10 +78,11 @@
         <div class="form-grid">
           <div class="field span-2">
             <label>Paciente Registado</label>
-            <select formControlName="patientId">
+            <select formControlName="patientId" (change)="onPatientChanged()">
               <option value="">Paciente não registado...</option>
               <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
             </select>
+            <span class="field-error" role="alert" *ngIf="patientError">{{ patientError }}</span>
           </div>
           <div class="field-divider span-2">
             <span>— ou —</span>
@@ -93,6 +94,12 @@
           <div class="field">
             <label>Idade</label>
             <input type="number" formControlName="patientAgeTemp" min="0" max="150" />
+            <span
+              class="field-error"
+              *ngIf="f['patientAgeTemp'].invalid && f['patientAgeTemp'].touched"
+            >
+              A idade deve estar entre 0 e 150 anos.
+            </span>
           </div>
           <div class="field">
             <label>Género</label>
@@ -163,6 +170,12 @@
               min="0"
               max="100"
             />
+            <span
+              class="field-error"
+              *ngIf="f['oxygenSaturation'].invalid && f['oxygenSaturation'].touched"
+            >
+              A saturação deve estar entre 0 e 100%.
+            </span>
           </div>
           <div class="field">
             <label>Freq. Respiratória</label>
@@ -175,6 +188,9 @@
           <div class="field">
             <label>Dor (0-10)</label>
             <input type="number" formControlName="painScale" min="0" max="10" />
+            <span class="field-error" *ngIf="f['painScale'].invalid && f['painScale'].touched">
+              A escala de dor deve estar entre 0 e 10.
+            </span>
           </div>
           <div class="field span-2">
             <label>Notas de Triagem</label>
@@ -241,7 +257,7 @@
         <!-- Paciente -->
         <div class="qcard-patient">
           <div class="patient-name">{{ t.patientName }}</div>
-          <div class="patient-meta" *ngIf="t.patientAge">
+          <div class="patient-meta" *ngIf="t.patientAge !== null && t.patientAge !== undefined">
             {{ t.patientAge }} anos {{ t.patientGender ? '· ' + t.patientGender : '' }}
           </div>
         </div>
@@ -300,20 +316,36 @@
 
         <!-- Acções -->
         <div class="qcard-actions">
-          <button class="btn-call" *ngIf="t.status === 'WAITING'" (click)="callNext(t)">
+          <button
+            class="btn-call"
+            *ngIf="t.status === 'WAITING'"
+            [disabled]="isUpdating(t.id)"
+            (click)="callNext(t)"
+          >
             📢 Chamar
           </button>
-          <button class="btn-complete" *ngIf="t.status === 'IN_PROGRESS'" (click)="complete(t)">
+          <button
+            class="btn-complete"
+            *ngIf="t.status === 'IN_PROGRESS'"
+            [disabled]="isUpdating(t.id)"
+            (click)="complete(t)"
+          >
             ✓ Concluir
           </button>
-          <button class="btn-left" *ngIf="t.status === 'WAITING'" (click)="markAsLeft(t)">
+          <button
+            class="btn-left"
+            *ngIf="t.status === 'WAITING'"
+            [disabled]="isUpdating(t.id)"
+            (click)="markAsLeft(t)"
+          >
             Saiu
           </button>
-          <!-- Alterar prioridade -->
           <select
+            *ngIf="t.status === 'WAITING'"
             class="priority-select"
             [value]="t.priority"
-            (change)="updatePriority(t, $any($event.target).value)"
+            [disabled]="isUpdating(t.id)"
+            (change)="onPriorityChange(t, $event)"
           >
             <option *ngFor="let p of priorities" [value]="p.value">{{ p.label }}</option>
           </select>
@@ -329,11 +361,17 @@
       <input type="date" [(ngModel)]="historyDate" (ngModelChange)="loadHistory()" />
     </div>
 
+    <div class="loading-state" *ngIf="historyLoading">
+      <div class="spinner-lg"></div>
+    </div>
+
+    <div class="alert-error" role="alert" *ngIf="historyError">{{ historyError }}</div>
+
     <div class="table-card">
-      <div class="empty-state" *ngIf="history.length === 0">
+      <div class="empty-state" *ngIf="!historyLoading && !historyError && history.length === 0">
         <p>Sem triagens para esta data.</p>
       </div>
-      <table *ngIf="history.length > 0">
+      <table *ngIf="!historyLoading && history.length > 0">
         <thead>
           <tr>
             <th>#</th>

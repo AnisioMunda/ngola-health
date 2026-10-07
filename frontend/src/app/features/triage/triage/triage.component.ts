@@ -1,10 +1,16 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { EMPTY, interval, Observable, Subscription } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import {
   TriageService,
   TriageResponse,
@@ -17,6 +23,34 @@ import {
 } from '../../../core/services/triage.service';
 import { PatientService } from '../../../core/services/patient.service';
 
+type TriageFormGroup = FormGroup<{
+  patientId: FormControl<string>;
+  patientNameTemp: FormControl<string>;
+  patientAgeTemp: FormControl<number | null>;
+  patientGenderTemp: FormControl<string>;
+  priority: FormControl<TriagePriority>;
+  chiefComplaint: FormControl<string>;
+  bloodPressure: FormControl<string>;
+  heartRate: FormControl<number | null>;
+  temperature: FormControl<number | null>;
+  oxygenSaturation: FormControl<number | null>;
+  respiratoryRate: FormControl<number | null>;
+  weightKg: FormControl<number | null>;
+  painScale: FormControl<number | null>;
+  triageNotes: FormControl<string>;
+}>;
+
+function todayInLuanda(): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Luanda',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
 @Component({
   selector: 'app-triage',
   standalone: true,
@@ -28,19 +62,23 @@ export class TriageComponent implements OnInit, OnDestroy {
   queue: TriageResponse[] = [];
   stats: TriageStatsDto | null = null;
   loading = true;
+  historyLoading = false;
   saving = false;
   error = '';
+  patientError = '';
   success = '';
 
   showForm = false;
   activeTab: 'queue' | 'history' = 'queue';
   history: TriageResponse[] = [];
-  historyDate = new Date().toISOString().split('T')[0];
+  historyError = '';
+  historyDate = todayInLuanda();
 
-  // Polling a cada 30 segundos
   private pollingSubscription?: Subscription;
+  private successTimeoutId?: ReturnType<typeof setTimeout>;
+  private readonly updatingTriageIds = new Set<string>();
 
-  form!: FormGroup;
+  form!: TriageFormGroup;
   patients: { id: string; fullName: string }[] = [];
 
   priorityLabels = PRIORITY_LABELS;
@@ -60,19 +98,26 @@ export class TriageComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private triageService: TriageService,
     private patientService: PatientService,
-    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.buildForm();
     this.loadPatients();
     this.load();
-    // Polling automático a cada 30 segundos
     this.pollingSubscription = interval(30000)
-      .pipe(switchMap(() => this.triageService.getActiveQueue()))
+      .pipe(
+        switchMap(() =>
+          this.triageService.getActiveQueue().pipe(
+            catchError((error: unknown) => {
+              this.error = this.errorMessage(error, 'Erro ao actualizar a fila de triagem.');
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
       .subscribe({
-        next: (q) => {
-          this.queue = q;
+        next: (queue) => {
+          this.queue = queue;
           this.loadStats();
         },
       });
@@ -80,45 +125,62 @@ export class TriageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pollingSubscription?.unsubscribe();
+    if (this.successTimeoutId) clearTimeout(this.successTimeoutId);
   }
 
   buildForm(): void {
     this.form = this.fb.group({
-      patientId: [''],
-      patientNameTemp: [''],
-      patientAgeTemp: [''],
-      patientGenderTemp: [''],
-      priority: ['GREEN', Validators.required],
-      chiefComplaint: ['', Validators.required],
-      bloodPressure: [''],
-      heartRate: [''],
-      temperature: [''],
-      oxygenSaturation: [''],
-      respiratoryRate: [''],
-      weightKg: [''],
-      painScale: [''],
-      triageNotes: [''],
+      patientId: this.fb.nonNullable.control(''),
+      patientNameTemp: this.fb.nonNullable.control(''),
+      patientAgeTemp: this.fb.control<number | null>(null, [
+        Validators.min(0),
+        Validators.max(150),
+      ]),
+      patientGenderTemp: this.fb.nonNullable.control(''),
+      priority: this.fb.nonNullable.control<TriagePriority>('GREEN', Validators.required),
+      chiefComplaint: this.fb.nonNullable.control('', Validators.required),
+      bloodPressure: this.fb.nonNullable.control(''),
+      heartRate: this.fb.control<number | null>(null, Validators.min(0)),
+      temperature: this.fb.control<number | null>(null, Validators.min(0)),
+      oxygenSaturation: this.fb.control<number | null>(null, [
+        Validators.min(0),
+        Validators.max(100),
+      ]),
+      respiratoryRate: this.fb.control<number | null>(null, Validators.min(0)),
+      weightKg: this.fb.control<number | null>(null, Validators.min(0)),
+      painScale: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(10)]),
+      triageNotes: this.fb.nonNullable.control(''),
     });
   }
 
   loadPatients(): void {
+    this.patientError = '';
     this.patientService.findAll('', 0, 200).subscribe({
-      next: (p) => {
-        this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
+      next: (page) => {
+        this.patients = page.content.map((patient) => ({
+          id: patient.id,
+          fullName: patient.fullName,
+        }));
+      },
+      error: (error: unknown) => {
+        this.patientError = this.errorMessage(error, 'Erro ao carregar a lista de pacientes.');
       },
     });
   }
 
   load(): void {
     this.loading = true;
+    this.error = '';
     this.triageService.getActiveQueue().subscribe({
-      next: (q) => {
-        this.queue = q;
+      next: (queue) => {
+        this.queue = queue;
         this.loading = false;
         this.loadStats();
       },
-      error: () => {
-        this.error = 'Erro ao carregar fila.';
+      error: (error: unknown) => {
+        this.queue = [];
+        this.stats = null;
+        this.error = this.errorMessage(error, 'Erro ao carregar fila.');
         this.loading = false;
       },
     });
@@ -126,16 +188,31 @@ export class TriageComponent implements OnInit, OnDestroy {
 
   loadStats(): void {
     this.triageService.getStats().subscribe({
-      next: (s) => {
-        this.stats = s;
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (error: unknown) => {
+        this.error = this.errorMessage(error, 'Erro ao carregar as estatísticas de triagem.');
       },
     });
   }
 
   loadHistory(): void {
+    this.historyError = '';
+    if (!this.historyDate) {
+      this.history = [];
+      return;
+    }
+    this.historyLoading = true;
     this.triageService.getHistory(this.historyDate).subscribe({
-      next: (h) => {
-        this.history = h;
+      next: (history) => {
+        this.history = history;
+        this.historyLoading = false;
+      },
+      error: (error: unknown) => {
+        this.history = [];
+        this.historyError = this.errorMessage(error, 'Erro ao carregar o histórico de triagem.');
+        this.historyLoading = false;
       },
     });
   }
@@ -145,120 +222,191 @@ export class TriageComponent implements OnInit, OnDestroy {
     if (tab === 'history') this.loadHistory();
   }
 
+  onPatientChanged(): void {
+    if (this.form.controls.patientId.value) {
+      this.form.patchValue({
+        patientNameTemp: '',
+        patientAgeTemp: null,
+        patientGenderTemp: '',
+      });
+    }
+  }
+
+  onPriorityChange(triage: TriageResponse, event: Event): void {
+    const selectedPriority = (event.target as HTMLSelectElement).value;
+    const priority = this.priorities.find((item) => item.value === selectedPriority);
+    if (priority) this.updatePriority(triage, priority.value);
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const v = this.form.getRawValue();
-    if (!v.patientId && !v.patientNameTemp) {
+
+    const value = this.form.getRawValue();
+    const patientId = value.patientId.trim();
+    const patientName = value.patientNameTemp.trim();
+    if (!patientId && !patientName) {
       this.error = 'Seleccione um paciente ou indique um nome temporário.';
       return;
     }
+
     this.saving = true;
     this.error = '';
-
     this.triageService
       .create({
-        patientId: v.patientId || null,
-        patientNameTemp: v.patientNameTemp || null,
-        patientAgeTemp: v.patientAgeTemp || null,
-        patientGenderTemp: v.patientGenderTemp || null,
-        priority: v.priority,
-        chiefComplaint: v.chiefComplaint,
-        bloodPressure: v.bloodPressure || null,
-        heartRate: v.heartRate || null,
-        temperature: v.temperature || null,
-        oxygenSaturation: v.oxygenSaturation || null,
-        respiratoryRate: v.respiratoryRate || null,
-        weightKg: v.weightKg || null,
-        painScale: v.painScale || null,
-        triageNotes: v.triageNotes || null,
+        patientId: patientId || null,
+        patientNameTemp: patientId ? null : patientName || null,
+        patientAgeTemp: patientId ? null : value.patientAgeTemp,
+        patientGenderTemp: patientId ? null : value.patientGenderTemp || null,
+        priority: value.priority,
+        chiefComplaint: value.chiefComplaint.trim(),
+        bloodPressure: value.bloodPressure.trim() || null,
+        heartRate: value.heartRate ?? null,
+        temperature: value.temperature ?? null,
+        oxygenSaturation: value.oxygenSaturation ?? null,
+        respiratoryRate: value.respiratoryRate ?? null,
+        weightKg: value.weightKg ?? null,
+        painScale: value.painScale ?? null,
+        triageNotes: value.triageNotes.trim() || null,
       })
       .subscribe({
         next: () => {
           this.saving = false;
           this.showForm = false;
-          this.form.reset({ priority: 'GREEN' });
+          this.form.reset({
+            patientId: '',
+            patientNameTemp: '',
+            patientAgeTemp: null,
+            patientGenderTemp: '',
+            priority: 'GREEN',
+            chiefComplaint: '',
+            bloodPressure: '',
+            heartRate: null,
+            temperature: null,
+            oxygenSaturation: null,
+            respiratoryRate: null,
+            weightKg: null,
+            painScale: null,
+            triageNotes: '',
+          });
           this.flash('Triagem registada com sucesso.');
           this.load();
         },
-        error: (err) => {
-          this.error = err.error?.message ?? 'Erro ao criar triagem.';
+        error: (error: unknown) => {
+          this.error = this.errorMessage(error, 'Erro ao criar triagem.');
           this.saving = false;
         },
       });
   }
 
-  callNext(t: TriageResponse): void {
-    this.triageService.callNext(t.id).subscribe({
-      next: (updated) => {
+  callNext(triage: TriageResponse): void {
+    this.runTriageAction(
+      triage,
+      this.triageService.callNext(triage.id),
+      (updated) => {
         this.updateInQueue(updated);
-        this.flash('Paciente chamado: ' + t.patientName);
+        this.flash(`Paciente chamado: ${triage.patientName}`);
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro.';
-      },
-    });
+      'Erro ao chamar o paciente.',
+    );
   }
 
-  complete(t: TriageResponse): void {
-    this.triageService.complete(t.id).subscribe({
-      next: () => {
+  complete(triage: TriageResponse): void {
+    this.runTriageAction(
+      triage,
+      this.triageService.complete(triage.id),
+      () => {
         this.load();
         this.flash('Atendimento concluído.');
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro.';
-      },
-    });
+      'Erro ao concluir o atendimento.',
+    );
   }
 
-  markAsLeft(t: TriageResponse): void {
-    if (!confirm('Marcar ' + t.patientName + ' como saiu sem ser atendido?')) return;
-    this.triageService.markAsLeft(t.id).subscribe({
-      next: () => {
+  markAsLeft(triage: TriageResponse): void {
+    if (!confirm(`Marcar ${triage.patientName} como saiu sem ser atendido?`)) return;
+    this.runTriageAction(
+      triage,
+      this.triageService.markAsLeft(triage.id),
+      () => {
         this.load();
         this.flash('Registo actualizado.');
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro.';
-      },
-    });
+      'Erro ao actualizar o registo.',
+    );
   }
 
-  updatePriority(t: TriageResponse, priority: TriagePriority): void {
-    this.triageService.updatePriority(t.id, priority).subscribe({
-      next: (updated) => {
-        this.updateInQueue(updated);
-      },
-    });
+  updatePriority(triage: TriageResponse, priority: TriagePriority): void {
+    if (triage.status !== 'WAITING') return;
+    this.runTriageAction(
+      triage,
+      this.triageService.updatePriority(triage.id, priority),
+      (updated) => this.updateInQueue(updated),
+      'Erro ao actualizar a prioridade.',
+    );
   }
 
   updateInQueue(updated: TriageResponse): void {
-    const idx = this.queue.findIndex((q) => q.id === updated.id);
-    if (idx !== -1) this.queue[idx] = updated;
+    const index = this.queue.findIndex((item) => item.id === updated.id);
+    if (index !== -1) this.queue[index] = updated;
     else this.load();
   }
 
-  flash(msg: string): void {
-    this.success = msg;
-    setTimeout(() => (this.success = ''), 3000);
+  isUpdating(id: string): boolean {
+    return this.updatingTriageIds.has(id);
   }
 
-  formatWait(mins: number): string {
-    if (mins < 60) return mins + ' min';
-    return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'min';
+  flash(message: string): void {
+    this.success = message;
+    if (this.successTimeoutId) clearTimeout(this.successTimeoutId);
+    this.successTimeoutId = setTimeout(() => {
+      this.success = '';
+      this.successTimeoutId = undefined;
+    }, 3000);
+  }
+
+  formatWait(minutes: number): string {
+    if (minutes < 60) return `${minutes} min`;
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}min`;
   }
 
   get waitingCount(): number {
-    return this.queue.filter((q) => q.status === 'WAITING').length;
+    return this.queue.filter((item) => item.status === 'WAITING').length;
   }
+
   get inProgressCount(): number {
-    return this.queue.filter((q) => q.status === 'IN_PROGRESS').length;
+    return this.queue.filter((item) => item.status === 'IN_PROGRESS').length;
   }
 
   get f() {
     return this.form.controls;
+  }
+
+  private runTriageAction<T>(
+    triage: TriageResponse,
+    request: Observable<T>,
+    onSuccess: (result: T) => void,
+    fallbackError: string,
+  ): void {
+    if (this.updatingTriageIds.has(triage.id)) return;
+    this.error = '';
+    this.updatingTriageIds.add(triage.id);
+    request.pipe(finalize(() => this.updatingTriageIds.delete(triage.id))).subscribe({
+      next: onSuccess,
+      error: (error: unknown) => {
+        this.error = this.errorMessage(error, fallbackError);
+      },
+    });
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+      const body = error.error as Record<string, unknown>;
+      if (typeof body['detail'] === 'string' && body['detail']) return body['detail'];
+      if (typeof body['message'] === 'string' && body['message']) return body['message'];
+    }
+    return fallback;
   }
 }

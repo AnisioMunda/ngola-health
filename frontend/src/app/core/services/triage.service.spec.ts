@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TriageService, TriageResponse } from './triage.service';
+import { CreateTriageRequest, TriageService, TriageResponse } from './triage.service';
 import { environment } from '../../../environments/environment';
 
 describe('TriageService', () => {
@@ -86,7 +86,7 @@ describe('TriageService', () => {
   });
 
   it('deve chamar paciente', () => {
-    const called = { ...mockTriage, status: 'IN_PROGRESS' as any };
+    const called: TriageResponse = { ...mockTriage, status: 'IN_PROGRESS' };
 
     service.callNext(mockTriage.id).subscribe((t) => {
       expect(t.status).toBe('IN_PROGRESS');
@@ -98,7 +98,7 @@ describe('TriageService', () => {
   });
 
   it('deve completar atendimento', () => {
-    const completed = { ...mockTriage, status: 'COMPLETED' as any };
+    const completed: TriageResponse = { ...mockTriage, status: 'COMPLETED' };
 
     service.complete(mockTriage.id).subscribe((t) => {
       expect(t.status).toBe('COMPLETED');
@@ -110,10 +110,21 @@ describe('TriageService', () => {
   });
 
   it('deve criar triagem', () => {
-    const req = {
+    const req: CreateTriageRequest = {
       patientId: 'patient-uuid',
+      patientNameTemp: null,
+      patientAgeTemp: null,
+      patientGenderTemp: null,
       priority: 'RED',
       chiefComplaint: 'Dor no peito',
+      bloodPressure: null,
+      heartRate: null,
+      temperature: null,
+      oxygenSaturation: null,
+      respiratoryRate: null,
+      weightKg: null,
+      painScale: 0,
+      triageNotes: null,
     };
 
     service.create(req).subscribe((t) => {
@@ -122,7 +133,7 @@ describe('TriageService', () => {
 
     const httpReq = httpMock.expectOne(apiUrl);
     expect(httpReq.request.method).toBe('POST');
-    expect(httpReq.request.body.priority).toBe('RED');
+    expect(httpReq.request.body).toEqual(req);
     httpReq.flush(mockTriage);
   });
 });
