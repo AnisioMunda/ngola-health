@@ -18,23 +18,23 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/reports")
 @RequiredArgsConstructor
-@Tag(name = "Reports", description = "PDF report generation")
+@Tag(name = "Relatórios", description = "Geração de documentos PDF")
 @SecurityRequirement(name = "bearerAuth")
 public class ReportController {
 
   private final PdfReportService pdfReportService;
 
   @GetMapping("/patients/{id}")
-  @Operation(summary = "Generate patient clinical record PDF")
+  @Operation(summary = "Gerar ficha clínica do paciente em PDF")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> patientReport(@PathVariable UUID id) throws IOException {
     byte[] pdf = pdfReportService.generatePatientReport(id);
-    return buildPdfResponse(pdf, "patient-report-" + id + ".pdf");
+    return buildPdfResponse(pdf, "ficha-paciente-" + id + ".pdf");
   }
 
   @GetMapping("/stock")
-  @Operation(summary = "Generate pharmacy stock report PDF")
+  @Operation(summary = "Gerar relatório de stock da farmácia em PDF")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> stockReport() throws IOException {

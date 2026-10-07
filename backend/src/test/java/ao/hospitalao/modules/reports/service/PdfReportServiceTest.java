@@ -1,5 +1,6 @@
 package ao.hospitalao.modules.reports.service;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class PdfReportServiceTest {
@@ -47,24 +49,40 @@ class PdfReportServiceTest {
             .province("Huíla")
             .emergencyContactName("Mário Gonçalves")
             .build();
-    Hospital hospital = Hospital.builder().id(hospitalId).name("Hospital São João").build();
+    Hospital hospital =
+        Hospital.builder().id(hospitalId).name("Hospital São João").province("Huíla").build();
 
-    when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
+    when(patientRepository.findByHospitalIdAndId(hospitalId, patientId))
+        .thenReturn(Optional.of(patient));
     when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
 
     byte[] pdf;
     try (MockedStatic<TenantContext> tenantContext = mockStatic(TenantContext.class)) {
       tenantContext.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+      tenantContext.when(TenantContext::hasPlatformAccess).thenReturn(false);
       pdf = pdfReportService.generatePatientReport(patientId);
     }
 
     try (var document = Loader.loadPDF(pdf)) {
       String text = new PDFTextStripper().getText(document);
 
+      assertTrue(text.contains("Hospital São João"));
       assertTrue(text.contains("João Gonçalves"));
       assertTrue(text.contains("Huíla"));
       assertTrue(text.contains("Mário Gonçalves"));
       assertTrue(document.getNumberOfPages() > 0);
+    }
+  }
+
+  @Test
+  void patientReportRequiresHospitalScope() {
+    try (MockedStatic<TenantContext> tenantContext = mockStatic(TenantContext.class)) {
+      tenantContext.when(TenantContext::getCurrentHospital).thenReturn(null);
+      tenantContext.when(TenantContext::hasPlatformAccess).thenReturn(false);
+
+      assertThrows(
+          AccessDeniedException.class,
+          () -> pdfReportService.generatePatientReport(UUID.randomUUID()));
     }
   }
 

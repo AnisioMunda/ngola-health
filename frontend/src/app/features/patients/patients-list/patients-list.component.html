@@ -28,6 +28,7 @@
   </div>
 
   <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="reportError" role="alert">{{ reportError }}</div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
@@ -80,6 +81,24 @@
           </td>
           <td class="text-muted">{{ p.province || '—' }}</td>
           <td>
+            <button
+              *ngIf="canDownloadPatientReport"
+              class="btn-icon"
+              title="Descarregar ficha em PDF"
+              aria-label="Descarregar ficha do paciente em PDF"
+              [disabled]="downloadingPatientReport"
+              (click)="downloadPatientReport(p.id, $event)"
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M10 3v9m0 0 3-3m-3 3L7 9m-3 6v2h12v-2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
             <button
               class="btn-icon"
               title="Editar paciente"
