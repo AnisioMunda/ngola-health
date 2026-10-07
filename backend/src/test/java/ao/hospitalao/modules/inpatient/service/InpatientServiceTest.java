@@ -175,7 +175,7 @@ class InpatientServiceTest {
             .build();
     UpdateBedStatusRequest request = new UpdateBedStatusRequest();
     request.setStatus(BedStatus.MAINTENANCE);
-    when(bedRepository.findById(bedId)).thenReturn(Optional.of(bed));
+    when(bedRepository.findByIdForUpdate(bedId)).thenReturn(Optional.of(bed));
     when(admissionRepository.isBedOccupied(bedId)).thenReturn(true);
 
     assertThatThrownBy(() -> inpatientService.updateBedStatus(bedId, request))
@@ -198,7 +198,7 @@ class InpatientServiceTest {
     UpdateBedStatusRequest request = new UpdateBedStatusRequest();
     request.setStatus(BedStatus.MAINTENANCE);
     request.setNotes("Aguarda reparação");
-    when(bedRepository.findById(bedId)).thenReturn(Optional.of(bed));
+    when(bedRepository.findByIdForUpdate(bedId)).thenReturn(Optional.of(bed));
     when(admissionRepository.isBedOccupied(bedId)).thenReturn(false);
     when(bedRepository.save(any(Bed.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

@@ -1,7 +1,6 @@
 package ao.hospitalao.modules.inpatient.service;
 
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.*;
 import ao.hospitalao.modules.inpatient.entity.*;
@@ -10,26 +9,19 @@ import ao.hospitalao.modules.inpatient.entity.Bed.BedStatus;
 import ao.hospitalao.modules.inpatient.repository.AdmissionRepository;
 import ao.hospitalao.modules.inpatient.repository.BedRepository;
 import ao.hospitalao.modules.inpatient.repository.WardRepository;
-import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InpatientService {
@@ -37,8 +29,6 @@ public class InpatientService {
   private final WardRepository wardRepository;
   private final BedRepository bedRepository;
   private final AdmissionRepository admissionRepository;
-  private final PatientRepository patientRepository;
-  private final EpisodeRepository episodeRepository;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
 
@@ -154,7 +144,7 @@ public class InpatientService {
 
     Bed bed =
         bedRepository
-            .findById(bedId)
+            .findByIdForUpdate(bedId)
             .orElseThrow(() -> new EntityNotFoundException("Cama não encontrada"));
 
     if (admissionRepository.isBedOccupied(bedId)) {
@@ -166,191 +156,6 @@ public class InpatientService {
     bed.setStatus(req.getStatus());
     if (req.getNotes() != null) bed.setNotes(req.getNotes());
     return toBedResponse(bedRepository.save(bed));
-  }
-
-  // ------------------------------------------------
-  // Internamentos
-  // ------------------------------------------------
-
-  @Transactional(readOnly = true)
-  public Page<AdmissionResponse> findAll(AdmissionStatus status, UUID wardId, Pageable pageable) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-    return admissionRepository
-        .findWithFilters(hospitalId, status, wardId, pageable)
-        .map(this::toAdmissionResponse);
-  }
-
-  @Transactional(readOnly = true)
-  public AdmissionResponse findById(UUID id) {
-    return admissionRepository
-        .findByIdWithRelations(id)
-        .map(this::toAdmissionResponse)
-        .orElseThrow(() -> new EntityNotFoundException("Internamento não encontrado"));
-  }
-
-  @Transactional(readOnly = true)
-  public List<AdmissionResponse> findActiveByHospital() {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-    return admissionRepository
-        .findByHospitalIdAndStatusOrderByAdmissionDateDesc(hospitalId, AdmissionStatus.ACTIVE)
-        .stream()
-        .map(this::toAdmissionResponse)
-        .collect(Collectors.toList());
-  }
-
-  @Transactional
-  public AdmissionResponse admit(CreateAdmissionRequest req) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-
-    // Verificar se paciente já tem internamento activo
-    admissionRepository
-        .findByPatientIdAndStatus(req.getPatientId(), AdmissionStatus.ACTIVE)
-        .ifPresent(
-            a -> {
-              throw new IllegalStateException(
-                  "Paciente já tem um internamento activo na " + a.getWard().getName());
-            });
-
-    // Verificar se cama está disponível
-    Bed bed =
-        bedRepository
-            .findById(req.getBedId())
-            .orElseThrow(() -> new EntityNotFoundException("Cama não encontrada"));
-    if (bed.getStatus() != BedStatus.AVAILABLE && bed.getStatus() != BedStatus.RESERVED) {
-      throw new IllegalStateException(
-          "Cama " + bed.getBedNumber() + " não está disponível. Estado: " + bed.getStatus());
-    }
-
-    var patient =
-        patientRepository
-            .findById(req.getPatientId())
-            .orElseThrow(() -> new EntityNotFoundException("Paciente não encontrado"));
-    var doctor =
-        userRepository
-            .findById(req.getResponsibleDoctorId())
-            .orElseThrow(() -> new EntityNotFoundException("Médico não encontrado"));
-
-    Admission admission =
-        Admission.builder()
-            .hospital(hospitalRepository.getReferenceById(hospitalId))
-            .patient(patient)
-            .bed(bed)
-            .ward(bed.getWard())
-            .responsibleDoctor(doctor)
-            .admissionDate(OffsetDateTime.now())
-            .admissionReason(req.getAdmissionReason())
-            .expectedDischargeDate(req.getExpectedDischargeDate())
-            .admittedBy(getCurrentUser())
-            .build();
-
-    if (req.getEpisodeId() != null) {
-      admission.setEpisode(episodeRepository.getReferenceById(req.getEpisodeId()));
-    }
-
-    // Marcar cama como ocupada
-    bed.setStatus(BedStatus.OCCUPIED);
-    bedRepository.save(bed);
-
-    Admission saved = admissionRepository.save(admission);
-    log.info(
-        "Patient {} admitted to bed {} in ward {}",
-        patient.getFullName(),
-        bed.getBedNumber(),
-        bed.getWard().getName());
-
-    return toAdmissionResponse(saved);
-  }
-
-  @Transactional
-  public AdmissionResponse discharge(UUID id, DischargeRequest req) {
-    Admission admission = getOrThrow(id);
-
-    if (admission.getStatus() != AdmissionStatus.ACTIVE) {
-      throw new IllegalStateException("Apenas internamentos ACTIVE podem receber alta.");
-    }
-
-    admission.setStatus(AdmissionStatus.DISCHARGED);
-    admission.setDischargeDate(OffsetDateTime.now());
-    admission.setDischargeNotes(req.getDischargeNotes());
-    admission.setDischargeCondition(req.getDischargeCondition());
-    admission.setDischargedBy(getCurrentUser());
-
-    // Libertar cama
-    Bed bed = admission.getBed();
-    bed.setStatus(BedStatus.AVAILABLE);
-    bedRepository.save(bed);
-
-    log.info(
-        "Patient {} discharged from bed {}",
-        admission.getPatient().getFullName(),
-        bed.getBedNumber());
-    return toAdmissionResponse(admissionRepository.save(admission));
-  }
-
-  @Transactional
-  public AdmissionResponse transfer(UUID id, TransferRequest req) {
-    Admission admission = getOrThrow(id);
-
-    if (admission.getStatus() != AdmissionStatus.ACTIVE) {
-      throw new IllegalStateException("Apenas internamentos activos podem ser transferidos.");
-    }
-
-    Bed newBed =
-        bedRepository
-            .findById(req.getToBedId())
-            .orElseThrow(() -> new EntityNotFoundException("Cama de destino não encontrada"));
-
-    if (newBed.getStatus() != BedStatus.AVAILABLE && newBed.getStatus() != BedStatus.RESERVED) {
-      throw new IllegalStateException("Cama de destino não está disponível.");
-    }
-
-    // Registar transferência
-    BedTransfer transfer =
-        BedTransfer.builder()
-            .admission(admission)
-            .fromBed(admission.getBed())
-            .fromWard(admission.getWard())
-            .toBed(newBed)
-            .toWard(newBed.getWard())
-            .reason(req.getReason())
-            .transferredBy(getCurrentUser())
-            .build();
-    admission.getTransfers().add(transfer);
-
-    // Libertar cama antiga
-    Bed oldBed = admission.getBed();
-    oldBed.setStatus(BedStatus.AVAILABLE);
-    bedRepository.save(oldBed);
-
-    // Actualizar internamento
-    admission.setBed(newBed);
-    admission.setWard(newBed.getWard());
-
-    // Ocupar nova cama
-    newBed.setStatus(BedStatus.OCCUPIED);
-    bedRepository.save(newBed);
-
-    log.info(
-        "Patient {} transferred from bed {} to bed {}",
-        admission.getPatient().getFullName(),
-        oldBed.getBedNumber(),
-        newBed.getBedNumber());
-    return toAdmissionResponse(admissionRepository.save(admission));
-  }
-
-  // ------------------------------------------------
-  // Helpers
-  // ------------------------------------------------
-
-  private Admission getOrThrow(UUID id) {
-    return admissionRepository
-        .findByIdWithRelations(id)
-        .orElseThrow(() -> new EntityNotFoundException("Internamento não encontrado: " + id));
-  }
-
-  private ao.hospitalao.modules.auth.entity.User getCurrentUser() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    return userRepository.findByUsername(username).orElse(null);
   }
 
   private WardResponse toWardResponse(Ward w) {
@@ -420,57 +225,6 @@ public class InpatientService {
         .collect(Collectors.toList());
   }
 
-  private AdmissionResponse toAdmissionResponse(Admission a) {
-    List<TransferResponse> transfers =
-        a.getTransfers() != null
-            ? a.getTransfers().stream()
-                .map(
-                    t ->
-                        TransferResponse.builder()
-                            .id(t.getId())
-                            .fromBedNumber(t.getFromBed().getBedNumber())
-                            .fromWardName(t.getFromWard().getName())
-                            .toBedNumber(t.getToBed().getBedNumber())
-                            .toWardName(t.getToWard().getName())
-                            .reason(t.getReason())
-                            .transferredByName(
-                                t.getTransferredBy() != null
-                                    ? t.getTransferredBy().getFullName()
-                                    : null)
-                            .transferredAt(t.getTransferredAt())
-                            .build())
-                .collect(Collectors.toList())
-            : List.of();
-
-    return AdmissionResponse.builder()
-        .id(a.getId())
-        .patientId(a.getPatient().getId())
-        .patientName(a.getPatient().getFullName())
-        .patientPhone(a.getPatient().getPhone())
-        .bedId(a.getBed().getId())
-        .bedNumber(a.getBed().getBedNumber())
-        .wardId(a.getWard().getId())
-        .wardName(a.getWard().getName())
-        .wardType(a.getWard().getType().name())
-        .doctorId(a.getResponsibleDoctor().getId())
-        .doctorName(a.getResponsibleDoctor().getFullName())
-        .status(a.getStatus())
-        .statusLabel(admissionStatusLabel(a.getStatus()))
-        .admissionDate(a.getAdmissionDate())
-        .expectedDischargeDate(a.getExpectedDischargeDate())
-        .dischargeDate(a.getDischargeDate())
-        .admissionReason(a.getAdmissionReason())
-        .diagnosis(a.getDiagnosis())
-        .dischargeNotes(a.getDischargeNotes())
-        .dischargeCondition(a.getDischargeCondition())
-        .daysAdmitted(a.getDaysAdmitted())
-        .admittedByName(a.getAdmittedBy() != null ? a.getAdmittedBy().getFullName() : null)
-        .dischargedByName(a.getDischargedBy() != null ? a.getDischargedBy().getFullName() : null)
-        .createdAt(a.getCreatedAt())
-        .transfers(transfers)
-        .build();
-  }
-
   private String wardTypeLabel(Ward.WardType t) {
     return switch (t) {
       case GENERAL -> "Medicina Geral";
@@ -491,15 +245,6 @@ public class InpatientService {
       case OCCUPIED -> "Ocupada";
       case MAINTENANCE -> "Manutenção";
       case RESERVED -> "Reservada";
-    };
-  }
-
-  private String admissionStatusLabel(AdmissionStatus s) {
-    return switch (s) {
-      case ACTIVE -> "Internado";
-      case DISCHARGED -> "Alta";
-      case TRANSFERRED -> "Transferido";
-      case DECEASED -> "Óbito";
     };
   }
 }

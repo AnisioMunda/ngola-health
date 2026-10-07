@@ -138,23 +138,34 @@ public class InpatientDtos {
 
   @Data
   public static class CreateAdmissionRequest {
-    private UUID patientId;
-    private UUID bedId;
+    @NotNull private UUID patientId;
+
+    @NotNull private UUID bedId;
+
     private UUID episodeId;
-    private UUID responsibleDoctorId;
+
+    @NotNull private UUID responsibleDoctorId;
+
+    @NotBlank
+    @Size(max = 500)
     private String admissionReason;
+
     private LocalDate expectedDischargeDate;
   }
 
   @Data
   public static class DischargeRequest {
+    @Size(max = 10000)
     private String dischargeNotes;
+
     private DischargeCondition dischargeCondition;
   }
 
   @Data
   public static class TransferRequest {
-    private UUID toBedId;
+    @NotNull private UUID toBedId;
+
+    @Size(max = 300)
     private String reason;
   }
 

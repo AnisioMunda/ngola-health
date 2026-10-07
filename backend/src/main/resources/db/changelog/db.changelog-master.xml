@@ -33,4 +33,5 @@
     <include file="changes/patients/003-hospital-scoped-identifiers.sql" relativeToChangelogFile="true"/>
     <include file="changes/users/003-account-lockout.sql" relativeToChangelogFile="true"/>
     <include file="changes/users/004-dev-seed.sql" relativeToChangelogFile="true"/>
+    <include file="changes/inpatient/002-active-admission-integrity.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -2,6 +2,9 @@ package ao.hospitalao.modules.inpatient.controller;
 
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.*;
 import ao.hospitalao.modules.inpatient.entity.Admission.AdmissionStatus;
+import ao.hospitalao.modules.inpatient.service.AdmissionService;
+import ao.hospitalao.modules.inpatient.service.BedTransferService;
+import ao.hospitalao.modules.inpatient.service.DischargeService;
 import ao.hospitalao.modules.inpatient.service.InpatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,6 +30,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class InpatientController {
 
   private final InpatientService inpatientService;
+  private final AdmissionService admissionService;
+  private final DischargeService dischargeService;
+  private final BedTransferService bedTransferService;
 
   // ------------------------------------------------
   // Enfermarias
@@ -103,21 +109,21 @@ public class InpatientController {
       @RequestParam(required = false) AdmissionStatus status,
       @RequestParam(required = false) UUID wardId,
       @PageableDefault(size = 20) Pageable pageable) {
-    return ResponseEntity.ok(inpatientService.findAll(status, wardId, pageable));
+    return ResponseEntity.ok(admissionService.findAll(status, wardId, pageable));
   }
 
   @GetMapping("/admissions/active")
   @Operation(summary = "Listar todos os internamentos activos")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<List<AdmissionResponse>> findActive() {
-    return ResponseEntity.ok(inpatientService.findActiveByHospital());
+    return ResponseEntity.ok(admissionService.findActiveByHospital());
   }
 
   @GetMapping("/admissions/{id}")
   @Operation(summary = "Obter internamento por ID")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<AdmissionResponse> findById(@PathVariable UUID id) {
-    return ResponseEntity.ok(inpatientService.findById(id));
+    return ResponseEntity.ok(admissionService.findById(id));
   }
 
   @PostMapping("/admissions")
@@ -126,7 +132,7 @@ public class InpatientController {
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<AdmissionResponse> admit(
       @Valid @RequestBody CreateAdmissionRequest request) {
-    AdmissionResponse created = inpatientService.admit(request);
+    AdmissionResponse created = admissionService.admit(request);
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -141,7 +147,7 @@ public class InpatientController {
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AdmissionResponse> discharge(
       @PathVariable UUID id, @Valid @RequestBody DischargeRequest request) {
-    return ResponseEntity.ok(inpatientService.discharge(id, request));
+    return ResponseEntity.ok(dischargeService.discharge(id, request));
   }
 
   @PatchMapping("/admissions/{id}/transfer")
@@ -150,6 +156,6 @@ public class InpatientController {
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<AdmissionResponse> transfer(
       @PathVariable UUID id, @Valid @RequestBody TransferRequest request) {
-    return ResponseEntity.ok(inpatientService.transfer(id, request));
+    return ResponseEntity.ok(bedTransferService.transfer(id, request));
   }
 }
