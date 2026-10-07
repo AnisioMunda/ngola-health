@@ -115,3 +115,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: "false"
           GITLEAKS_VERSION: 8.30.1
+
+  homoglyph-check:
+    name: Source homoglyphs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v7
+
+      - name: Verificar código-fonte
+        run: python3 scripts/check-homoglyphs.py
