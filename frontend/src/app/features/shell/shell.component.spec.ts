@@ -43,6 +43,15 @@ describe('ShellComponent', () => {
 
     expect(component.visibleNavItems).toEqual([]);
   });
+
+  it('shows platform hospital management to super-administrators', () => {
+    component.currentUser = createUser(['SUPER_ADMIN']);
+
+    expect(component.visibleNavItems.map((item) => item.route)).toEqual([
+      '/dashboard',
+      '/hospitals',
+    ]);
+  });
 });
 
 function createUser(roles: string[]): AuthUser {

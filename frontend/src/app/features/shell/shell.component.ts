@@ -42,6 +42,12 @@ export class ShellComponent implements OnInit {
       ],
     },
     {
+      label: 'Hospitais',
+      route: '/hospitals',
+      icon: 'hospitals',
+      roles: ['SUPER_ADMIN'],
+    },
+    {
       label: 'Pacientes',
       route: '/patients',
       icon: 'patients',

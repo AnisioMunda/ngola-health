@@ -31,6 +31,18 @@ export const adminGuard: CanActivateFn = () => {
 };
 
 /**
+ * Guard para a gestão global de hospitais, reservada ao super-administrador da plataforma.
+ */
+export const superAdminGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.getCurrentUser()?.roles?.includes('SUPER_ADMIN')
+    ? true
+    : router.createUrlTree(['/dashboard']);
+};
+
+/**
  * Guard para redirigir utilizadores já autenticados.
  * Usado na rota /login — se já estiver autenticado,
  * vai directamente para o dashboard.

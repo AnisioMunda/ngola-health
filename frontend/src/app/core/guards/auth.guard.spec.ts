@@ -7,7 +7,7 @@ import {
   UrlTree,
 } from '@angular/router';
 import { AuthService, AuthUser } from '../services/auth.service';
-import { adminGuard, authGuard, publicGuard } from './auth.guard';
+import { adminGuard, authGuard, publicGuard, superAdminGuard } from './auth.guard';
 
 describe('authentication guards', () => {
   let isLoggedIn: jasmine.Spy;
@@ -82,6 +82,29 @@ describe('authentication guards', () => {
       throw new Error('Expected the guard to return the user list UrlTree.');
     }
     expect(router.serializeUrl(result)).toBe('/users');
+  });
+
+  it('allows platform hospital management only to super-administrators', () => {
+    getCurrentUser.and.returnValue(createUser(['SUPER_ADMIN']));
+
+    const result = TestBed.runInInjectionContext(() =>
+      superAdminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+
+    expect(result).toBeTrue();
+  });
+
+  it('redirects hospital administrators away from platform hospital management', () => {
+    getCurrentUser.and.returnValue(createUser(['ADMIN']));
+
+    const result = TestBed.runInInjectionContext(() =>
+      superAdminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+
+    if (!(result instanceof UrlTree)) {
+      throw new Error('Expected the guard to return the dashboard UrlTree.');
+    }
+    expect(router.serializeUrl(result)).toBe('/dashboard');
   });
 });
 
