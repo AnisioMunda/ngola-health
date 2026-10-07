@@ -1,5 +1,6 @@
 package ao.hospitalao.exceptions;
 
+import ao.hospitalao.modules.patients.exception.PatientIdentifierConflictException;
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler {
   public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
     var problem =
         problem(HttpStatus.BAD_REQUEST, "Pedido inválido", "Um ou mais campos são inválidos.");
+    problem.setProperty("code", "VALIDATION_ERROR");
     Map<String, String> errors = new TreeMap<>();
     exception
         .getBindingResult()
@@ -71,6 +73,18 @@ public class GlobalExceptionHandler {
   public ProblemDetail handleEmailConflict(EmailAlreadyExistsException exception) {
     return problem(
         HttpStatus.CONFLICT, "Conflito", "Já existe um registo com os dados informados.");
+  }
+
+  @ExceptionHandler(PatientIdentifierConflictException.class)
+  public ProblemDetail handlePatientIdentifierConflict(
+      PatientIdentifierConflictException exception) {
+    var problem =
+        problem(
+            HttpStatus.CONFLICT,
+            "Identificador de paciente duplicado",
+            "Já existe um paciente com o BI/NIF ou número de cartão informado neste hospital.");
+    problem.setProperty("code", "PATIENT_IDENTIFIER_CONFLICT");
+    return problem;
   }
 
   @ExceptionHandler(PasswordPolicyException.class)

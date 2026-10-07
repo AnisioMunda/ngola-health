@@ -58,6 +58,8 @@ public class AuditInterceptor implements HandlerInterceptor {
           default -> AuditAction.READ;
         };
 
+    if (url.contains("/patients/possible-duplicates")) action = AuditAction.READ;
+
     // Sobrescrever acções especiais baseado no URL
     if (url.contains("/issue")) action = AuditAction.APPROVE;
     if (url.contains("/void")) action = AuditAction.REJECT;
