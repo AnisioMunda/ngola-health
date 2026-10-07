@@ -24,32 +24,30 @@ As versões adoptadas e as regras de actualização estão registadas na
 do backend são mantidas nas versões estáveis mais recentes compatíveis e
 validadas pelo build completo.
 
-| Área | Tecnologia prevista |
-| --- | --- |
-| Backend | Java 25 LTS, Spring Boot 4.1.1 e Maven Wrapper |
-| Frontend | Angular 22 |
-| Base de dados | PostgreSQL 16 ou superior e Liquibase |
-| Execução local | Docker Compose |
+| Área           | Tecnologia prevista                            |
+| -------------- | ---------------------------------------------- |
+| Backend        | Java 25 LTS, Spring Boot 4.1.1 e Maven Wrapper |
+| Frontend       | Angular 22                                     |
+| Base de dados  | PostgreSQL 16 ou superior e Liquibase          |
+| Execução local | Docker Compose                                 |
 
-O backend foi alinhado com Java 25 e Spring Boot 4.1.1. O frontend e outros
-componentes do protótipo ainda serão alinhados com as versões adoptadas nas
-respectivas tarefas do roadmap.
+O backend e o frontend estão alinhados com Java 25, Spring Boot 4.1.1 e
+Angular 22. A versão PostgreSQL usada no ambiente local está definida em
+`docker-compose.yml`.
 
 ## Estado do projecto
 
-O projecto está na fase de fundação do repositório. As primeiras tarefas
-organizam a configuração e a documentação antes de se avançar para a
-consolidação do esqueleto técnico, dos testes e da integração contínua.
+O projecto concluiu a fundação técnica da Fase 1: backend Java 25, frontend
+Angular 22, execução local com Docker Compose, testes e integração contínua.
+As capacidades clínicas e administrativas continuam em desenvolvimento
+conforme o [roadmap](docs/ROADMAP.md); a presença de ecrãs ou código de
+protótipo não significa que os módulos estejam prontos para produção.
 
-O código já presente em `backend/`, `frontend/` e `infra/` é um protótipo em
-alinhamento com o roadmap. A sua presença no repositório, por si só, não
-significa que os requisitos, testes ou critérios de conclusão de cada tarefa
-estejam satisfeitos.
+Os componentes funcionais existentes em `backend/`, `frontend/` e `infra/`
+estão a ser alinhados com os requisitos e as decisões arquitecturais do
+projecto.
 
 ## Documentação
 
+- [Guia de desenvolvimento: instalar, executar, testar e depurar](docs/development.md)
 - [Roadmap, arquitectura e convenções de desenvolvimento](docs/ROADMAP.md)
-
-O guia para instalar, executar, testar e depurar o sistema será acrescentado
-na tarefa 1.18 do roadmap. Até lá, o projecto não declara um procedimento de
-arranque local suportado.
