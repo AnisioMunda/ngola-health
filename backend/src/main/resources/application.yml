@@ -147,6 +147,7 @@ jwt:
 # ============================================================
 agt:
   api-url: ${AGT_API_URL}
+  enabled: ${AGT_ENABLED:false}
   client-id: ${AGT_CLIENT_ID:}
   client-secret: ${AGT_CLIENT_SECRET:}
   nif: ${AGT_NIF}
@@ -240,7 +241,8 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:4200}
 
 agt:
-  api-url: ${AGT_API_URL:https://sandbox.portaldoparceiro.minfin.gov.ao}
+  api-url: ${AGT_API_URL:https://sifphml.minfin.gov.ao}
+  enabled: ${AGT_ENABLED:false}
   nif: ${AGT_NIF:5000413178}
   software-id: ${AGT_SOFTWARE_ID:HospitalAO}
   software-version: ${AGT_SOFTWARE_VERSION:0.0.1-SNAPSHOT}

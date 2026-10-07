@@ -46,7 +46,8 @@ jobs:
           # Fixture Base64 de 32 bytes; não é um segredo de produção.
           JWT_SECRET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           APP_BASE_URL: http://localhost:4200
-          AGT_API_URL: https://sandbox.portaldoparceiro.minfin.gov.ao
+          AGT_API_URL: https://sifphml.minfin.gov.ao
+          AGT_ENABLED: false
           AGT_NIF: 5000000001HA044
           AGT_SOFTWARE_ID: HospitalAO
           AGT_SOFTWARE_VERSION: 0.0.1-SNAPSHOT

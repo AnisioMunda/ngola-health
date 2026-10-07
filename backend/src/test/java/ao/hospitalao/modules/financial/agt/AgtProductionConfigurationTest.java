@@ -31,6 +31,18 @@ class AgtProductionConfigurationTest {
   }
 
   @Test
+  void permitsProductionWhenIntegrationIsExplicitlyDisabled() {
+    var properties = validProperties();
+    properties.setEnabled(false);
+    properties.setClientId("");
+    properties.setClientSecret("");
+    properties.setPrivateKeyPath("");
+
+    AgtProductionConfiguration.validateProductionConfiguration(
+        properties, mock(AgtSigningService.class));
+  }
+
+  @Test
   void loadsConfiguredRsaPrivateKeyFromExternalFileDuringProductionValidation() throws Exception {
     var keyPairGenerator = KeyPairGenerator.getInstance("RSA");
     keyPairGenerator.initialize(2048);
@@ -65,6 +77,7 @@ class AgtProductionConfigurationTest {
 
   private AgtProperties validProperties() {
     var properties = new AgtProperties();
+    properties.setEnabled(true);
     properties.setClientId("test-client-id");
     properties.setClientSecret("test-client-secret");
     properties.setPrivateKeyPath("/run/secrets/agt-private-key.pem");

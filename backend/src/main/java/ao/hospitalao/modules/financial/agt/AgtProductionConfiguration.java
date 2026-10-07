@@ -19,6 +19,10 @@ public class AgtProductionConfiguration {
 
   static void validateProductionConfiguration(
       AgtProperties properties, AgtSigningService signingService) {
+    if (!properties.isEnabled()) {
+      return;
+    }
+
     List<String> missing = new ArrayList<>();
     if (isBlank(properties.getClientId())) {
       missing.add("AGT_CLIENT_ID");

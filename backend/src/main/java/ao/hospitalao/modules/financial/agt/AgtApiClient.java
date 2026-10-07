@@ -38,6 +38,11 @@ public class AgtApiClient {
 
   @SuppressWarnings("null")
   public AgtSubmissionResult register(Invoice invoice) throws Exception {
+    if (!properties.isEnabled()) {
+      return AgtSubmissionResult.error(
+          "Integração AGT desactivada até à validação técnica e homologação.");
+    }
+
     String requestId = "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
     // Construir payload conforme especificação AGT
@@ -77,6 +82,11 @@ public class AgtApiClient {
 
   @SuppressWarnings("null")
   public AgtStatusResult checkStatus(String requestId) {
+    if (!properties.isEnabled()) {
+      return new AgtStatusResult(
+          "UNKNOWN", null, null, "Integração AGT desactivada até à validação técnica.");
+    }
+
     String url = properties.getApiUrl() + "/api/v1/invoices/status/" + requestId;
 
     HttpHeaders headers = buildHeaders();
@@ -109,6 +119,11 @@ public class AgtApiClient {
 
   @SuppressWarnings("null")
   public String requestSeries(String documentType, int year) throws Exception {
+    if (!properties.isEnabled()) {
+      throw new IllegalStateException(
+          "Integração AGT desactivada até à validação técnica e homologação.");
+    }
+
     ObjectNode body = objectMapper.createObjectNode();
     body.put("taxRegistrationNumber", properties.getNif());
     body.put("documentType", documentType);
