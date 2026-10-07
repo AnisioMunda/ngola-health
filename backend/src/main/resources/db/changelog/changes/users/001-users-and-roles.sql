@@ -29,7 +29,7 @@ ALTER TABLE role_permissions ADD CONSTRAINT pk_role_permissions PRIMARY KEY (rol
 
 --rollback DROP TABLE role_permissions;
 
--- changeset hospitalao:002-06-inserir-roles-base splitStatements:false
+-- changeset hospitalao:002-06-inserir-roles-base splitStatements:true
 INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-0000-000000000001', 'ADMIN', 'System administrator — full access', TRUE);
 INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-0000-000000000002', 'DOCTOR', 'Doctor — consultations, prescriptions, diagnoses', TRUE);
 INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-0000-000000000003', 'NURSE', 'Nurse — triage, inpatient, daily evolution', TRUE);
@@ -39,13 +39,4 @@ INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-00
 INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-0000-000000000007', 'MANAGER', 'Manager — dashboards and reports (read-only)', TRUE);
 INSERT INTO roles (id, name, description, active) VALUES ('00000000-0000-0000-0000-000000000008', 'LAB_TECHNICIAN', 'Lab Technician — exams and results', TRUE);
 
---rollback DELETE FROM roles WHERE id IN (
-                    '00000000-0000-0000-0000-000000000001',
-                    '00000000-0000-0000-0000-000000000002',
-                    '00000000-0000-0000-0000-000000000003',
-                    '00000000-0000-0000-0000-000000000004',
-                    '00000000-0000-0000-0000-000000000005',
-                    '00000000-0000-0000-0000-000000000006',
-                    '00000000-0000-0000-0000-000000000007',
-                    '00000000-0000-0000-0000-000000000008'
-                );
+--rollback DELETE FROM roles WHERE id IN ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000008');

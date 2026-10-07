@@ -5,6 +5,4 @@ ALTER TABLE patients
             ALTER COLUMN gender TYPE VARCHAR(10)
             USING gender::VARCHAR;
 
---rollback ALTER TABLE patients
-                ALTER COLUMN gender TYPE gender_enum
-                USING gender::gender_enum;
+--rollback ALTER TABLE patients ALTER COLUMN gender TYPE gender_enum USING gender::gender_enum;
