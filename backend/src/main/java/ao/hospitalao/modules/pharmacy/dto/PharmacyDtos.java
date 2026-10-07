@@ -1,6 +1,11 @@
 package ao.hospitalao.modules.pharmacy.dto;
 
 import ao.hospitalao.modules.pharmacy.entity.Medication.DosageForm;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -31,12 +36,25 @@ public class PharmacyDtos {
 
   @Data
   public static class CreateMedicationRequest {
+    @NotBlank
+    @Size(max = 200)
     private String name;
+
+    @Size(max = 200)
     private String genericName;
-    private DosageForm dosageForm;
+
+    @NotNull private DosageForm dosageForm;
+
+    @Size(max = 50)
     private String strength;
+
+    @NotBlank
+    @Size(max = 20)
     private String unit;
+
     private boolean requiresPrescription;
+
+    @Min(0)
     private Integer minStockLevel;
   }
 
@@ -63,11 +81,22 @@ public class PharmacyDtos {
 
   @Data
   public static class ReceiveStockRequest {
-    private UUID medicationId;
+    @NotNull private UUID medicationId;
+
+    @NotBlank
+    @Size(max = 50)
     private String batchNumber;
-    private LocalDate expiryDate;
+
+    @NotNull private LocalDate expiryDate;
+
+    @NotNull
+    @Min(1)
     private Integer quantity;
+
+    @DecimalMin("0.00")
     private BigDecimal unitCost;
+
+    @Size(max = 200)
     private String supplier;
   }
 
@@ -77,10 +106,17 @@ public class PharmacyDtos {
 
   @Data
   public static class DispenseRequest {
-    private UUID medicationId;
+    @NotNull private UUID medicationId;
+
+    @NotNull
+    @Min(1)
     private Integer quantity;
+
     private UUID patientId;
+
     private UUID episodeId;
+
+    @Size(max = 500)
     private String reason;
   }
 

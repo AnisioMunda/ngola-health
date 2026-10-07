@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Validated
 @RequestMapping("/pharmacy")
 @RequiredArgsConstructor
 @Tag(name = "Pharmacy", description = "Medications, stock and dispensing")
@@ -42,7 +46,7 @@ public class PharmacyController {
   @PostMapping("/medications")
   @Operation(summary = "Add new medication to catalog")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<MedicationResponse> createMedication(
       @Valid @RequestBody CreateMedicationRequest request) {
     return ResponseEntity.ok(pharmacyService.createMedication(request));
@@ -63,7 +67,7 @@ public class PharmacyController {
   @PostMapping("/stock/receive")
   @Operation(summary = "Receive new stock batch")
   @PreAuthorize(
-      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<StockBatchResponse> receiveStock(
       @Valid @RequestBody ReceiveStockRequest request) {
     return ResponseEntity.ok(pharmacyService.receiveStock(request));
@@ -74,7 +78,7 @@ public class PharmacyController {
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<StockBatchResponse>> findExpiringSoon(
-      @RequestParam(defaultValue = "30") int days) {
+      @RequestParam(defaultValue = "30") @Min(1) @Max(365) int days) {
     return ResponseEntity.ok(pharmacyService.findExpiringSoon(days));
   }
 

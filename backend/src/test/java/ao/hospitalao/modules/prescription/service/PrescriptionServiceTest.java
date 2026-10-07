@@ -221,6 +221,35 @@ class PrescriptionServiceTest {
     }
 
     @Test
+    @DisplayName("Deve rejeitar dispensa parcial quando o stock bloqueado é insuficiente")
+    void shouldRejectDispenseWhenLockedStockIsInsufficient() {
+      var prescription = buildActivePrescription();
+      var item = buildPrescriptionItem(prescription, 5, 0);
+      prescription.setItems(new ArrayList<>(List.of(item)));
+      var batch = buildStockBatch(3);
+
+      when(prescriptionRepository.findByIdWithRelations(any()))
+          .thenReturn(Optional.of(prescription));
+      when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+      when(stockBatchRepository.findAvailableBatchesFefo(any(), any())).thenReturn(List.of(batch));
+
+      try (MockedStatic<TenantContext> tc = mockStatic(TenantContext.class)) {
+        tc.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+        var req = new DispenseItemRequest();
+        req.setPrescriptionItemId(item.getId());
+        req.setQuantityToDispense(5);
+
+        assertThatThrownBy(() -> prescriptionService.dispense(prescription.getId(), req))
+            .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+            .hasMessageContaining("Stock insuficiente");
+      }
+
+      verify(stockBatchRepository, never()).save(any());
+      verifyNoInteractions(dispensationRepository);
+      assertThat(batch.getQuantityAvailable()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Deve rejeitar dispensa de prescrição cancelada")
     void shouldRejectDispenseOfCancelledPrescription() {
       var prescription = buildActivePrescription();

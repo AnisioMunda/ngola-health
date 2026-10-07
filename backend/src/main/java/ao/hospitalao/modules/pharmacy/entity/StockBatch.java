@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 import lombok.*;
 
@@ -16,6 +17,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class StockBatch extends TenantScopedEntity {
+
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -60,12 +63,13 @@ public class StockBatch extends TenantScopedEntity {
   }
 
   public boolean isExpired() {
-    return expiryDate != null && expiryDate.isBefore(LocalDate.now());
+    return expiryDate != null && expiryDate.isBefore(LocalDate.now(ANGOLA_ZONE));
   }
 
   public boolean isExpiringWithin(int days) {
+    LocalDate today = LocalDate.now(ANGOLA_ZONE);
     return expiryDate != null
-        && !isExpired()
-        && expiryDate.isBefore(LocalDate.now().plusDays(days));
+        && !expiryDate.isBefore(today)
+        && !expiryDate.isAfter(today.plusDays(days));
   }
 }

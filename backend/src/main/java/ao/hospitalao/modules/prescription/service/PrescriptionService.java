@@ -5,6 +5,7 @@ import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.inpatient.repository.AdmissionRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
+import ao.hospitalao.modules.pharmacy.entity.StockBatch;
 import ao.hospitalao.modules.pharmacy.repository.MedicationRepository;
 import ao.hospitalao.modules.pharmacy.repository.StockBatchRepository;
 import ao.hospitalao.modules.prescription.dto.PrescriptionDtos.*;
@@ -24,10 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -259,6 +262,15 @@ public class PrescriptionService {
     if (batches.isEmpty()) {
       throw new IllegalStateException(
           "Sem stock disponível para " + item.getMedication().getName());
+    }
+    long available = batches.stream().mapToLong(StockBatch::getQuantityAvailable).sum();
+    if (available < req.getQuantityToDispense()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Stock insuficiente. Disponível: "
+              + available
+              + ", solicitado: "
+              + req.getQuantityToDispense());
     }
 
     int remaining = req.getQuantityToDispense();
