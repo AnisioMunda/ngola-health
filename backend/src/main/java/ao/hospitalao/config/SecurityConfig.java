@@ -41,6 +41,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/auth/login",
                         "/auth/refresh",
+                        "/auth/logout",
                         "/portal/register",
                         "/portal/login",
                         "/actuator/**",

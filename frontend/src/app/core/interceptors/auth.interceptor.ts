@@ -9,7 +9,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router: Router = inject(Router);
 
   // Endpoints públicos — não adicionar token
-  const publicUrls = ['/auth/login', '/auth/register', '/auth/refresh'];
+  const publicUrls = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
   const isPublic = publicUrls.some((url) => req.url.includes(url));
 
   if (isPublic) {

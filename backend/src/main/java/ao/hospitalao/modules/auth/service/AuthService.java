@@ -12,9 +12,9 @@ import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.jwt.JwtService;
 import ao.hospitalao.security.tenant.TenantContext;
+import io.jsonwebtoken.JwtException;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
-import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -162,22 +162,34 @@ public class AuthService {
     }
   }
 
-  public void logout(String authHeader) {
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      throw new IllegalArgumentException("Invalid or missing authorization token");
+  @Transactional
+  public void logout(String authHeader, String refreshToken) {
+    if (refreshToken == null
+        || refreshToken.isBlank()
+        || !jwtService.isRefreshToken(refreshToken)) {
+      throw new BadCredentialsException("Invalid refresh token");
     }
 
-    String token = authHeader.substring(7);
+    String username = jwtService.extractUsername(refreshToken);
+    if (!tokenBlackListService.isBlacklisted(refreshToken)) {
+      tokenBlackListService.addToBlacklist(
+          refreshToken, jwtService.extractExpiration(refreshToken));
+      log.info("Refresh token revoked for {}", username);
+    }
 
-    try {
-      Date expirationDate = jwtService.extractExpiration(token);
-      if (expirationDate.after(new Date())) {
-        tokenBlackListService.addToBlacklist(token, expirationDate);
-        log.info("Token added to blacklist");
+    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+      String accessToken = authHeader.substring(7);
+      try {
+        if (jwtService.isAccessToken(accessToken)
+            && username.equals(jwtService.extractUsername(accessToken))
+            && !tokenBlackListService.isBlacklisted(accessToken)) {
+          tokenBlackListService.addToBlacklist(
+              accessToken, jwtService.extractExpiration(accessToken));
+          log.info("Access token revoked for {}", username);
+        }
+      } catch (JwtException exception) {
+        log.debug("Skipping invalid or expired access token during logout");
       }
-    } catch (Exception e) {
-      log.error("Error processing logout: {}", e.getMessage());
-      throw new RuntimeException("Could not process logout. Invalid token.");
     }
   }
 }

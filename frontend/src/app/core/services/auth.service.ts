@@ -47,11 +47,25 @@ export class AuthService {
   }
 
   logout(): void {
-    const token = this.getAccessToken();
-    if (token) {
-      this.http.post(`${this.apiUrl}/logout`, {}).subscribe();
+    const accessToken = this.getAccessToken();
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      this.http
+        .post(
+          `${this.apiUrl}/logout`,
+          { refreshToken },
+          {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+          },
+        )
+        .subscribe({
+          error: (error: { status?: number }) =>
+            console.error('Token revocation failed during logout:', error.status),
+        });
     }
-    localStorage.clear();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     this.router.navigate(['/login']);
   }
 

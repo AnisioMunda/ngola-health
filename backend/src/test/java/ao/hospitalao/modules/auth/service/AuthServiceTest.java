@@ -97,6 +97,28 @@ class AuthServiceTest {
     verify(userRepository, never()).findByUsername(org.mockito.ArgumentMatchers.anyString());
   }
 
+  @Test
+  void logoutRevokesTheRefreshTokenAndItsMatchingAccessToken() {
+    String refreshToken = "refresh-current";
+    String accessToken = "access-current";
+    String username = "hospital-admin";
+    Date refreshExpiration = new Date(System.currentTimeMillis() + 60_000);
+    Date accessExpiration = new Date(System.currentTimeMillis() + 30_000);
+    when(jwtService.isRefreshToken(refreshToken)).thenReturn(true);
+    when(jwtService.extractUsername(refreshToken)).thenReturn(username);
+    when(tokenBlackListService.isBlacklisted(refreshToken)).thenReturn(false);
+    when(jwtService.extractExpiration(refreshToken)).thenReturn(refreshExpiration);
+    when(jwtService.isAccessToken(accessToken)).thenReturn(true);
+    when(jwtService.extractUsername(accessToken)).thenReturn(username);
+    when(tokenBlackListService.isBlacklisted(accessToken)).thenReturn(false);
+    when(jwtService.extractExpiration(accessToken)).thenReturn(accessExpiration);
+
+    authService.logout("Bearer " + accessToken, refreshToken);
+
+    verify(tokenBlackListService).addToBlacklist(refreshToken, refreshExpiration);
+    verify(tokenBlackListService).addToBlacklist(accessToken, accessExpiration);
+  }
+
   private User hospitalAdmin(UUID hospitalId) {
     User user =
         User.builder()
