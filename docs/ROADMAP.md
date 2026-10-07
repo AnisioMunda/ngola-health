@@ -297,7 +297,7 @@ Cada linha é **um PR = um commit na `main`**. A coluna *Commit* é a mensagem e
 | 4.3 | `feat(notificacoes): adicionar sino, lista e página de notificações` | Sino, lista paginada, leitura e erros tratados e cobertos por testes |
 | 4.4 | `feat(bd): criar tabelas de horários e agendamentos` | Horários, bloqueios e agendamentos incluídos e reversíveis no changelog |
 | 4.5 | `feat(agendamento): adicionar API de horários e slots de médicos` | Horários validados; slots respeitam capacidade, bloqueios e marcações existentes |
-| 4.6 | `feat(agendamento): adicionar API de marcação e estados da consulta` | Impossível marcar duas vezes o mesmo slot (restrição na BD + teste concorrente) (R17) |
+| 4.6 | `feat(agendamento): adicionar API de marcação e estados da consulta` | Capacidade por slot respeitada sob concorrência; lugares e paciente/slot protegidos por índices únicos na BD; estados inválidos rejeitados (R17) |
 | 4.7 | `feat(agendamento): adicionar lembretes automáticos de consultas` | Tarefa agendada gera notificações |
 | 4.8 | `feat(agendamento): adicionar horários e calendário no frontend` | |
 | 4.9 | `feat(agendamento): adicionar marcação, lista e detalhe no frontend` | |

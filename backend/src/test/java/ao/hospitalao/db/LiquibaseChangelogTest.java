@@ -146,6 +146,10 @@ class LiquibaseChangelogTest {
         changelog, "012-02-schedule-blocks", "changes/scheduling/001-scheduling.sql");
     assertChangesetIsIncludedAndReversible(
         changelog, "012-03-appointments", "changes/scheduling/001-scheduling.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog,
+        "023-01-appointment-slot-capacity",
+        "changes/scheduling/002-appointment-slot-capacity.sql");
   }
 
   private void assertChangesetIsIncludedAndReversible(

@@ -89,6 +89,35 @@ class SchedulingServiceTest {
   }
 
   @Test
+  void completedAppointmentsCannotBeCompletedAgain() {
+    UUID appointmentId = UUID.randomUUID();
+    Appointment appointment =
+        Appointment.builder().id(appointmentId).status(AppointmentStatus.COMPLETED).build();
+    when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+    ResponseStatusException exception =
+        assertThrows(
+            ResponseStatusException.class, () -> schedulingService.complete(appointmentId));
+
+    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    verify(appointmentRepository, never()).save(any(Appointment.class));
+  }
+
+  @Test
+  void completedAppointmentsCannotBeConfirmed() {
+    UUID appointmentId = UUID.randomUUID();
+    Appointment appointment =
+        Appointment.builder().id(appointmentId).status(AppointmentStatus.COMPLETED).build();
+    when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> schedulingService.confirm(appointmentId));
+
+    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    verify(appointmentRepository, never()).save(any(Appointment.class));
+  }
+
+  @Test
   void availabilityChecksPartialBlockOverlapWithTheWholeSlotInterval() {
     UUID doctorId = UUID.randomUUID();
     User doctor = User.builder().id(doctorId).fullName("Médico").build();

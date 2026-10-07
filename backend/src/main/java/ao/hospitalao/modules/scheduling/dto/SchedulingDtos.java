@@ -4,7 +4,9 @@ import ao.hospitalao.modules.scheduling.entity.Appointment.AppointmentStatus;
 import ao.hospitalao.modules.scheduling.entity.Appointment.AppointmentType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -114,12 +116,21 @@ public class SchedulingDtos {
 
   @Data
   public static class CreateAppointmentRequest {
-    private UUID patientId;
-    private UUID doctorId;
-    private LocalDate appointmentDate;
-    private LocalTime startTime;
+    @NotNull private UUID patientId;
+
+    @NotNull private UUID doctorId;
+
+    @NotNull private LocalDate appointmentDate;
+
+    @NotNull private LocalTime startTime;
+
     private AppointmentType appointmentType;
+
+    @NotBlank
+    @Size(max = 300)
     private String reason;
+
+    @Size(max = 10000)
     private String notes;
   }
 

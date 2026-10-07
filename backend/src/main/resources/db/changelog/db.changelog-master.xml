@@ -19,6 +19,7 @@
     <include file="changes/financial/001-financial.sql" relativeToChangelogFile="true"/>
     <include file="changes/agt/001-invoice-agt-fields.sql" relativeToChangelogFile="true"/>
     <include file="changes/scheduling/001-scheduling.sql" relativeToChangelogFile="true"/>
+    <include file="changes/scheduling/002-appointment-slot-capacity.sql" relativeToChangelogFile="true"/>
     <include file="changes/notifications/001-notifications.sql" relativeToChangelogFile="true"/>
     <include file="changes/inpatient/001-inpatient.sql" relativeToChangelogFile="true"/>
     <include file="changes/audit/001-audit.sql" relativeToChangelogFile="true"/>

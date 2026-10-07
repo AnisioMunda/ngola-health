@@ -50,6 +50,10 @@ public class Appointment extends TenantScopedEntity {
   @Column(name = "end_time", nullable = false)
   private LocalTime endTime;
 
+  @Column(name = "slot_position", nullable = false)
+  @Builder.Default
+  private int slotPosition = 1;
+
   @Column(name = "status", nullable = false, length = 20)
   @Enumerated(EnumType.STRING)
   @Builder.Default
