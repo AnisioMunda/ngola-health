@@ -53,4 +53,5 @@ projecto.
 - [Segurança, autenticação, perfis e isolamento multi-hospital](docs/security.md)
 - [Fluxo clínico e regras de negócio implementadas](docs/clinical-workflow.md)
 - [Agendamento, notificações e internamento](docs/scheduling-notifications-inpatient.md)
+- [Gestão de RH, equipamentos, dashboards e relatórios](docs/operations.md)
 - [Roadmap, arquitectura e convenções de desenvolvimento](docs/ROADMAP.md)
