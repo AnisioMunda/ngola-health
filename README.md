@@ -10,7 +10,9 @@ dos dados de cada hospital.
 O Ngola Health pretende reunir, numa plataforma, capacidades como gestão de
 utilizadores e hospitais, cadastro de pacientes, episódios clínicos, triagem,
 farmácia, laboratório, agendamento, internamento, facturação e relatórios.
-O portal do paciente e a telemedicina também fazem parte do âmbito planeado.
+O portal do paciente e a telemedicina com Microsoft Teams também estão
+implementados; a integração externa requer configuração e revisão operacional
+antes de ser disponibilizada em produção.
 
 Estas capacidades são objectivos do projecto, não uma declaração de que todos
 os módulos já estejam completos ou prontos para produção. O desenvolvimento
@@ -54,4 +56,6 @@ projecto.
 - [Fluxo clínico e regras de negócio implementadas](docs/clinical-workflow.md)
 - [Agendamento, notificações e internamento](docs/scheduling-notifications-inpatient.md)
 - [Gestão de RH, equipamentos, dashboards e relatórios](docs/operations.md)
+- [Portal do paciente e telemedicina com Microsoft Teams](docs/operations.md#portal-do-paciente)
 - [Roadmap, arquitectura e convenções de desenvolvimento](docs/ROADMAP.md)
+- [Registo de alterações](CHANGELOG.md) e [notas de preparação da versão 1.0.0](docs/release-notes-1.0.0.md)

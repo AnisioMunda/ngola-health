@@ -112,6 +112,11 @@ em ambientes partilhados.
   autenticação.
 - Servir a aplicação e a API exclusivamente por HTTPS e configurar `APP_BASE_URL`
   para a origem exacta do frontend.
+- Em produção, os logs da aplicação são emitidos em JSON e os níveis DEBUG ficam
+  desactivados; não incluir identidades, dados clínicos, credenciais ou tokens
+  nas mensagens. Os endpoints `/api/actuator/metrics` e
+  `/api/actuator/prometheus` exigem um papel administrativo e não devem ser
+  expostos directamente a scrapers sem autenticação.
 - A alteração de senha não revoga actualmente todos os tokens já emitidos para
   a conta. O refresh token permanece utilizável até expirar ou ser revogado;
   este comportamento deve ser revisto antes de tratar a alteração de senha

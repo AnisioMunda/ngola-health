@@ -77,6 +77,80 @@ O ecrã de relatórios está em `/reports` e o dashboard executivo em
 Os endpoints de relatório devolvem dados ou ficheiros PDF; não alteram
 registos financeiros ou clínicos.
 
+## Portal do paciente
+
+O portal está disponível em `/portal/login` e `/portal`. O registo é feito
+com o número de processo ou NIF e fica pendente até a recepção, um gestor ou
+um administrador confirmar presencialmente a identidade do paciente. Só
+depois da aprovação é possível iniciar sessão. O token do portal tem âmbito
+próprio e não autentica chamadas à API interna.
+
+| Método e endpoint | Acesso | Utilização |
+| --- | --- | --- |
+| `POST /api/portal/register` | Público | Solicitar acesso; requer email, palavra-passe com pelo menos 12 caracteres e número de processo ou NIF |
+| `POST /api/portal/login` | Público | Obter token do portal após aprovação |
+| `GET /api/portal/dashboard` | Token do portal | Resumo e próximas consultas do próprio paciente |
+| `GET /api/portal/episodes` | Token do portal | Até 50 episódios recentes do próprio paciente |
+| `GET /api/portal/lab-results` | Token do portal | Resultados laboratoriais concluídos do próprio paciente |
+| `GET /api/portal/prescriptions` | Token do portal | Até 50 prescrições do próprio paciente |
+| `GET /api/portal/invoices` | Token do portal | Facturas visíveis do próprio paciente |
+| `GET /api/patient-portal/accounts/pending` | ADMIN, MANAGER, RECEPTIONIST | Pedidos de aprovação do hospital activo |
+| `PATCH /api/patient-portal/accounts/{accountId}/approve` | ADMIN, MANAGER, RECEPTIONIST | Confirmar identidade e activar conta no hospital activo |
+
+O âmbito do paciente é obtido do token, nunca de um identificador de paciente
+enviado pelo browser. O portal é de consulta nesta versão; não agenda nem
+altera dados clínicos.
+
+## Telemedicina com Microsoft Teams
+
+O ecrã operacional está em `/telemedicine`. A integração cria reuniões
+independentes do calendário através do Microsoft Graph; não há transmissão de
+áudio/vídeo pela aplicação. Consulte a [ADR-0012](adr/0012-telemedicine.md)
+antes de activar o fornecedor.
+
+Para activar a integração:
+
+1. Registe uma aplicação Microsoft Entra e conceda consentimento de
+   administrador para a permissão de aplicação
+   `OnlineMeetings.ReadWrite.All`.
+2. Crie uma application access policy limitada aos organizadores autorizados
+   e atribua-a às contas Entra dos médicos. Cada médico organizador tem de ter
+   a licença e a configuração Teams exigidas pela Microsoft.
+3. Defina `TEAMS_ENABLED=true`, `TEAMS_TENANT_ID`, `TEAMS_CLIENT_ID` e
+   `TEAMS_CLIENT_SECRET` no gestor de segredos do ambiente. Nunca grave o
+   segredo no repositório ou na base de dados. Com a integração activa, a
+   aplicação recusa iniciar se as credenciais estiverem incompletas.
+4. No perfil de cada médico, guarde o object ID do utilizador Microsoft Entra
+   no campo de organizador Teams. O campo só pode ser atribuído a utilizadores
+   com o papel `DOCTOR`. A lista de médicos da telemedicina inclui apenas
+   médicos activos, configurados e pertencentes ao hospital activo.
+
+| Método e endpoint | Acesso | Utilização |
+| --- | --- | --- |
+| `GET /api/telemedicine/stats` | ADMIN, MANAGER, DOCTOR | Indicadores do hospital activo e estado da integração |
+| `GET /api/telemedicine/active` | ADMIN, MANAGER, DOCTOR | Sessões activas do hospital activo |
+| `GET /api/telemedicine/my-sessions` | DOCTOR | Sessões do médico autenticado no dia |
+| `GET /api/telemedicine/doctors` | ADMIN, DOCTOR, MANAGER, RECEPTIONIST | Médicos elegíveis do hospital activo |
+| `POST /api/telemedicine` | ADMIN, DOCTOR, MANAGER, RECEPTIONIST | Criar sessão Teams para paciente e médico do mesmo hospital |
+| `PATCH /api/telemedicine/room/{token}/join` | DOCTOR, ADMIN | Iniciar sessão |
+| `PATCH /api/telemedicine/{id}/end` | DOCTOR, ADMIN | Concluir sessão e guardar notas clínicas |
+| `PATCH /api/telemedicine/{id}/cancel` | ADMIN, DOCTOR, MANAGER, RECEPTIONIST | Cancelar sessão |
+
+A criação requer `patientId`, `doctorId`, `scheduledAt` futuro e
+`durationMinutes` entre 1 e 1440; `appointmentId` é opcional e, se indicado,
+tem de corresponder ao mesmo paciente, médico e hospital. O assunto da reunião
+é sempre genérico ("Consulta médica"), sem dados do paciente. A aplicação
+guarda o ID da reunião e o organizador para poder revogar a ligação quando a
+sessão termina ou é cancelada. A URL é removida da resposta depois da
+revogação. Se o Graph não confirmar a revogação, a operação falha e o estado
+local não é alterado.
+
+As ligações Teams são sensíveis: não as copie para logs, mensagens ou canais
+públicos. Confirme as permissões de acesso aos endpoints antes de partilhar
+uma ligação com participantes. Rever requisitos de privacidade, retenção e
+localização de dados do fornecedor é obrigatório antes da disponibilização em
+produção.
+
 ## Persistência e validação
 
 As tabelas de RH e equipamentos são criadas pelas migrações Liquibase
@@ -93,3 +167,72 @@ mvn -Djacoco.skip=true \
 ```
 
 Os testes de integração que usam Testcontainers precisam de Docker activo.
+
+## Operação local
+
+O ambiente local é iniciado com `docker compose up --build --detach` conforme
+o [guia de desenvolvimento](development.md). Confirme os estados dos serviços
+e acompanhe os registos:
+
+```sh
+docker compose ps
+docker compose logs --since=30m backend
+docker compose logs --since=30m frontend
+```
+
+O backend local está disponível em `http://localhost:8080`; o frontend em
+`http://localhost:4200`. Um administrador pode consultar a saúde e as métricas
+Actuator localmente:
+
+```sh
+curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" http://localhost:8080/api/actuator/health
+curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" http://localhost:8080/api/actuator/metrics
+curl -fsS -H "Authorization: Bearer $ADMIN_TOKEN" http://localhost:8080/api/actuator/prometheus
+```
+
+Actuator exige papel administrativo; não exponha essas portas numa rede
+pública. O Compose de desenvolvimento liga os serviços às interfaces locais.
+Para TLS público, renovação Let’s Encrypt e deployment, use o Compose de
+produção opcional descrito em
+[development.md](development.md#compose-de-produção-opcional).
+
+## Backups e recuperação locais
+
+O perfil opcional `backup` grava dumps PostgreSQL cifrados com `age` no
+directório local `backups/`, sem dependência de S3. Pode executar uma cópia
+imediata ou activar o scheduler diário às 02:00 UTC; os comandos de preparação
+da chave, backup e restauro isolado estão em
+[development.md — backups locais](development.md#backups-locais).
+
+Confirme a existência e a data do ficheiro `.dump.age` e teste periodicamente
+o restauro numa base local vazia, diferente da origem. Guarde a identidade
+privada `age` fora do projecto e com cópia segura: sem ela não é possível
+recuperar os dados. O conteúdo de `backups/` é ignorado pelo Git. Esta cópia
+local não protege contra perda ou falha do computador; para produção será
+necessário definir armazenamento externo e uma política institucional.
+
+## Resposta a incidentes
+
+1. **Priorize a segurança clínica.** Se um fluxo essencial estiver
+   indisponível, active o procedimento institucional de continuidade aprovado
+   e informe o responsável clínico de serviço.
+2. **Classifique e contenha.** Registe hora de início, sistemas e hospitais
+   afectados, impacto e responsável pela coordenação. Em suspeita de acesso
+   indevido, limite acessos e rode ou revogue credenciais através do gestor de
+   segredos; preserve os registos necessários sem os copiar para canais
+   públicos.
+3. **Recupere de forma isolada.** Para corrupção ou perda, preserve a instância
+   afectada para investigação, restaure um backup numa instância vazia e
+   valide a integridade antes de aprovar qualquer regresso ao serviço.
+4. **Comunique e documente.** Encaminhe incidentes de privacidade para o
+   responsável institucional competente e cumpra os prazos legais aplicáveis.
+   Não inclua nomes, identificadores de pacientes, tokens ou credenciais no
+   ticket ou relatório.
+5. **Feche com revisão.** Depois de estabilizar, documente a causa, a linha
+   temporal, as decisões, a evidência preservada e as acções com responsáveis;
+   actualize este runbook quando o processo mudar.
+
+Não existe neste repositório uma escala de piquete, lista de contactos ou
+objectivos de recuperação aprovados. A instituição deve designar os
+responsáveis clínico, técnico e de privacidade, definir a cadeia de
+escalonamento e validar RPO/RTO antes da entrada em produção.

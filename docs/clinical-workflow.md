@@ -152,7 +152,8 @@ ser acompanhados separadamente.
   operacionais próprios, descritos no guia de
   [agendamento, notificações e internamento](scheduling-notifications-inpatient.md).
   Não são passos automáticos da sequência clínica acima. O portal do paciente
-  continua a seguir o [roadmap](ROADMAP.md).
+  e a telemedicina são descritos no guia de
+  [operações](operations.md#portal-do-paciente).
 
 ## Referências de implementação
 

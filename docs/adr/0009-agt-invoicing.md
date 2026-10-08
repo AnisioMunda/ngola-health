@@ -81,9 +81,11 @@ parceiro:
 
 Os campos `agt_*` já existentes na base de dados são metadados internos
 provisórios; os seus nomes ou valores não constituem uma confirmação do
-contrato da API da AGT. A integração está desactivada por omissão
-(`AGT_ENABLED=false`) para impedir o envio de dados de pacientes antes da
-validação.
+contrato da API da AGT. A integração permanece desactivada por omissão
+(`AGT_ENABLED=false`). O Compose de desenvolvimento aponta para o endpoint de
+homologação e pode ser activado localmente com credenciais sandbox e dados
+sintéticos; essa utilização serve para testes técnicos, não prova certificação,
+homologação ou conformidade fiscal.
 
 ## Alternativa considerada
 
@@ -106,7 +108,7 @@ obrigações vigentes.
 
 ## Decisão pendente
 
-Obter do parceiro a versão aplicável do esquema e os esclarecimentos acima,
-com credenciais sandbox fornecidas fora do repositório. Depois actualizar
-esta ADR e testar a integração em homologação antes de activar transmissões
-reais ou declarar conformidade.
+Obter do parceiro a versão aplicável do esquema e os esclarecimentos acima.
+Credenciais sandbox podem ser usadas localmente, fornecidas fora do
+repositório, para testes técnicos. Depois actualizar esta ADR e concluir a
+homologação antes de activar transmissões reais ou declarar conformidade.
