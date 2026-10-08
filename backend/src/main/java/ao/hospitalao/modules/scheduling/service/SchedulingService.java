@@ -1,7 +1,9 @@
 package ao.hospitalao.modules.scheduling.service;
 
+import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.notifications.application.event.AppointmentCancelledEvent;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.scheduling.dto.SchedulingDtos.*;
 import ao.hospitalao.modules.scheduling.entity.Appointment;
@@ -18,14 +20,21 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -38,6 +47,7 @@ public class SchedulingService {
   private final PatientRepository patientRepository;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private static final Locale PT = new Locale("pt", "AO");
   private static final DateTimeFormatter DATE_LABEL =
@@ -69,11 +79,42 @@ public class SchedulingService {
 
   @Transactional
   public DoctorScheduleResponse createSchedule(CreateScheduleRequest req) {
+    if (req.getDoctorId() == null
+        || req.getDayOfWeek() == null
+        || req.getDayOfWeek() < 0
+        || req.getDayOfWeek() > 6
+        || req.getStartTime() == null
+        || req.getEndTime() == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Médico, dia da semana e horas são obrigatórios.");
+    }
+    if (!req.getStartTime().isBefore(req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A hora de início deve ser anterior à hora de fim.");
+    }
+    if ((req.getSlotDurationMinutes() != null && req.getSlotDurationMinutes() < 1)
+        || (req.getMaxPatientsPerSlot() != null && req.getMaxPatientsPerSlot() < 1)) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A duração e a capacidade dos slots devem ser positivas.");
+    }
+    int slotDurationMinutes =
+        req.getSlotDurationMinutes() != null ? req.getSlotDurationMinutes() : 30;
+    if (slotDurationMinutes > ChronoUnit.MINUTES.between(req.getStartTime(), req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A duração do slot não pode exceder o horário definido.");
+    }
+
     UUID hospitalId = TenantContext.getCurrentHospital();
     var doctor =
         userRepository
             .findById(req.getDoctorId())
             .orElseThrow(() -> new EntityNotFoundException("Médico não encontrado"));
+
+    if (scheduleRepository.existsOverlappingSchedule(
+        req.getDoctorId(), req.getDayOfWeek(), req.getStartTime(), req.getEndTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O horário sobrepõe-se a outro horário activo do médico.");
+    }
 
     DoctorSchedule schedule =
         DoctorSchedule.builder()
@@ -82,9 +123,9 @@ public class SchedulingService {
             .dayOfWeek(req.getDayOfWeek())
             .startTime(req.getStartTime())
             .endTime(req.getEndTime())
-            .slotDurationMinutes(
-                req.getSlotDurationMinutes() > 0 ? req.getSlotDurationMinutes() : 30)
-            .maxPatientsPerSlot(req.getMaxPatientsPerSlot() > 0 ? req.getMaxPatientsPerSlot() : 1)
+            .slotDurationMinutes(slotDurationMinutes)
+            .maxPatientsPerSlot(
+                req.getMaxPatientsPerSlot() != null ? req.getMaxPatientsPerSlot() : 1)
             .build();
 
     return toScheduleResponse(scheduleRepository.save(schedule));
@@ -147,8 +188,9 @@ public class SchedulingService {
                   .anyMatch(
                       b ->
                           b.getStartTime() != null
-                              && !slotStart.isBefore(b.getStartTime())
-                              && !slotStart.isAfter(b.getEndTime()));
+                              && b.getEndTime() != null
+                              && slotStart.isBefore(b.getEndTime())
+                              && slotEnd.isAfter(b.getStartTime()));
 
           // Contar marcações neste slot
           long booked =
@@ -225,15 +267,26 @@ public class SchedulingService {
 
   @Transactional
   public AppointmentResponse create(CreateAppointmentRequest req) {
-    UUID hospitalId = TenantContext.getCurrentHospital();
-
-    // Verificar conflito
-    if (appointmentRepository.existsConflict(
-        req.getDoctorId(), req.getAppointmentDate(), req.getStartTime(), null)) {
-      throw new IllegalStateException(
-          "Slot indisponível. Já existe marcação para este médico neste horário.");
+    if (req.getPatientId() == null
+        || req.getDoctorId() == null
+        || req.getAppointmentDate() == null
+        || req.getStartTime() == null
+        || req.getReason() == null
+        || req.getReason().isBlank()
+        || req.getReason().length() > 300) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Paciente, médico, data, hora e motivo são obrigatórios.");
+    }
+    if (req.getStartTime().getSecond() != 0 || req.getStartTime().getNano() != 0) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A hora da marcação deve corresponder a um slot válido.");
+    }
+    if (req.getAppointmentDate().isBefore(LocalDate.now())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível marcar consultas em datas passadas.");
     }
 
+    UUID hospitalId = TenantContext.getCurrentHospital();
     var patient =
         patientRepository
             .findById(req.getPatientId())
@@ -243,16 +296,57 @@ public class SchedulingService {
             .findById(req.getDoctorId())
             .orElseThrow(() -> new EntityNotFoundException("Médico não encontrado"));
 
-    // Calcular hora de fim com base no horário do médico
     int dow = req.getAppointmentDate().getDayOfWeek().getValue() - 1;
-    int duration =
-        scheduleRepository
-            .findByDoctorIdAndActiveTrueOrderByDayOfWeekAscStartTimeAsc(req.getDoctorId())
-            .stream()
-            .filter(s -> s.getDayOfWeek() == dow)
+    DoctorSchedule schedule =
+        scheduleRepository.findActiveSchedulesForBooking(req.getDoctorId(), dow).stream()
+            .filter(s -> isValidSlotStart(s, req.getStartTime()))
             .findFirst()
-            .map(DoctorSchedule::getSlotDurationMinutes)
-            .orElse(30);
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.CONFLICT, "O horário solicitado não está disponível."));
+    LocalTime slotEnd = req.getStartTime().plusMinutes(schedule.getSlotDurationMinutes());
+
+    boolean blocked =
+        blockRepository.findByDoctorAndDate(req.getDoctorId(), req.getAppointmentDate()).stream()
+            .anyMatch(
+                block ->
+                    block.isAllDay()
+                        || (block.getStartTime() != null
+                            && block.getEndTime() != null
+                            && req.getStartTime().isBefore(block.getEndTime())
+                            && slotEnd.isAfter(block.getStartTime())));
+    if (blocked) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O horário solicitado está bloqueado.");
+    }
+
+    if (appointmentRepository.existsActiveAppointmentForPatientInSlot(
+        req.getPatientId(), req.getDoctorId(), req.getAppointmentDate(), req.getStartTime())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Este paciente já tem uma consulta marcada neste horário.");
+    }
+
+    Set<Integer> occupiedPositions =
+        new HashSet<>(
+            appointmentRepository.findOccupiedSlotPositions(
+                req.getDoctorId(), req.getAppointmentDate(), req.getStartTime()));
+    int capacity = schedule.getMaxPatientsPerSlot();
+    if (capacity < 1 || occupiedPositions.size() >= capacity) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O horário solicitado atingiu a capacidade máxima.");
+    }
+    int slotPosition = 0;
+    for (int candidate = 1; candidate > 0 && candidate <= capacity; candidate++) {
+      if (!occupiedPositions.contains(candidate)) {
+        slotPosition = candidate;
+        break;
+      }
+    }
+    if (slotPosition == 0) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O horário solicitado atingiu a capacidade máxima.");
+    }
 
     Appointment appointment =
         Appointment.builder()
@@ -261,7 +355,8 @@ public class SchedulingService {
             .doctor(doctor)
             .appointmentDate(req.getAppointmentDate())
             .startTime(req.getStartTime())
-            .endTime(req.getStartTime().plusMinutes(duration))
+            .endTime(slotEnd)
+            .slotPosition(slotPosition)
             .appointmentType(
                 req.getAppointmentType() != null
                     ? req.getAppointmentType()
@@ -272,21 +367,49 @@ public class SchedulingService {
             .bookedBy(getCurrentUser())
             .build();
 
-    Appointment saved = appointmentRepository.save(appointment);
-    log.info(
-        "Appointment created: {} {} {} for patient {}",
-        saved.getAppointmentDate(),
-        saved.getStartTime(),
-        doctor.getFullName(),
-        patient.getFullName());
+    Appointment saved;
+    try {
+      saved = appointmentRepository.saveAndFlush(appointment);
+    } catch (DataIntegrityViolationException exception) {
+      if (!isSlotPositionConstraintViolation(exception)) {
+        throw exception;
+      }
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "O lugar deste horário acabou de ser reservado.", exception);
+    }
+    log.info("Appointment created");
     return toAppointmentResponse(saved);
+  }
+
+  private boolean isValidSlotStart(DoctorSchedule schedule, LocalTime startTime) {
+    int duration = schedule.getSlotDurationMinutes();
+    if (duration < 1 || startTime.isBefore(schedule.getStartTime())) {
+      return false;
+    }
+    long offsetMinutes = ChronoUnit.MINUTES.between(schedule.getStartTime(), startTime);
+    return offsetMinutes % duration == 0
+        && !startTime.plusMinutes(duration).isAfter(schedule.getEndTime());
+  }
+
+  private boolean isSlotPositionConstraintViolation(Throwable exception) {
+    for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+      if (cause instanceof ConstraintViolationException violation) {
+        String constraintName = violation.getConstraintName();
+        if ("uq_appointment_slot_position_active".equals(constraintName)
+            || "uq_appointment_patient_slot_active".equals(constraintName)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Transactional
   public AppointmentResponse confirm(UUID id) {
     Appointment a = getOrThrow(id);
     if (a.getStatus() != AppointmentStatus.SCHEDULED) {
-      throw new IllegalStateException("Apenas agendamentos SCHEDULED podem ser confirmados.");
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Apenas agendamentos SCHEDULED podem ser confirmados.");
     }
     a.setStatus(AppointmentStatus.CONFIRMED);
     a.setConfirmedAt(OffsetDateTime.now());
@@ -296,9 +419,10 @@ public class SchedulingService {
   @Transactional
   public AppointmentResponse complete(UUID id) {
     Appointment a = getOrThrow(id);
-    if (a.getStatus() == AppointmentStatus.CANCELLED
-        || a.getStatus() == AppointmentStatus.NO_SHOW) {
-      throw new IllegalStateException("Não é possível completar este agendamento.");
+    if (a.getStatus() != AppointmentStatus.SCHEDULED
+        && a.getStatus() != AppointmentStatus.CONFIRMED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Apenas consultas agendadas ou confirmadas podem ser concluídas.");
     }
     a.setStatus(AppointmentStatus.COMPLETED);
     return toAppointmentResponse(appointmentRepository.save(a));
@@ -307,19 +431,39 @@ public class SchedulingService {
   @Transactional
   public AppointmentResponse cancel(UUID id, String reason) {
     Appointment a = getOrThrow(id);
-    if (a.getStatus() == AppointmentStatus.COMPLETED) {
-      throw new IllegalStateException("Não é possível cancelar uma consulta já realizada.");
+    if (a.getStatus() == AppointmentStatus.COMPLETED
+        || a.getStatus() == AppointmentStatus.NO_SHOW) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Consultas realizadas ou com falta não podem ser canceladas.");
     }
+    boolean wasAlreadyCancelled = a.getStatus() == AppointmentStatus.CANCELLED;
     a.setStatus(AppointmentStatus.CANCELLED);
     a.setCancellationReason(reason);
     a.setCancelledAt(OffsetDateTime.now());
-    log.info("Appointment {} cancelled: {}", a.getId(), reason);
-    return toAppointmentResponse(appointmentRepository.save(a));
+    log.info("Appointment cancelled");
+    Appointment saved = appointmentRepository.save(a);
+    if (!wasAlreadyCancelled) {
+      eventPublisher.publishEvent(
+          new AppointmentCancelledEvent(
+              a.getHospitalId(),
+              a.getId(),
+              a.getDoctor().getId(),
+              a.getPatient().getFullName(),
+              a.getAppointmentDate(),
+              a.getStartTime()));
+    }
+    return toAppointmentResponse(saved);
   }
 
   @Transactional
   public AppointmentResponse noShow(UUID id) {
     Appointment a = getOrThrow(id);
+    if (a.getStatus() != AppointmentStatus.SCHEDULED
+        && a.getStatus() != AppointmentStatus.CONFIRMED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "A falta só pode ser registada numa consulta agendada ou confirmada.");
+    }
     a.setStatus(AppointmentStatus.NO_SHOW);
     return toAppointmentResponse(appointmentRepository.save(a));
   }
@@ -330,6 +474,14 @@ public class SchedulingService {
 
   @Transactional
   public void createBlock(CreateBlockRequest req) {
+    if (!req.isAllDay()
+        && (req.getStartTime() == null
+            || req.getEndTime() == null
+            || !req.getStartTime().isBefore(req.getEndTime()))) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Um bloqueio parcial exige horas válidas de início e fim.");
+    }
+
     UUID hospitalId = TenantContext.getCurrentHospital();
     var doctor =
         userRepository
@@ -348,8 +500,7 @@ public class SchedulingService {
             .build();
 
     blockRepository.save(block);
-    log.info(
-        "Schedule block created for doctor {} on {}", doctor.getFullName(), req.getBlockDate());
+    log.info("Schedule block created");
   }
 
   // ------------------------------------------------
@@ -362,9 +513,17 @@ public class SchedulingService {
         .orElseThrow(() -> new EntityNotFoundException("Agendamento não encontrado: " + id));
   }
 
-  private ao.hospitalao.modules.auth.entity.User getCurrentUser() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    return userRepository.findByUsername(username).orElse(null);
+  private User getCurrentUser() {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null
+        || !authentication.isAuthenticated()
+        || authentication instanceof AnonymousAuthenticationToken) {
+      throw new ResponseStatusException(
+          HttpStatus.UNAUTHORIZED, "É necessário autenticar o utilizador que cria a marcação.");
+    }
+    return userRepository
+        .findByUsername(authentication.getName())
+        .orElseThrow(() -> new EntityNotFoundException("Utilizador autenticado não encontrado"));
   }
 
   private DoctorScheduleResponse toScheduleResponse(DoctorSchedule s) {
@@ -411,6 +570,7 @@ public class SchedulingService {
   private CalendarEventResponse toCalendarEvent(Appointment a) {
     return CalendarEventResponse.builder()
         .id(a.getId())
+        .doctorId(a.getDoctor().getId())
         .title(a.getPatient().getFullName())
         .date(a.getAppointmentDate())
         .startTime(a.getStartTime())

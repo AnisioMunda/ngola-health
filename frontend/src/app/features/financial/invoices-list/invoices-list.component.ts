@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import {
   FinancialService,
   InvoiceResponse,
   InvoiceStatus,
   DOCUMENT_TYPE_LABELS,
   STATUS_LABELS,
-  PAYMENT_METHOD_LABELS,
 } from '../../../core/services/financial.service';
 
 @Component({
@@ -19,7 +21,11 @@ import {
   styleUrls: ['./invoices-list.component.scss'],
 })
 export class InvoicesListComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private loadSubscription?: Subscription;
+
   invoices: InvoiceResponse[] = [];
+  issuingInvoiceIds = new Set<string>();
   loading = true;
   error = '';
   statusFilter: InvoiceStatus | '' = '';
@@ -31,7 +37,6 @@ export class InvoicesListComponent implements OnInit {
 
   docLabels = DOCUMENT_TYPE_LABELS;
   statusLabels = STATUS_LABELS;
-  pmLabels = PAYMENT_METHOD_LABELS;
 
   statuses: { value: InvoiceStatus | ''; label: string }[] = [
     { value: '', label: 'Todos os estados' },
@@ -44,6 +49,7 @@ export class InvoicesListComponent implements OnInit {
   ];
 
   constructor(
+    private changeDetectorRef: ChangeDetectorRef,
     private financialService: FinancialService,
     private router: Router,
   ) {}
@@ -53,19 +59,24 @@ export class InvoicesListComponent implements OnInit {
   }
 
   loadInvoices(): void {
+    this.loadSubscription?.unsubscribe();
     this.loading = true;
-    this.financialService
+    this.error = '';
+    this.loadSubscription = this.financialService
       .findAllInvoices(undefined, this.statusFilter || undefined, this.currentPage, this.pageSize)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (page) => {
           this.invoices = page.content;
           this.totalElements = page.totalElements;
           this.totalPages = page.totalPages;
           this.loading = false;
+          this.changeDetectorRef.markForCheck();
         },
-        error: () => {
-          this.error = 'Erro ao carregar documentos.';
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao carregar documentos.');
           this.loading = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
@@ -84,33 +95,46 @@ export class InvoicesListComponent implements OnInit {
 
   downloadPdf(id: string, invoiceNumber: string, event: Event): void {
     event.stopPropagation();
-    this.financialService.downloadPdf(id).subscribe({
-      next: (blob) => {
-        const filename = invoiceNumber.replace(/ /g, '-').replace(/\//g, '-') + '.pdf';
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      error: () => {
-        this.error = 'Erro ao gerar PDF.';
-      },
-    });
+    this.financialService
+      .downloadPdf(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          const filename = invoiceNumber.replace(/ /g, '-').replace(/\//g, '-') + '.pdf';
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url));
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao gerar PDF.');
+        },
+      });
   }
 
   issue(id: string, event: Event): void {
     event.stopPropagation();
-    this.financialService.issue(id).subscribe({
-      next: (updated) => {
-        const idx = this.invoices.findIndex((i) => i.id === updated.id);
-        if (idx !== -1) this.invoices[idx] = updated;
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao emitir documento.';
-      },
-    });
+    if (this.issuingInvoiceIds.has(id)) return;
+    this.error = '';
+    this.issuingInvoiceIds.add(id);
+    this.financialService
+      .issue(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          const idx = this.invoices.findIndex((i) => i.id === updated.id);
+          if (idx !== -1) this.invoices[idx] = updated;
+          this.issuingInvoiceIds.delete(id);
+          this.changeDetectorRef.markForCheck();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao emitir documento.');
+          this.issuingInvoiceIds.delete(id);
+          this.changeDetectorRef.markForCheck();
+        },
+      });
   }
 
   prevPage(): void {
@@ -124,5 +148,9 @@ export class InvoicesListComponent implements OnInit {
       this.currentPage++;
       this.loadInvoices();
     }
+  }
+
+  private errorMessage(error: HttpErrorResponse, fallback: string): string {
+    return error.error?.detail ?? error.error?.message ?? fallback;
   }
 }

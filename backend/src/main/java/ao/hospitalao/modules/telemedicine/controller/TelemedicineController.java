@@ -25,26 +25,36 @@ public class TelemedicineController {
   private final TelemedicineService telemedicineService;
 
   @GetMapping("/stats")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<TelemedicineStatsDto> getStats() {
     return ResponseEntity.ok(telemedicineService.getStats());
   }
 
   @GetMapping("/active")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<List<SessionResponse>> getActiveSessions() {
     return ResponseEntity.ok(telemedicineService.getActiveSessions());
   }
 
   @GetMapping("/my-sessions")
-  @PreAuthorize("hasRole('DOCTOR')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   @Operation(summary = "Sessões do médico autenticado hoje")
   public ResponseEntity<List<SessionResponse>> getMySessionsToday() {
     return ResponseEntity.ok(telemedicineService.getMySessionsToday());
   }
 
+  @GetMapping("/doctors")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
+  public ResponseEntity<List<DoctorOptionDto>> getTeamsDoctors() {
+    return ResponseEntity.ok(telemedicineService.getTeamsDoctors());
+  }
+
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<SessionResponse> create(@Valid @RequestBody CreateSessionRequest request) {
     SessionResponse created = telemedicineService.create(request);
     URI uri =
@@ -57,7 +67,8 @@ public class TelemedicineController {
 
   @PatchMapping("/room/{token}/join")
   @Operation(summary = "Médico entra na sala — inicia sessão")
-  @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<SessionResponse> joinSession(@PathVariable String token) {
     return ResponseEntity.ok(telemedicineService.joinSession(token));
   }
@@ -69,14 +80,16 @@ public class TelemedicineController {
   }
 
   @PatchMapping("/{id}/end")
-  @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<SessionResponse> endSession(
       @PathVariable UUID id, @RequestBody UpdateNotesRequest request) {
     return ResponseEntity.ok(telemedicineService.endSession(id, request));
   }
 
   @PatchMapping("/{id}/cancel")
-  @PreAuthorize("hasAnyRole('DOCTOR','ADMIN','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<SessionResponse> cancel(@PathVariable UUID id) {
     return ResponseEntity.ok(telemedicineService.cancel(id));
   }

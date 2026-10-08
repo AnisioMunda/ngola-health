@@ -4,41 +4,45 @@
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      Back
+      Voltar
     </button>
-    <h1>{{ isEdit ? 'Edit Episode' : 'Schedule New Episode' }}</h1>
+    <h1>{{ isEdit ? 'Editar episódio clínico' : 'Registar episódio clínico' }}</h1>
   </header>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading...</span>
+    <span>A carregar...</span>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading" novalidate>
     <div class="form-grid">
       <!-- Left column -->
       <div class="form-section">
-        <h2 class="section-title">Episode Info</h2>
+        <h2 class="section-title">Dados do episódio</h2>
 
         <div class="field">
-          <label>Patient *</label>
-          <select formControlName="patientId">
-            <option value="">Select patient...</option>
+          <label for="episode-patient">Paciente *</label>
+          <div class="field-error" *ngIf="patientLoadError" role="alert">
+            {{ patientLoadError }}
+          </div>
+          <select id="episode-patient" formControlName="patientId">
+            <option value="">Seleccione um paciente...</option>
             <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
           </select>
           <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
-            Patient is required
+            Seleccione um paciente.
           </span>
         </div>
 
         <div class="field">
-          <label>Type *</label>
+          <label>Tipo *</label>
           <div class="type-grid">
             <button
               type="button"
               *ngFor="let t of episodeTypes"
               class="type-btn"
               [class.selected]="f['episodeType'].value === t.value"
+              [attr.aria-pressed]="f['episodeType'].value === t.value"
               (click)="form.get('episodeType')?.setValue(t.value)"
             >
               {{ t.label }}
@@ -48,77 +52,119 @@
 
         <div class="field-row">
           <div class="field">
-            <label>Doctor</label>
-            <select formControlName="doctorId">
-              <option value="">Not assigned</option>
+            <label for="episode-doctor">Médico</label>
+            <div class="field-error" *ngIf="doctorLoadError" role="alert">
+              {{ doctorLoadError }}
+            </div>
+            <select id="episode-doctor" formControlName="doctorId">
+              <option value="">Sem médico atribuído</option>
               <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
             </select>
           </div>
           <div class="field">
-            <label>Scheduled At</label>
-            <input type="datetime-local" formControlName="scheduledAt" />
+            <label for="episode-scheduled-at">Data e hora</label>
+            <input id="episode-scheduled-at" type="datetime-local" formControlName="scheduledAt" />
           </div>
         </div>
 
         <div class="field">
-          <label>Reason</label>
-          <input type="text" formControlName="reason" placeholder="Reason for the visit..." />
+          <label for="episode-reason">Motivo</label>
+          <input
+            id="episode-reason"
+            type="text"
+            formControlName="reason"
+            placeholder="Motivo da consulta..."
+          />
         </div>
 
         <div class="field">
-          <label>Symptoms</label>
+          <label for="episode-symptoms">Sintomas</label>
           <textarea
+            id="episode-symptoms"
             formControlName="symptoms"
             rows="3"
-            placeholder="Reported symptoms..."
+            placeholder="Sintomas relatados..."
           ></textarea>
         </div>
       </div>
 
       <!-- Right column -->
       <div class="form-section">
-        <h2 class="section-title">Clinical Record</h2>
+        <h2 class="section-title">Registo clínico</h2>
 
         <div class="field">
-          <label>Diagnosis</label>
-          <textarea formControlName="diagnosis" rows="3" placeholder="Diagnosis..."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Prescription</label>
+          <label for="episode-diagnosis">Diagnóstico</label>
           <textarea
-            formControlName="prescription"
+            id="episode-diagnosis"
+            formControlName="diagnosis"
             rows="3"
-            placeholder="Medications, dosages..."
+            placeholder="Diagnóstico..."
           ></textarea>
         </div>
 
         <div class="field">
-          <label>Notes</label>
-          <textarea formControlName="notes" rows="2" placeholder="Additional notes..."></textarea>
+          <label for="episode-prescription">Prescrição</label>
+          <textarea
+            id="episode-prescription"
+            formControlName="prescription"
+            rows="3"
+            placeholder="Medicamentos e dosagens..."
+          ></textarea>
         </div>
 
-        <h2 class="section-title" style="margin-top: 1.25rem">Vitals</h2>
+        <div class="field">
+          <label for="episode-notes">Observações</label>
+          <textarea
+            id="episode-notes"
+            formControlName="notes"
+            rows="2"
+            placeholder="Observações adicionais..."
+          ></textarea>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 1.25rem">Sinais vitais</h2>
 
         <div class="field-row">
           <div class="field">
-            <label>Blood Pressure</label>
-            <input type="text" formControlName="bloodPressure" placeholder="120/80" />
+            <label for="episode-blood-pressure">Pressão arterial</label>
+            <input
+              id="episode-blood-pressure"
+              type="text"
+              formControlName="bloodPressure"
+              placeholder="120/80"
+            />
           </div>
           <div class="field">
-            <label>Heart Rate (bpm)</label>
-            <input type="number" formControlName="heartRate" placeholder="72" />
+            <label for="episode-heart-rate">Frequência cardíaca (bpm)</label>
+            <input
+              id="episode-heart-rate"
+              type="number"
+              formControlName="heartRate"
+              placeholder="72"
+            />
           </div>
         </div>
 
         <div class="field-row">
           <div class="field">
-            <label>Temperature (°C)</label>
-            <input type="number" formControlName="temperature" placeholder="36.5" step="0.1" />
+            <label for="episode-temperature">Temperatura (°C)</label>
+            <input
+              id="episode-temperature"
+              type="number"
+              formControlName="temperature"
+              placeholder="36.5"
+              step="0.1"
+            />
           </div>
           <div class="field">
-            <label>Weight (kg)</label>
-            <input type="number" formControlName="weightKg" placeholder="70.5" step="0.1" />
+            <label for="episode-weight">Peso (kg)</label>
+            <input
+              id="episode-weight"
+              type="number"
+              formControlName="weightKg"
+              placeholder="70.5"
+              step="0.1"
+            />
           </div>
         </div>
       </div>
@@ -127,11 +173,11 @@
     <div class="alert-error" *ngIf="error">{{ error }}</div>
 
     <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="saving">
-        <span *ngIf="!saving">{{ isEdit ? 'Save Changes' : 'Schedule Episode' }}</span>
+        <span *ngIf="!saving">{{ isEdit ? 'Guardar alterações' : 'Registar episódio' }}</span>
         <span *ngIf="saving" class="saving-state">
-          <span class="spinner-sm"></span> Saving...
+          <span class="spinner-sm"></span> A guardar...
         </span>
       </button>
     </div>

@@ -14,11 +14,16 @@ class OpenApiProfileConfigurationTest {
         new YamlPropertySourceLoader()
             .load("application", new ClassPathResource("application.yml"));
 
-    assertThat(sources).hasSize(2);
+    assertThat(sources).hasSize(3);
     assertThat(sources.getFirst().getProperty("springdoc.api-docs.enabled")).isEqualTo(false);
     assertThat(sources.getFirst().getProperty("springdoc.swagger-ui.enabled")).isEqualTo(false);
 
-    var development = sources.get(1);
+    var production = sources.get(1);
+    assertThat(production.getProperty("spring.config.activate.on-profile")).isEqualTo("prod");
+    assertThat(production.getProperty("springdoc.api-docs.enabled")).isNull();
+    assertThat(production.getProperty("springdoc.swagger-ui.enabled")).isNull();
+
+    var development = sources.get(2);
     assertThat(development.getProperty("spring.config.activate.on-profile")).isEqualTo("dev");
     assertThat(development.getProperty("springdoc.api-docs.enabled")).isEqualTo(true);
     assertThat(development.getProperty("springdoc.swagger-ui.enabled")).isEqualTo(true);

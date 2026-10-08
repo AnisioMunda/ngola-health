@@ -1,7 +1,7 @@
 <!-- admission-form.component.html -->
 <div class="page">
   <header class="page-header">
-    <button class="btn-back" (click)="goBack()">
+    <button type="button" class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -16,9 +16,11 @@
         <h2 class="section-title">Paciente e Médico</h2>
 
         <div class="field">
-          <label>Paciente *</label>
-          <select formControlName="patientId">
-            <option value="">Seleccionar paciente...</option>
+          <label for="admission-patient">Paciente *</label>
+          <select id="admission-patient" formControlName="patientId">
+            <option value="">
+              {{ loadingPatients ? 'A carregar pacientes...' : 'Seleccionar paciente...' }}
+            </option>
             <option *ngFor="let p of patients" [value]="p.id">
               {{ p.fullName }}{{ p.phone ? ' — ' + p.phone : '' }}
             </option>
@@ -29,9 +31,11 @@
         </div>
 
         <div class="field">
-          <label>Médico Responsável *</label>
-          <select formControlName="responsibleDoctorId">
-            <option value="">Seleccionar médico...</option>
+          <label for="admission-doctor">Médico Responsável *</label>
+          <select id="admission-doctor" formControlName="responsibleDoctorId">
+            <option value="">
+              {{ loadingDoctors ? 'A carregar médicos...' : 'Seleccionar médico...' }}
+            </option>
             <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
           </select>
           <span
@@ -43,10 +47,12 @@
         </div>
 
         <div class="field">
-          <label>Motivo de Internamento *</label>
+          <label for="admission-reason">Motivo de Internamento *</label>
           <textarea
+            id="admission-reason"
             formControlName="admissionReason"
             rows="3"
+            maxlength="500"
             placeholder="Descreva o motivo do internamento..."
           ></textarea>
           <span
@@ -58,8 +64,13 @@
         </div>
 
         <div class="field">
-          <label>Alta Esperada</label>
-          <input type="date" formControlName="expectedDischargeDate" [min]="minDate" />
+          <label for="expected-discharge-date">Alta Esperada</label>
+          <input
+            id="expected-discharge-date"
+            type="date"
+            formControlName="expectedDischargeDate"
+            [min]="minDate"
+          />
         </div>
       </div>
 
@@ -67,9 +78,11 @@
         <h2 class="section-title">Enfermaria e Cama</h2>
 
         <div class="field">
-          <label>Enfermaria *</label>
-          <select formControlName="wardId">
-            <option value="">Seleccionar enfermaria...</option>
+          <label for="admission-ward">Enfermaria *</label>
+          <select id="admission-ward" formControlName="wardId">
+            <option value="">
+              {{ loadingWards ? 'A carregar enfermarias...' : 'Seleccionar enfermaria...' }}
+            </option>
             <option *ngFor="let w of wards" [value]="w.id">
               {{ w.name }} ({{ w.availableBeds }} disponíveis)
             </option>
@@ -80,7 +93,7 @@
         </div>
 
         <div class="field">
-          <label>Cama *</label>
+          <span class="field-label">Cama *</span>
 
           <div class="beds-loading" *ngIf="loadingBeds">
             <div class="spinner-sm"></div>
@@ -91,7 +104,10 @@
             Seleccione uma enfermaria primeiro
           </div>
 
-          <div class="beds-empty" *ngIf="!loadingBeds && f['wardId'].value && beds.length === 0">
+          <div
+            class="beds-empty"
+            *ngIf="!loadingBeds && !bedsError && f['wardId'].value && beds.length === 0"
+          >
             Sem camas disponíveis nesta enfermaria
           </div>
 
@@ -102,7 +118,11 @@
               class="bed-btn"
               [class.selected]="f['bedId'].value === b.id"
               [class.reserved]="b.status === 'RESERVED'"
-              (click)="form.get('bedId')?.setValue(b.id)"
+              [attr.aria-pressed]="f['bedId'].value === b.id"
+              [attr.aria-label]="
+                'Cama ' + b.bedNumber + ', ' + (b.status === 'RESERVED' ? 'Reservada' : 'Livre')
+              "
+              (click)="selectBed(b.id)"
             >
               <span class="bed-num">{{ b.bedNumber }}</span>
               <span class="bed-lbl">{{ b.status === 'RESERVED' ? 'Reservada' : 'Livre' }}</span>
@@ -116,10 +136,12 @@
       </div>
     </div>
 
-    <div class="alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
     <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
+      <button type="button" class="btn-secondary" [disabled]="saving" (click)="goBack()">
+        Cancelar
+      </button>
       <button type="submit" class="btn-primary" [disabled]="saving">
         <span *ngIf="!saving">Confirmar Admissão</span>
         <span *ngIf="saving" class="saving-state">

@@ -4,6 +4,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.episodes.entity.Episode;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.patients.entity.Patient;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -18,7 +19,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Admission {
+public class Admission extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,7 +27,7 @@ public class Admission {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @ManyToOne(fetch = FetchType.LAZY)

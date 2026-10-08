@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   LabService,
   LabRequestResponse,
   RequestStatus,
   STATUS_LABELS,
   PRIORITY_LABELS,
+  labErrorMessage,
 } from '../../../core/services/lab.service';
 
 @Component({
@@ -22,6 +24,7 @@ export class LabRequestsListComponent implements OnInit {
   loading = true;
   error = '';
   statusFilter: RequestStatus | '' = '';
+  advancingId: string | null = null;
 
   totalElements = 0;
   totalPages = 0;
@@ -32,25 +35,55 @@ export class LabRequestsListComponent implements OnInit {
   priorityLabels = PRIORITY_LABELS;
 
   statuses: { value: RequestStatus | ''; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'COLLECTED', label: 'Collected' },
-    { value: 'IN_ANALYSIS', label: 'In Analysis' },
-    { value: 'COMPLETED', label: 'Completed' },
-    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: '', label: 'Todos os estados' },
+    { value: 'PENDING', label: 'Pendente' },
+    { value: 'COLLECTED', label: 'Amostra recolhida' },
+    { value: 'IN_ANALYSIS', label: 'Em análise' },
+    { value: 'COMPLETED', label: 'Concluído' },
+    { value: 'CANCELLED', label: 'Cancelado' },
   ];
 
   constructor(
     private labService: LabService,
     private router: Router,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
+    if (!this.canViewList) {
+      this.error = 'O seu perfil não tem permissão para consultar os pedidos de laboratório.';
+      this.loading = false;
+      return;
+    }
     this.loadRequests();
+  }
+
+  get canViewList(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return ['ADMIN', 'DOCTOR', 'NURSE', 'LAB_TECHNICIAN', 'MANAGER'].some((role) =>
+      roles.includes(role),
+    );
+  }
+
+  get canCreate(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return ['ADMIN', 'DOCTOR', 'NURSE'].some((role) => roles.includes(role));
+  }
+
+  canAdvance(status: RequestStatus): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    if (status === 'PENDING') {
+      return ['ADMIN', 'NURSE', 'LAB_TECHNICIAN'].some((role) => roles.includes(role));
+    }
+    if (status === 'COLLECTED') {
+      return roles.includes('ADMIN') || roles.includes('LAB_TECHNICIAN');
+    }
+    return false;
   }
 
   loadRequests(): void {
     this.loading = true;
+    this.error = '';
     this.labService
       .findAllRequests(undefined, this.statusFilter || undefined, this.currentPage, this.pageSize)
       .subscribe({
@@ -60,8 +93,14 @@ export class LabRequestsListComponent implements OnInit {
           this.totalPages = page.totalPages;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Failed to load lab requests.';
+        error: (error: unknown) => {
+          this.requests = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+          this.error = labErrorMessage(
+            error,
+            'Não foi possível carregar os pedidos de laboratório.',
+          );
           this.loading = false;
         },
       });
@@ -73,14 +112,15 @@ export class LabRequestsListComponent implements OnInit {
   }
 
   goToCreate(): void {
-    this.router.navigate(['/lab/new']);
+    if (this.canCreate) void this.router.navigate(['/lab/new']);
   }
   goToDetail(id: string): void {
-    this.router.navigate(['/lab', id]);
+    void this.router.navigate(['/lab', id]);
   }
 
   advanceStatus(req: LabRequestResponse, event: Event): void {
     event.stopPropagation();
+    if (!this.canAdvance(req.status) || this.advancingId) return;
     const obs =
       req.status === 'PENDING'
         ? this.labService.collect(req.id)
@@ -90,21 +130,29 @@ export class LabRequestsListComponent implements OnInit {
 
     if (!obs) return;
 
+    this.error = '';
+    this.advancingId = req.id;
     obs.subscribe({
       next: (updated) => {
         const idx = this.requests.findIndex((r) => r.id === updated.id);
         if (idx !== -1) this.requests[idx] = updated;
+        this.advancingId = null;
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Failed to update request.';
+      error: (error: unknown) => {
+        this.error = labErrorMessage(error, 'Não foi possível actualizar o pedido.');
+        this.advancingId = null;
       },
     });
   }
 
   getNextActionLabel(status: RequestStatus): string {
-    if (status === 'PENDING') return 'Collect Sample';
-    if (status === 'COLLECTED') return 'Start Analysis';
+    if (status === 'PENDING') return 'Recolher amostra';
+    if (status === 'COLLECTED') return 'Iniciar análise';
     return '';
+  }
+
+  patientInitial(name: string): string {
+    return name.trim().charAt(0).toLocaleUpperCase('pt-AO') || '?';
   }
 
   prevPage(): void {

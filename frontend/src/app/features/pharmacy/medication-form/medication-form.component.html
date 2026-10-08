@@ -1,0 +1,93 @@
+<main class="page">
+  <header class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">← Voltar à farmácia</button>
+    <div>
+      <h1>Novo medicamento</h1>
+      <p>Adicione um medicamento ao catálogo do hospital.</p>
+    </div>
+  </header>
+
+  <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="form-grid">
+      <div class="field span-2">
+        <label for="name">Nome do medicamento *</label>
+        <input id="name" type="text" formControlName="name" maxlength="200" autocomplete="off" />
+        <span class="field-error" *ngIf="f.name.invalid && f.name.touched">
+          Indique um nome com até 200 caracteres.
+        </span>
+      </div>
+
+      <div class="field span-2">
+        <label for="genericName">Princípio activo</label>
+        <input
+          id="genericName"
+          type="text"
+          formControlName="genericName"
+          maxlength="200"
+          autocomplete="off"
+        />
+        <span class="field-error" *ngIf="f.genericName.invalid && f.genericName.touched">
+          O princípio activo não pode exceder 200 caracteres.
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="dosageForm">Forma farmacêutica *</label>
+        <select id="dosageForm" formControlName="dosageForm">
+          <option value="">Seleccione uma forma...</option>
+          <option *ngFor="let form of dosageForms" [value]="form.value">{{ form.label }}</option>
+        </select>
+        <span class="field-error" *ngIf="f.dosageForm.invalid && f.dosageForm.touched">
+          Seleccione a forma farmacêutica.
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="strength">Dosagem</label>
+        <input
+          id="strength"
+          type="text"
+          formControlName="strength"
+          maxlength="50"
+          placeholder="Ex.: 500 mg"
+        />
+      </div>
+
+      <div class="field">
+        <label for="unit">Unidade de stock *</label>
+        <input
+          id="unit"
+          type="text"
+          formControlName="unit"
+          maxlength="20"
+          placeholder="Ex.: comprimido, ml"
+        />
+        <span class="field-error" *ngIf="f.unit.invalid && f.unit.touched">
+          Indique a unidade de stock (máximo 20 caracteres).
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="minStockLevel">Nível mínimo de stock</label>
+        <input id="minStockLevel" type="number" formControlName="minStockLevel" min="0" />
+        <span class="field-error" *ngIf="f.minStockLevel.invalid && f.minStockLevel.touched">
+          O nível mínimo não pode ser negativo.
+        </span>
+      </div>
+    </div>
+
+    <label class="checkbox-field">
+      <input type="checkbox" formControlName="requiresPrescription" />
+      <span>Medicamento sujeito a receita médica</span>
+    </label>
+
+    <div class="alert-error" role="alert" *ngIf="error">{{ error }}</div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="saving">
+        {{ saving ? 'A guardar...' : 'Adicionar medicamento' }}
+      </button>
+    </div>
+  </form>
+</main>

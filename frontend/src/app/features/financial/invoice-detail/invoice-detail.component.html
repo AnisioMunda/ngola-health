@@ -54,8 +54,13 @@
         </div>
 
         <div class="header-actions">
-          <button class="btn-issue" *ngIf="invoice.status === 'RASCUNHO'" (click)="issue()">
-            Emitir Documento
+          <button
+            class="btn-issue"
+            *ngIf="invoice.status === 'RASCUNHO'"
+            [disabled]="savingIssue"
+            (click)="issue()"
+          >
+            {{ savingIssue ? 'A emitir...' : 'Emitir Documento' }}
           </button>
           <button
             class="btn-payment"
@@ -87,6 +92,10 @@
         <div class="meta-item">
           <span class="meta-label">Paciente</span>
           <span class="meta-value">{{ invoice.patientName }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Moeda</span>
+          <span class="meta-value">{{ invoice.currency }}</span>
         </div>
         <div class="meta-item" *ngIf="invoice.patientNif">
           <span class="meta-label">NIF</span>
@@ -124,7 +133,11 @@
             min="0.01"
             [max]="invoice.balance"
             step="0.01"
+            [attr.aria-invalid]="isPaymentAmountInvalid()"
           />
+          <span class="field-error" *ngIf="isPaymentAmountInvalid()">
+            Indique um valor superior a zero e até ao saldo em dívida.
+          </span>
         </div>
         <div class="field">
           <label>Forma de Pagamento *</label>
@@ -149,7 +162,7 @@
         <button class="btn-secondary" (click)="showPaymentForm = false">Cancelar</button>
         <button
           class="btn-primary"
-          [disabled]="!paymentAmount || savingPayment"
+          [disabled]="!isPaymentValid() || savingPayment"
           (click)="registerPayment()"
         >
           {{ savingPayment ? 'A registar...' : 'Confirmar Pagamento' }}
@@ -162,12 +175,21 @@
       <h3>Anular Documento</h3>
       <div class="field">
         <label>Motivo de anulação *</label>
-        <input type="text" [(ngModel)]="voidReason" placeholder="Motivo obrigatório..." />
+        <input
+          type="text"
+          [(ngModel)]="voidReason"
+          maxlength="500"
+          placeholder="Motivo obrigatório..."
+        />
       </div>
       <div class="payment-actions">
         <button class="btn-secondary" (click)="showVoidForm = false">Cancelar</button>
-        <button class="btn-danger" [disabled]="!voidReason" (click)="voidInvoice()">
-          Confirmar Anulação
+        <button
+          class="btn-danger"
+          [disabled]="!voidReason.trim() || savingVoid"
+          (click)="voidInvoice()"
+        >
+          {{ savingVoid ? 'A anular...' : 'Confirmar Anulação' }}
         </button>
       </div>
     </div>
@@ -230,7 +252,7 @@
     </div>
 
     <!-- Histórico de pagamentos -->
-    <div class="section-card" *ngIf="invoice.payments?.length">
+    <div class="section-card" *ngIf="invoice.payments.length > 0">
       <h3 class="section-title">Histórico de Pagamentos</h3>
       <div class="payments-list">
         <div class="payment-item" *ngFor="let p of invoice.payments">

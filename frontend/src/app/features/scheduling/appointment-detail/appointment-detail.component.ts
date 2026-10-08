@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import {
   SchedulingService,
   AppointmentResponse,
@@ -17,8 +19,12 @@ import {
   styleUrls: ['./appointment-detail.component.scss'],
 })
 export class AppointmentDetailComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private loadSequence = 0;
+
   appointment: AppointmentResponse | null = null;
   loading = true;
+  updating = false;
   error = '';
   success = '';
 
@@ -35,74 +41,93 @@ export class AppointmentDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.load(id);
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params.get('id');
+      if (id) {
+        this.load(id);
+      } else {
+        this.appointment = null;
+        this.error = 'Identificador do agendamento inválido.';
+        this.loading = false;
+        this.updating = false;
+      }
+    });
   }
 
   load(id: string): void {
+    const requestSequence = ++this.loadSequence;
     this.loading = true;
+    this.error = '';
+    this.success = '';
+    this.updating = false;
+    this.showCancelForm = false;
+    this.cancelReason = '';
     this.schedulingService.findById(id).subscribe({
       next: (a) => {
+        if (requestSequence !== this.loadSequence) return;
         this.appointment = a;
         this.loading = false;
       },
-      error: () => {
-        this.error = 'Erro ao carregar agendamento.';
+      error: (err) => {
+        if (requestSequence !== this.loadSequence) return;
+        this.appointment = null;
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao carregar agendamento.';
         this.loading = false;
       },
     });
   }
 
   confirm(): void {
-    if (!this.appointment) return;
-    this.schedulingService.confirm(this.appointment.id).subscribe({
-      next: (a) => {
-        this.appointment = a;
-        this.flash('Consulta confirmada.');
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao confirmar.';
-      },
-    });
+    this.updateAppointment((id) => this.schedulingService.confirm(id), 'Consulta confirmada.');
   }
 
   complete(): void {
-    if (!this.appointment) return;
-    this.schedulingService.complete(this.appointment.id).subscribe({
-      next: (a) => {
-        this.appointment = a;
-        this.flash('Consulta marcada como realizada.');
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao completar.';
-      },
-    });
+    this.updateAppointment(
+      (id) => this.schedulingService.complete(id),
+      'Consulta marcada como realizada.',
+    );
   }
 
   cancel(): void {
-    if (!this.appointment || !this.cancelReason) return;
-    this.schedulingService.cancel(this.appointment.id, this.cancelReason).subscribe({
-      next: (a) => {
-        this.appointment = a;
+    const reason = this.cancelReason.trim();
+    if (!reason || reason.length > 300) return;
+    this.updateAppointment(
+      (id) => this.schedulingService.cancel(id, reason),
+      'Consulta cancelada.',
+      () => {
         this.showCancelForm = false;
         this.cancelReason = '';
-        this.flash('Consulta cancelada.');
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao cancelar.';
-      },
-    });
+    );
   }
 
   noShow(): void {
-    if (!this.appointment) return;
-    this.schedulingService.noShow(this.appointment.id).subscribe({
-      next: (a) => {
-        this.appointment = a;
-        this.flash('Falta registada.');
+    this.updateAppointment((id) => this.schedulingService.noShow(id), 'Falta registada.');
+  }
+
+  private updateAppointment(
+    action: (id: string) => Observable<AppointmentResponse>,
+    successMessage: string,
+    onSuccess?: () => void,
+  ): void {
+    const appointmentId = this.appointment?.id;
+    if (!appointmentId || this.updating) return;
+
+    this.updating = true;
+    this.error = '';
+    this.success = '';
+    action(appointmentId).subscribe({
+      next: (appointment) => {
+        if (this.appointment?.id !== appointmentId) return;
+        this.appointment = appointment;
+        this.updating = false;
+        onSuccess?.();
+        this.flash(successMessage);
       },
       error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao registar falta.';
+        if (this.appointment?.id !== appointmentId) return;
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao actualizar agendamento.';
+        this.updating = false;
       },
     });
   }

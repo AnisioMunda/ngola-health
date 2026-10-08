@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, publicGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, publicGuard, superAdminGuard } from './core/guards/auth.guard';
 import { portalRoutes } from './portal.routes';
 
 export const routes: Routes = [
@@ -368,6 +368,7 @@ export const routes: Routes = [
           },
           {
             path: 'new',
+            canActivate: [adminGuard],
             loadComponent: () =>
               import('./features/users/user-form/user-form.component').then(
                 (m) => m.UserFormComponent,
@@ -375,9 +376,38 @@ export const routes: Routes = [
           },
           {
             path: ':id/edit',
+            canActivate: [adminGuard],
             loadComponent: () =>
               import('./features/users/user-form/user-form.component').then(
                 (m) => m.UserFormComponent,
+              ),
+          },
+        ],
+      },
+
+      {
+        path: 'hospitals',
+        canActivate: [superAdminGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/hospitals/hospitals-list/hospitals-list.component').then(
+                (m) => m.HospitalsListComponent,
+              ),
+          },
+          {
+            path: 'new',
+            loadComponent: () =>
+              import('./features/hospitals/hospital-form/hospital-form.component').then(
+                (m) => m.HospitalFormComponent,
+              ),
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/hospitals/hospital-form/hospital-form.component').then(
+                (m) => m.HospitalFormComponent,
               ),
           },
         ],

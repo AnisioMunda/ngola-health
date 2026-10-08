@@ -35,7 +35,8 @@ public class PrescriptionController {
 
   @GetMapping("/stats")
   @Operation(summary = "Estatísticas de prescrições")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<PrescriptionStatsDto> getStats() {
     return ResponseEntity.ok(prescriptionService.getStats());
   }
@@ -46,7 +47,8 @@ public class PrescriptionController {
 
   @GetMapping
   @Operation(summary = "Listar prescrições do hospital num período")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<Page<PrescriptionResponse>> findAll(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -56,14 +58,16 @@ public class PrescriptionController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Obter prescrição por ID")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<PrescriptionResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(prescriptionService.findById(id));
   }
 
   @GetMapping("/patient/{patientId}")
   @Operation(summary = "Historial de prescrições de um paciente")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<Page<PrescriptionResponse>> findByPatient(
       @PathVariable UUID patientId, @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(prescriptionService.findByPatient(patientId, pageable));
@@ -71,14 +75,16 @@ public class PrescriptionController {
 
   @GetMapping("/episode/{episodeId}")
   @Operation(summary = "Prescrições de um episódio")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<List<PrescriptionResponse>> findByEpisode(@PathVariable UUID episodeId) {
     return ResponseEntity.ok(prescriptionService.findByEpisode(episodeId));
   }
 
   @GetMapping("/admission/{admissionId}")
   @Operation(summary = "Prescrições de um internamento")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','DOCTOR','PHARMACIST','NURSE')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).NURSE.name())")
   public ResponseEntity<List<PrescriptionResponse>> findByAdmission(
       @PathVariable UUID admissionId) {
     return ResponseEntity.ok(prescriptionService.findByAdmission(admissionId));
@@ -86,7 +92,8 @@ public class PrescriptionController {
 
   @PostMapping
   @Operation(summary = "Criar prescrição (médico)")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name())")
   public ResponseEntity<PrescriptionResponse> create(
       @Valid @RequestBody CreatePrescriptionRequest request) {
     PrescriptionResponse created = prescriptionService.create(request);
@@ -104,7 +111,8 @@ public class PrescriptionController {
 
   @PostMapping("/{id}/dispense")
   @Operation(summary = "Dispensar medicamento de uma prescrição")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name())")
   public ResponseEntity<PrescriptionResponse> dispense(
       @PathVariable UUID id, @Valid @RequestBody DispenseItemRequest request) {
     return ResponseEntity.ok(prescriptionService.dispense(id, request));
@@ -116,7 +124,8 @@ public class PrescriptionController {
 
   @PatchMapping("/{id}/cancel")
   @Operation(summary = "Cancelar prescrição")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<PrescriptionResponse> cancel(
       @PathVariable UUID id, @Valid @RequestBody CancelPrescriptionRequest request) {
     return ResponseEntity.ok(prescriptionService.cancel(id, request));

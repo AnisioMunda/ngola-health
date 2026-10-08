@@ -1,20 +1,25 @@
 <div class="page">
   <header class="page-header">
     <div class="header-left">
-      <h1>Consultations</h1>
-      <span class="total-badge">{{ totalElements }} total</span>
+      <h1>Episódios clínicos</h1>
+      <span class="total-badge">{{ totalElements }} registos</span>
     </div>
     <button class="btn-primary" (click)="goToCreate()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      New Episode
+      Novo episódio
     </button>
   </header>
 
   <!-- Filter -->
   <div class="filters">
-    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+    <label for="episode-status-filter">Filtrar por estado</label>
+    <select
+      id="episode-status-filter"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="onFilterChange()"
+    >
       <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
     </select>
   </div>
@@ -23,23 +28,23 @@
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading episodes...</span>
+    <span>A carregar episódios...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
     <table>
       <thead>
         <tr>
-          <th>Patient</th>
-          <th>Type</th>
-          <th>Doctor</th>
-          <th>Scheduled</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th>Paciente</th>
+          <th>Tipo</th>
+          <th>Médico</th>
+          <th>Data e hora</th>
+          <th>Estado</th>
+          <th>Acções</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let e of episodes" (click)="goToDetail(e.id)" class="clickable">
+        <tr *ngFor="let e of episodes" (click)="goToEdit(e.id)" class="clickable">
           <td>
             <div class="name-cell">
               <div class="avatar">{{ e.patientName[0] }}</div>
@@ -66,7 +71,9 @@
                 class="btn-action btn-start"
                 *ngIf="e.status === 'SCHEDULED'"
                 (click)="changeStatus(e, 'start', $event)"
-                title="Start"
+                title="Iniciar episódio"
+                aria-label="Iniciar episódio"
+                [disabled]="updatingEpisodeId === e.id"
               >
                 ▶
               </button>
@@ -74,7 +81,9 @@
                 class="btn-action btn-complete"
                 *ngIf="e.status === 'IN_PROGRESS'"
                 (click)="changeStatus(e, 'complete', $event)"
-                title="Complete"
+                title="Concluir episódio"
+                aria-label="Concluir episódio"
+                [disabled]="updatingEpisodeId === e.id"
               >
                 ✓
               </button>
@@ -82,7 +91,9 @@
                 class="btn-action btn-cancel"
                 *ngIf="e.status === 'SCHEDULED' || e.status === 'IN_PROGRESS'"
                 (click)="changeStatus(e, 'cancel', $event)"
-                title="Cancel"
+                title="Cancelar episódio"
+                aria-label="Cancelar episódio"
+                [disabled]="updatingEpisodeId === e.id"
               >
                 ✕
               </button>
@@ -109,8 +120,8 @@
                 stroke-linecap="round"
               />
             </svg>
-            <p>No episodes found</p>
-            <button class="btn-primary" (click)="goToCreate()">Schedule first episode</button>
+            <p>Não foram encontrados episódios clínicos.</p>
+            <button class="btn-primary" (click)="goToCreate()">Registar o primeiro episódio</button>
           </td>
         </tr>
       </tbody>
@@ -118,11 +129,11 @@
 
     <div class="pagination" *ngIf="totalPages > 1">
       <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
-        ← Previous
+        ← Anterior
       </button>
-      <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <span class="page-info">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
       <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-        Next →
+        Seguinte →
       </button>
     </div>
   </div>

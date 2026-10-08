@@ -53,16 +53,29 @@
 
   <!-- Filtros -->
   <div class="filters">
-    <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+    <select
+      aria-label="Filtrar agendamentos por estado"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="onFilterChange()"
+    >
       <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
     </select>
 
-    <select [(ngModel)]="doctorFilter" (ngModelChange)="onFilterChange()">
+    <select
+      aria-label="Filtrar agendamentos por médico"
+      [(ngModel)]="doctorFilter"
+      (ngModelChange)="onFilterChange()"
+    >
       <option value="">Todos os médicos</option>
       <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
     </select>
 
-    <input type="date" [(ngModel)]="dateFilter" (ngModelChange)="onFilterChange()" />
+    <input
+      type="date"
+      aria-label="Filtrar agendamentos por data"
+      [(ngModel)]="dateFilter"
+      (ngModelChange)="onFilterChange()"
+    />
 
     <button
       class="btn-clear"
@@ -73,7 +86,8 @@
     </button>
   </div>
 
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="doctorsError" role="alert">{{ doctorsError }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
@@ -119,25 +133,31 @@
           <td>
             <div class="row-actions" (click)="$event.stopPropagation()">
               <button
+                type="button"
                 class="btn-action green"
                 *ngIf="a.status === 'SCHEDULED'"
                 (click)="confirm(a.id, $event)"
+                [attr.aria-label]="'Confirmar consulta de ' + a.patientName"
                 title="Confirmar"
               >
                 ✓
               </button>
               <button
+                type="button"
                 class="btn-action red"
                 *ngIf="a.status === 'SCHEDULED' || a.status === 'CONFIRMED'"
                 (click)="cancel(a.id, $event)"
+                [attr.aria-label]="'Cancelar consulta de ' + a.patientName"
                 title="Cancelar"
               >
                 ✕
               </button>
               <button
+                type="button"
                 class="btn-action amber"
                 *ngIf="a.status === 'SCHEDULED' || a.status === 'CONFIRMED'"
                 (click)="noShow(a.id, $event)"
+                [attr.aria-label]="'Registar falta de ' + a.patientName"
                 title="Falta"
               >
                 !

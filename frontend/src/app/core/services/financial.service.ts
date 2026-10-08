@@ -42,6 +42,7 @@ export interface PaymentResponse {
 export interface InvoiceResponse {
   id: string;
   invoiceNumber: string;
+  currency: string;
   documentType: DocumentType;
   patientId: string;
   patientName: string;

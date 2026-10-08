@@ -65,6 +65,7 @@ export interface AppointmentResponse {
 
 export interface CalendarEvent {
   id: string;
+  doctorId: string;
   title: string;
   date: string;
   startTime: string;
@@ -92,6 +93,15 @@ export interface CreateScheduleRequest {
   endTime: string;
   slotDurationMinutes: number;
   maxPatientsPerSlot: number;
+}
+
+export interface CreateBlockRequest {
+  doctorId: string;
+  blockDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  allDay: boolean;
+  reason?: string;
 }
 
 export interface Page<T> {
@@ -208,7 +218,7 @@ export class SchedulingService {
     return this.http.patch<AppointmentResponse>(`${this.apiUrl}/appointments/${id}/no-show`, {});
   }
 
-  createBlock(req: any): Observable<void> {
+  createBlock(req: CreateBlockRequest): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/blocks`, req);
   }
 }

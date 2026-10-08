@@ -6,6 +6,7 @@ import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +22,10 @@ public class HospitalService {
   private final HospitalRepository hospitalRepository;
 
   @Transactional(readOnly = true)
-  public List<HospitalResponse> findAll() {
-    return hospitalRepository.findByActiveTrue().stream()
-        .map(this::toResponse)
-        .collect(Collectors.toList());
+  public List<HospitalResponse> findAll(boolean includeInactive) {
+    List<Hospital> hospitals =
+        includeInactive ? hospitalRepository.findAll() : hospitalRepository.findByActiveTrue();
+    return hospitals.stream().map(this::toResponse).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
@@ -37,14 +38,15 @@ public class HospitalService {
 
   @Transactional
   public HospitalResponse create(CreateHospitalRequest request) {
-    if (hospitalRepository.existsByCode(request.getCode())) {
+    String code = request.getCode().toUpperCase(Locale.ROOT);
+    if (hospitalRepository.existsByCode(code)) {
       throw new IllegalArgumentException("Hospital code already in use: " + request.getCode());
     }
 
     Hospital hospital =
         Hospital.builder()
             .name(request.getName())
-            .code(request.getCode().toUpperCase())
+            .code(code)
             .type(request.getType())
             .province(request.getProvince())
             .municipality(request.getMunicipality())
@@ -55,7 +57,34 @@ public class HospitalService {
             .build();
 
     Hospital saved = hospitalRepository.save(hospital);
-    log.info("Hospital created: {} ({})", saved.getName(), saved.getId());
+    log.info("Hospital created");
+    return toResponse(saved);
+  }
+
+  @Transactional
+  public HospitalResponse update(UUID id, CreateHospitalRequest request) {
+    Hospital hospital =
+        hospitalRepository
+            .findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Hospital not found: " + id));
+
+    String code = request.getCode().toUpperCase(Locale.ROOT);
+    if (hospitalRepository.existsByCodeAndIdNot(code, id)) {
+      throw new IllegalArgumentException("Hospital code already in use: " + request.getCode());
+    }
+
+    hospital.setName(request.getName());
+    hospital.setCode(code);
+    hospital.setType(request.getType());
+    hospital.setProvince(request.getProvince());
+    hospital.setMunicipality(request.getMunicipality());
+    hospital.setAddress(request.getAddress());
+    hospital.setPhone(request.getPhone());
+    hospital.setEmail(request.getEmail());
+    hospital.setTaxId(request.getTaxId());
+
+    Hospital saved = hospitalRepository.save(hospital);
+    log.info("Hospital updated");
     return toResponse(saved);
   }
 

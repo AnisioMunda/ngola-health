@@ -2,7 +2,7 @@ package ao.hospitalao.modules.pharmacy.service;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
+import ao.hospitalao.modules.episodes.application.EpisodeApplicationService;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.pharmacy.dto.PharmacyDtos.*;
@@ -16,6 +16,7 @@ import ao.hospitalao.modules.pharmacy.repository.StockMovementRepository;
 import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,20 +24,24 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PharmacyService {
 
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
+
   private final MedicationRepository medicationRepository;
   private final StockBatchRepository batchRepository;
   private final StockMovementRepository movementRepository;
   private final PatientRepository patientRepository;
-  private final EpisodeRepository episodeRepository;
+  private final EpisodeApplicationService episodeApplicationService;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
 
@@ -52,6 +57,12 @@ public class PharmacyService {
             ? medicationRepository.search(hospitalId, search.trim(), pageable)
             : medicationRepository.findByHospitalIdAndActiveTrue(hospitalId, pageable);
     return page.map(this::toMedicationResponse);
+  }
+
+  @Transactional(readOnly = true)
+  public MedicationResponse findMedication(UUID medicationId) {
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    return toMedicationResponse(findMedicationOrThrow(hospitalId, medicationId));
   }
 
   @Transactional
@@ -71,7 +82,7 @@ public class PharmacyService {
             .build();
 
     Medication saved = medicationRepository.save(med);
-    log.info("Medication created: {} ({})", saved.getName(), saved.getId());
+    log.info("Medication created");
     return toMedicationResponse(saved);
   }
 
@@ -81,17 +92,26 @@ public class PharmacyService {
 
   @Transactional(readOnly = true)
   public List<StockBatchResponse> findBatchesByMedication(UUID medicationId) {
-    return batchRepository.findByMedicationId(medicationId).stream()
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    findMedicationOrThrow(hospitalId, medicationId);
+    return batchRepository.findByMedicationIdAndHospitalId(medicationId, hospitalId).stream()
         .map(this::toBatchResponse)
         .collect(Collectors.toList());
   }
 
   @Transactional
   public StockBatchResponse receiveStock(ReceiveStockRequest req) {
-    Medication med =
-        medicationRepository
-            .findById(req.getMedicationId())
-            .orElseThrow(() -> new EntityNotFoundException("Medication not found"));
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    Medication med = findMedicationOrThrow(hospitalId, req.getMedicationId());
+    if (!med.isActive()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível receber stock para um medicamento inactivo.");
+    }
+    if (req.getExpiryDate().isBefore(today())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A validade do lote não pode estar no passado.");
+    }
+    User currentUser = getCurrentUser();
 
     StockBatch batch =
         StockBatch.builder()
@@ -102,7 +122,7 @@ public class PharmacyService {
             .quantityAvailable(req.getQuantity())
             .unitCost(req.getUnitCost())
             .supplier(req.getSupplier())
-            .createdBy(getCurrentUser())
+            .createdBy(currentUser)
             .build();
 
     StockBatch saved = batchRepository.save(batch);
@@ -114,14 +134,10 @@ public class PharmacyService {
             .movementType(MovementType.IN)
             .quantity(req.getQuantity())
             .reason("Stock received from supplier")
-            .performedBy(getCurrentUser())
+            .performedBy(currentUser)
             .build());
 
-    log.info(
-        "Stock received: {} units of {} (batch {})",
-        req.getQuantity(),
-        med.getName(),
-        saved.getBatchNumber());
+    log.info("Medication stock received");
     return toBatchResponse(saved);
   }
 
@@ -131,29 +147,46 @@ public class PharmacyService {
 
   @Transactional
   public DispenseResponse dispense(DispenseRequest req) {
-    Medication med =
-        medicationRepository
-            .findById(req.getMedicationId())
-            .orElseThrow(() -> new EntityNotFoundException("Medication not found"));
-
-    int totalAvailable = batchRepository.getTotalAvailableQuantity(med.getId(), LocalDate.now());
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    Medication med = findMedicationOrThrow(hospitalId, req.getMedicationId());
+    if (!med.isActive()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Não é possível dispensar um medicamento inactivo.");
+    }
+    LocalDate today = today();
+    List<StockBatch> batches = batchRepository.findAvailableBatchesFefo(med.getId(), today);
+    long totalAvailable = batches.stream().mapToLong(StockBatch::getQuantityAvailable).sum();
     if (totalAvailable < req.getQuantity()) {
-      throw new IllegalStateException(
-          "Insufficient stock. Available: " + totalAvailable + ", requested: " + req.getQuantity());
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Stock insuficiente. Disponível: "
+              + totalAvailable
+              + ", solicitado: "
+              + req.getQuantity());
     }
 
     var patient =
         req.getPatientId() != null
-            ? patientRepository.findById(req.getPatientId()).orElse(null)
+            ? patientRepository
+                .findById(req.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found"))
             : null;
-    var episode =
-        req.getEpisodeId() != null
-            ? episodeRepository.findById(req.getEpisodeId()).orElse(null)
-            : null;
+    UUID episodeId = req.getEpisodeId();
+    if (episodeId != null) {
+      UUID episodePatientId = episodeApplicationService.getPatientId(episodeId);
+      if (patient != null && !episodePatientId.equals(patient.getId())) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, "O episódio não pertence ao paciente indicado.");
+      }
+      if (patient == null) {
+        patient =
+            patientRepository
+                .findById(episodePatientId)
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+      }
+    }
 
-    // FEFO: consumir dos lotes com validade mais próxima primeiro
-    List<StockBatch> batches =
-        batchRepository.findAvailableBatchesFefo(med.getId(), LocalDate.now());
+    User currentUser = getCurrentUser();
     int remaining = req.getQuantity();
 
     for (StockBatch batch : batches) {
@@ -169,20 +202,16 @@ public class PharmacyService {
               .movementType(MovementType.DISPENSE)
               .quantity(-takeFromBatch)
               .patient(patient)
-              .episode(episode)
+              .episodeId(episodeId)
               .reason(req.getReason())
-              .performedBy(getCurrentUser())
+              .performedBy(currentUser)
               .build());
 
       remaining -= takeFromBatch;
     }
 
-    int newTotal = batchRepository.getTotalAvailableQuantity(med.getId(), LocalDate.now());
-    log.info(
-        "Dispensed {} units of {} to patient {}",
-        req.getQuantity(),
-        med.getName(),
-        patient != null ? patient.getFullName() : "N/A");
+    int newTotal = batchRepository.getTotalAvailableQuantity(med.getId(), today);
+    log.info("Medication dispensed");
 
     return DispenseResponse.builder()
         .medicationId(med.getId())
@@ -194,10 +223,13 @@ public class PharmacyService {
 
   @Transactional(readOnly = true)
   public List<StockBatchResponse> findExpiringSoon(int days) {
+    if (days < 1 || days > 365) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "O prazo deve estar entre 1 e 365 dias.");
+    }
     UUID hospitalId = TenantContext.getCurrentHospital();
-    return batchRepository
-        .findExpiringSoon(hospitalId, LocalDate.now(), LocalDate.now().plusDays(days))
-        .stream()
+    LocalDate today = today();
+    return batchRepository.findExpiringSoon(hospitalId, today, today.plusDays(days)).stream()
         .map(this::toBatchResponse)
         .collect(Collectors.toList());
   }
@@ -207,12 +239,27 @@ public class PharmacyService {
   // ------------------------------------------------
 
   private User getCurrentUser() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    return userRepository.findByUsername(username).orElse(null);
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new EntityNotFoundException("Authenticated user not found");
+    }
+    return userRepository
+        .findByUsername(authentication.getName())
+        .orElseThrow(() -> new EntityNotFoundException("Authenticated user not found"));
+  }
+
+  private Medication findMedicationOrThrow(UUID hospitalId, UUID medicationId) {
+    return medicationRepository
+        .findByHospitalIdAndId(hospitalId, medicationId)
+        .orElseThrow(() -> new EntityNotFoundException("Medication not found"));
+  }
+
+  private LocalDate today() {
+    return LocalDate.now(ANGOLA_ZONE);
   }
 
   private MedicationResponse toMedicationResponse(Medication m) {
-    int total = batchRepository.getTotalAvailableQuantity(m.getId(), LocalDate.now());
+    int total = batchRepository.getTotalAvailableQuantity(m.getId(), today());
     return MedicationResponse.builder()
         .id(m.getId())
         .name(m.getName())

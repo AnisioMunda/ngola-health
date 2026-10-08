@@ -1,6 +1,6 @@
 # ADR-0007: Arquitectura do frontend
 
-- **Estado:** Proposta
+- **Estado:** Aceite
 - **Data:** 2026-10-07
 
 ## Contexto
@@ -16,6 +16,8 @@ tipos usados na aplicação.
 - Organizar as funcionalidades em rotas lazy por módulo.
 - Gerar os tipos consumidos pelo frontend a partir do contrato OpenAPI, em vez
   de manter cópias manuais dos DTOs.
+- Usar `swagger-typescript-api` para gerar os tipos do portal a partir do
+  contrato versionado em `frontend/openapi/portal.yaml`.
 - Manter componentes pequenos e reutilizáveis, com o texto visível às pessoas
   em português e identificadores de código em inglês.
 
@@ -34,7 +36,8 @@ tipos se desviem dos DTOs e do contrato real.
 - A estrutura e as decisões de versão devem ser validadas ao inicializar o
   Angular previsto na ADR-0002.
 
-## Decisão pendente
+## Geração dos tipos
 
-Confirmar a proposta e escolher a ferramenta concreta de geração de tipos na
-Tarefa 7.6.
+Executar `npm run api:generate` na pasta `frontend`. O contrato OpenAPI deve ser
+actualizado juntamente com os DTOs do backend, e os tipos gerados devem ser
+revistos e compilados antes de integrar alterações à API.

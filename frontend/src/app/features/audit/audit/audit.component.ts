@@ -21,13 +21,18 @@ import {
   styleUrls: ['./audit.component.scss'],
 })
 export class AuditComponent implements OnInit {
+  private static readonly UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   logs: AuditLogDto[] = [];
   stats: AuditStatsDto | null = null;
   loading = true;
   loadingStats = true;
   error = '';
+  statsError = '';
+  filterError = '';
 
-  // Filtros
+  userIdFilter = '';
   actionFilter: AuditAction | '' = '';
   entityTypeFilter: EntityType | '' = '';
   dateFrom = '';
@@ -45,10 +50,13 @@ export class AuditComponent implements OnInit {
   actions: { value: AuditAction | ''; label: string }[] = [
     { value: '', label: 'Todas as acções' },
     { value: 'CREATE', label: 'Criação' },
+    { value: 'READ', label: 'Leitura' },
     { value: 'UPDATE', label: 'Actualização' },
     { value: 'DELETE', label: 'Eliminação' },
     { value: 'LOGIN', label: 'Login' },
+    { value: 'LOGOUT', label: 'Logout' },
     { value: 'LOGIN_FAILED', label: 'Login Falhado' },
+    { value: 'EXPORT', label: 'Exportação' },
     { value: 'PRINT', label: 'Impressão' },
     { value: 'APPROVE', label: 'Aprovação' },
     { value: 'REJECT', label: 'Rejeição' },
@@ -58,12 +66,19 @@ export class AuditComponent implements OnInit {
     { value: '', label: 'Todas as entidades' },
     { value: 'PATIENT', label: 'Paciente' },
     { value: 'EPISODE', label: 'Episódio' },
+    { value: 'PRESCRIPTION', label: 'Prescrição' },
     { value: 'LAB_REQUEST', label: 'Laboratório' },
     { value: 'MEDICATION', label: 'Medicamento' },
     { value: 'INVOICE', label: 'Factura' },
     { value: 'APPOINTMENT', label: 'Agendamento' },
     { value: 'ADMISSION', label: 'Internamento' },
     { value: 'USER', label: 'Utilizador' },
+    { value: 'HOSPITAL', label: 'Hospital' },
+    { value: 'NOTIFICATION', label: 'Notificação' },
+    { value: 'REPORT', label: 'Relatório' },
+    { value: 'WARD', label: 'Enfermaria' },
+    { value: 'BED', label: 'Cama' },
+    { value: 'SYSTEM', label: 'Sistema' },
   ];
 
   constructor(private auditService: AuditService) {}
@@ -75,9 +90,10 @@ export class AuditComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.error = '';
     this.auditService
       .findAll(
-        undefined,
+        this.userIdFilter.trim() || undefined,
         this.actionFilter || undefined,
         this.entityTypeFilter || undefined,
         this.dateFrom ? this.dateFrom + 'T00:00:00Z' : undefined,
@@ -92,7 +108,7 @@ export class AuditComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.error = 'Erro ao carregar logs.';
+          this.error = 'Não foi possível carregar os registos de auditoria.';
           this.loading = false;
         },
       });
@@ -100,22 +116,45 @@ export class AuditComponent implements OnInit {
 
   loadStats(): void {
     this.loadingStats = true;
+    this.statsError = '';
     this.auditService.getStats().subscribe({
       next: (s) => {
         this.stats = s;
         this.loadingStats = false;
       },
       error: () => {
+        this.stats = null;
+        this.statsError = 'Não foi possível carregar as estatísticas de auditoria.';
         this.loadingStats = false;
       },
     });
   }
 
   onFilterChange(): void {
+    this.filterError = '';
+    this.error = '';
+    const userId = this.userIdFilter.trim();
+    if (userId && !AuditComponent.UUID_PATTERN.test(userId)) {
+      this.filterError = 'Indique um UUID válido para filtrar pelo utilizador.';
+      return;
+    }
+    if (this.dateFrom && this.dateTo && this.dateFrom > this.dateTo) {
+      this.filterError = 'A data inicial não pode ser posterior à data final.';
+      return;
+    }
+
     this.currentPage = 0;
     this.load();
   }
+
+  filterByUser(userId: string | null): void {
+    if (!userId) return;
+    this.userIdFilter = userId;
+    this.onFilterChange();
+  }
+
   clearFilters(): void {
+    this.userIdFilter = '';
     this.actionFilter = '';
     this.entityTypeFilter = '';
     this.dateFrom = '';

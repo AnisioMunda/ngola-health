@@ -1,17 +1,49 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { FormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import {
   SchedulingService,
   DoctorScheduleResponse,
 } from '../../../core/services/scheduling.service';
 import { UserManagementService } from '../../../core/services/user-management.service';
 
+interface DoctorScheduleGroup {
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  initials: string;
+  schedules: DoctorScheduleResponse[];
+}
+
+function scheduleTimeRangeValidator(control: AbstractControl): ValidationErrors | null {
+  const startTime = control.get('startTime')?.value as string | null;
+  const endTime = control.get('endTime')?.value as string | null;
+  const duration = Number(control.get('slotDurationMinutes')?.value);
+  if (!startTime || !endTime) return null;
+
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+  if (endMinutes <= startMinutes) return { invalidTimeRange: true };
+  if (duration > endMinutes - startMinutes) return { slotExceedsInterval: true };
+  return null;
+}
+
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
 @Component({
   selector: 'app-doctor-schedules',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './doctor-schedules.component.html',
   styleUrls: ['./doctor-schedules.component.scss'],
 })
@@ -21,6 +53,7 @@ export class DoctorSchedulesComponent implements OnInit {
   saving = false;
   error = '';
   success = '';
+  doctorError = '';
 
   showForm = false;
   doctors: { id: string; fullName: string; especiality: string }[] = [];
@@ -36,14 +69,8 @@ export class DoctorSchedulesComponent implements OnInit {
     { value: 6, label: 'Domingo' },
   ];
 
-  get schedulesByDoctor(): {
-    doctorId: string;
-    doctorName: string;
-    specialty: string;
-    initials: string;
-    schedules: DoctorScheduleResponse[];
-  }[] {
-    const map = new Map<string, any>();
+  get schedulesByDoctor(): DoctorScheduleGroup[] {
+    const map = new Map<string, DoctorScheduleGroup>();
     for (const s of this.schedules) {
       if (!map.has(s.doctorId)) {
         map.set(s.doctorId, {
@@ -54,7 +81,7 @@ export class DoctorSchedulesComponent implements OnInit {
           schedules: [],
         });
       }
-      map.get(s.doctorId).schedules.push(s);
+      map.get(s.doctorId)?.schedules.push(s);
     }
     return Array.from(map.values());
   }
@@ -80,10 +107,12 @@ export class DoctorSchedulesComponent implements OnInit {
       slotDurationMinutes: [30, [Validators.required, Validators.min(10), Validators.max(120)]],
       maxPatientsPerSlot: [1, [Validators.required, Validators.min(1), Validators.max(10)]],
     });
+    this.form.addValidators(scheduleTimeRangeValidator);
   }
 
   load(): void {
     this.loading = true;
+    this.error = '';
     this.schedulingService.getHospitalSchedules().subscribe({
       next: (s) => {
         this.schedules = s;
@@ -102,17 +131,23 @@ export class DoctorSchedulesComponent implements OnInit {
         this.doctors = p.content
           .filter((u) => u.roles?.includes('DOCTOR'))
           .map((u) => ({ id: u.id, fullName: u.fullName, especiality: u.especiality ?? '' }));
+        this.doctorError = '';
+      },
+      error: () => {
+        this.doctorError = 'Erro ao carregar a lista de médicos.';
       },
     });
   }
 
   onSubmit(): void {
+    if (this.saving) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     this.saving = true;
     this.error = '';
+    this.success = '';
 
     this.schedulingService.createSchedule(this.form.getRawValue()).subscribe({
       next: () => {
@@ -129,7 +164,7 @@ export class DoctorSchedulesComponent implements OnInit {
         this.load();
       },
       error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao criar horário.';
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao criar horário.';
         this.saving = false;
       },
     });
@@ -137,6 +172,8 @@ export class DoctorSchedulesComponent implements OnInit {
 
   delete(id: string): void {
     if (!confirm('Remover este horário?')) return;
+    this.error = '';
+    this.success = '';
     this.schedulingService.deleteSchedule(id).subscribe({
       next: () => {
         this.flash('Horário removido.');
@@ -186,9 +223,7 @@ export class DoctorSchedulesComponent implements OnInit {
   }
 
   private timeToMinutes(t: string): number {
-    if (!t) return 0;
-    const parts = t.split(':');
-    return Number(parts[0]) * 60 + Number(parts[1]);
+    return t ? timeToMinutes(t) : 0;
   }
 
   get f() {

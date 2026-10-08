@@ -6,6 +6,7 @@ import {
   NotificationDto,
   TYPE_ICONS,
   PRIORITY_COLORS,
+  notificationErrorMessage,
 } from '../../../core/services/notification.service';
 
 @Component({
@@ -55,6 +56,7 @@ export class NotificationsComponent implements OnInit {
 
   load(): void {
     this.loading = true;
+    this.error = '';
     this.notificationService.getAll(this.currentPage).subscribe({
       next: (page) => {
         this.notifications = page.content;
@@ -62,8 +64,8 @@ export class NotificationsComponent implements OnInit {
         this.totalPages = page.totalPages;
         this.loading = false;
       },
-      error: () => {
-        this.error = 'Erro ao carregar notificações.';
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(error, 'Não foi possível carregar as notificações.');
         this.loading = false;
       },
     });
@@ -71,19 +73,33 @@ export class NotificationsComponent implements OnInit {
 
   markAsRead(n: NotificationDto): void {
     if (n.read) return;
+    this.error = '';
     this.notificationService.markAsRead(n.id).subscribe({
       next: () => {
         n.read = true;
         this.notificationService.unreadCount.update((c) => Math.max(0, c - 1));
       },
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(
+          error,
+          'Não foi possível marcar a notificação como lida.',
+        );
+      },
     });
   }
 
   markAllAsRead(): void {
+    this.error = '';
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
         this.notifications.forEach((n) => (n.read = true));
         this.notificationService.unreadCount.set(0);
+      },
+      error: (error: unknown) => {
+        this.error = notificationErrorMessage(
+          error,
+          'Não foi possível marcar todas as notificações como lidas.',
+        );
       },
     });
   }

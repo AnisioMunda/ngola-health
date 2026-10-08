@@ -31,13 +31,15 @@ export class CalendarComponent implements OnInit {
   events: CalendarEvent[] = [];
   loading = false;
   error = '';
+  doctorError = '';
 
   selectedDoctorId = '';
   doctors: { id: string; fullName: string }[] = [];
+  private eventLoadSequence = 0;
 
   statusLabels = STATUS_LABELS;
 
-  readonly DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  readonly DAY_NAMES = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
   readonly MONTH_NAMES = [
     'Janeiro',
     'Fevereiro',
@@ -71,6 +73,10 @@ export class CalendarComponent implements OnInit {
         this.doctors = p.content
           .filter((u) => u.roles?.includes('DOCTOR'))
           .map((u) => ({ id: u.id, fullName: u.fullName }));
+        this.doctorError = '';
+      },
+      error: () => {
+        this.doctorError = 'Erro ao carregar a lista de médicos.';
       },
     });
   }
@@ -82,9 +88,9 @@ export class CalendarComponent implements OnInit {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    // Começar no domingo antes do primeiro dia
+    // Começar na segunda-feira anterior ou no próprio primeiro dia.
     const start = new Date(firstDay);
-    start.setDate(start.getDate() - start.getDay());
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -112,7 +118,11 @@ export class CalendarComponent implements OnInit {
   }
 
   loadEvents(): void {
+    const requestSequence = ++this.eventLoadSequence;
     this.loading = true;
+    this.error = '';
+    this.events = [];
+    this.distributeEvents();
     const year = this.currentDate.getFullYear();
     const month = this.currentDate.getMonth();
     const from = this.toDateStr(new Date(year, month, 1));
@@ -120,14 +130,13 @@ export class CalendarComponent implements OnInit {
 
     this.schedulingService.getCalendar(from, to).subscribe({
       next: (events) => {
-        this.events = events.filter(
-          (e) =>
-            !this.selectedDoctorId || e.doctorName === this.getDoctorName(this.selectedDoctorId),
-        );
+        if (requestSequence !== this.eventLoadSequence) return;
+        this.events = events;
         this.distributeEvents();
         this.loading = false;
       },
       error: () => {
+        if (requestSequence !== this.eventLoadSequence) return;
         this.error = 'Erro ao carregar calendário.';
         this.loading = false;
       },
@@ -138,12 +147,14 @@ export class CalendarComponent implements OnInit {
     // Limpar eventos anteriores
     this.weeks.forEach((week) => week.forEach((day) => (day.events = [])));
 
-    this.events.forEach((event) => {
-      this.weeks.forEach((week) => {
-        const day = week.find((d) => d.dateStr === event.date);
-        if (day) day.events.push(event);
+    this.events
+      .filter((event) => !this.selectedDoctorId || event.doctorId === this.selectedDoctorId)
+      .forEach((event) => {
+        this.weeks.forEach((week) => {
+          const day = week.find((d) => d.dateStr === event.date);
+          if (day) day.events.push(event);
+        });
       });
-    });
   }
 
   prevMonth(): void {
@@ -184,11 +195,9 @@ export class CalendarComponent implements OnInit {
   }
 
   private toDateStr(d: Date): string {
-    return d.toISOString().split('T')[0];
-  }
-
-  private getDoctorName(id: string): string {
-    return this.doctors.find((d) => d.id === id)?.fullName ?? '';
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
   }
 
   statusColor(status: AppointmentStatus): string {

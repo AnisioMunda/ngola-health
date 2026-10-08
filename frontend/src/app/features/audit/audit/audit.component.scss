@@ -107,6 +107,12 @@
   align-items: flex-start;
 }
 
+.stats-loading {
+  margin: 0 0 1rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
 .top-users {
   display: flex;
   flex-direction: column;
@@ -160,7 +166,8 @@
   flex: 1;
 }
 
-select {
+select,
+.user-id-filter {
   height: 38px;
   padding: 0 12px;
   border: 1.5px solid #e5e7eb;
@@ -170,9 +177,14 @@ select {
   background: white;
   outline: none;
   min-width: 160px;
+  box-sizing: border-box;
   &:focus {
     border-color: #203a43;
   }
+}
+
+.user-id-filter {
+  width: 210px;
 }
 
 .date-range {
@@ -348,6 +360,43 @@ table {
   font-weight: 600;
   color: #1a1f2e;
   font-size: 0.82rem;
+}
+
+.user-filter {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1a1f2e;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: #203a43;
+    text-decoration: underline;
+  }
+}
+
+.entity-id {
+  display: block;
+  max-width: 120px;
+  margin-top: 0.2rem;
+  overflow: hidden;
+  color: #9ca3af;
+  font-family: monospace;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 .user-email {
   display: block;

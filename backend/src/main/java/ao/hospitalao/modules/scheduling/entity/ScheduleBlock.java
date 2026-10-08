@@ -2,6 +2,7 @@ package ao.hospitalao.modules.scheduling.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,7 +16,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ScheduleBlock {
+public class ScheduleBlock extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,7 +28,7 @@ public class ScheduleBlock {
   private User doctor;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @Column(name = "block_date", nullable = false)

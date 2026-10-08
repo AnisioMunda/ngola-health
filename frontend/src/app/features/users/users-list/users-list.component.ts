@@ -5,6 +5,7 @@ import {
   UserManagementService,
   UserResponse,
 } from '../../../core/services/user-management.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-users-list',
@@ -26,6 +27,7 @@ export class UsersListComponent implements OnInit {
   constructor(
     private userService: UserManagementService,
     private router: Router,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -34,6 +36,7 @@ export class UsersListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
+    this.error = '';
     this.userService.findAll(this.currentPage, this.pageSize).subscribe({
       next: (page) => {
         this.users = page.content;
@@ -42,10 +45,14 @@ export class UsersListComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Failed to load users.';
+        this.error = 'Não foi possível carregar os utilizadores. Tente novamente.';
         this.loading = false;
       },
     });
+  }
+
+  get canManageUsers(): boolean {
+    return this.authService.getCurrentUser()?.roles?.includes('ADMIN') ?? false;
   }
 
   goToCreate(): void {
@@ -68,30 +75,31 @@ export class UsersListComponent implements OnInit {
         if (index !== -1) this.users[index] = updated;
       },
       error: () => {
-        this.error = 'Failed to update status.';
+        this.error = 'Não foi possível actualizar o estado do utilizador.';
       },
     });
   }
 
   getStatusLabel(status: string): string {
     const map: Record<string, string> = {
-      ACTIVE: 'Active',
-      INACTIVE: 'Inactive',
-      SUSPENDED: 'Suspended',
+      ACTIVE: 'Activo',
+      INACTIVE: 'Inactivo',
+      SUSPENDED: 'Suspenso',
     };
     return map[status] ?? status;
   }
 
   getRoleLabel(role: string): string {
     const map: Record<string, string> = {
-      ADMIN: 'Admin',
-      DOCTOR: 'Doctor',
-      NURSE: 'Nurse',
-      RECEPTIONIST: 'Receptionist',
-      PHARMACIST: 'Pharmacist',
-      FINANCIAL: 'Financial',
-      MANAGER: 'Manager',
-      LAB_TECHNICIAN: 'Lab Tech',
+      ADMIN: 'Administrador',
+      DOCTOR: 'Médico',
+      NURSE: 'Enfermeiro',
+      RECEPTIONIST: 'Recepcionista',
+      PHARMACIST: 'Farmacêutico',
+      FINANCIAL: 'Financeiro',
+      MANAGER: 'Gestor',
+      LAB_TECHNICIAN: 'Técnico de laboratório',
+      SUPER_ADMIN: 'Superadministrador da plataforma',
     };
     return map[role] ?? role;
   }

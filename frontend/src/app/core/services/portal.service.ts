@@ -4,78 +4,29 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import type {
+  PortalDashboardDto,
+  PortalEpisodeDto,
+  PortalInvoiceDto,
+  PortalLabResultDto,
+  PortalLoginRequest,
+  PortalLoginResponse,
+  PortalPrescriptionDto,
+  PortalRegistrationResponse,
+  PortalRegisterRequest,
+} from '../api/generated/portal-api';
 
-export interface PortalLoginResponse {
-  token: string;
-  patientName: string;
-  patientId: string;
-  email: string;
-}
-
-export interface PortalDashboardDto {
-  patientName: string;
-  totalEpisodes: number;
-  upcomingAppointments: number;
-  pendingLabResults: number;
-  pendingInvoices: number;
-  totalDebt: number;
-  recentEpisodes: PortalEpisodeDto[];
-  upcomingAppointmentsList: PortalAppointmentDto[];
-}
-
-export interface PortalEpisodeDto {
-  id: string;
-  episodeType: string;
-  status: string;
-  statusLabel: string;
-  doctorName: string;
-  scheduledAt: string;
-  completedAt: string;
-  reason: string;
-  diagnosis: string;
-  hasLabResults: boolean;
-  hasPrescriptions: boolean;
-}
-
-export interface PortalPrescriptionDto {
-  id: string;
-  prescriptionNumber: string;
-  doctorName: string;
-  prescriptionDate: string;
-  expiryDate: string;
-  status: string;
-  statusLabel: string;
-  diagnosis: string;
-  items: PortalPrescriptionItemDto[];
-}
-
-export interface PortalPrescriptionItemDto {
-  medicationName: string;
-  dosage: string;
-  route: string;
-  quantityPrescribed: number;
-  quantityDispensed: number;
-  status: string;
-}
-
-export interface PortalInvoiceDto {
-  id: string;
-  invoiceNumber: string;
-  issueDate: string;
-  totalAmount: number;
-  status: string;
-  statusLabel: string;
-  description: string;
-}
-
-export interface PortalAppointmentDto {
-  id: string;
-  doctorName: string;
-  specialty: string;
-  scheduledAt: string;
-  status: string;
-  reason: string;
-}
+export type {
+  PortalAppointmentDto,
+  PortalDashboardDto,
+  PortalEpisodeDto,
+  PortalInvoiceDto,
+  PortalLabResultDto,
+  PortalLoginResponse,
+  PortalPrescriptionDto,
+  PortalPrescriptionItemDto,
+  PortalRegistrationResponse,
+} from '../api/generated/portal-api';
 
 const PORTAL_TOKEN_KEY = 'portal_token';
 const PORTAL_USER_KEY = 'portal_user';
@@ -89,15 +40,16 @@ export class PortalService {
   private currentUser$ = new BehaviorSubject<PortalLoginResponse | null>(this.getStoredUser());
 
   // Auth
-  register(req: any): Observable<PortalLoginResponse> {
-    return this.http
-      .post<PortalLoginResponse>(`${this.apiUrl}/register`, req)
-      .pipe(tap((r) => this.storeSession(r)));
+  register(req: PortalRegisterRequest): Observable<PortalRegistrationResponse> {
+    return this.http.post<PortalRegistrationResponse>(`${this.apiUrl}/register`, req);
   }
 
   login(email: string, password: string): Observable<PortalLoginResponse> {
     return this.http
-      .post<PortalLoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .post<PortalLoginResponse>(`${this.apiUrl}/login`, {
+        email,
+        password,
+      } satisfies PortalLoginRequest)
       .pipe(tap((r) => this.storeSession(r)));
   }
 
@@ -127,6 +79,10 @@ export class PortalService {
 
   getEpisodes(): Observable<PortalEpisodeDto[]> {
     return this.http.get<PortalEpisodeDto[]>(`${this.apiUrl}/episodes`);
+  }
+
+  getLabResults(): Observable<PortalLabResultDto[]> {
+    return this.http.get<PortalLabResultDto[]>(`${this.apiUrl}/lab-results`);
   }
 
   getPrescriptions(): Observable<PortalPrescriptionDto[]> {

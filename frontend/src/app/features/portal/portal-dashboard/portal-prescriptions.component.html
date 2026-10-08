@@ -1,0 +1,51 @@
+<header class="content-header">
+  <h1>Prescrições</h1>
+</header>
+
+<div class="empty-state" *ngIf="prescriptions.length === 0">
+  <p>Sem prescrições registadas.</p>
+</div>
+
+<div class="prescription-card" *ngFor="let prescription of prescriptions">
+  <div class="rx-header">
+    <span class="rx-number">{{ prescription.prescriptionNumber }}</span>
+    <span
+      class="rx-status"
+      [style.background]="statusColor(prescription.status) + '22'"
+      [style.color]="statusColor(prescription.status)"
+    >
+      {{ prescription.statusLabel || prescription.status }}
+    </span>
+  </div>
+
+  <div class="rx-meta">
+    <span>Dr(a). {{ prescription.doctorName }}</span>
+    <span>{{ prescription.prescriptionDate | date: 'dd/MM/yyyy' }}</span>
+    <span>Válida até: {{ prescription.expiryDate | date: 'dd/MM/yyyy' }}</span>
+  </div>
+
+  <div class="rx-diagnosis" *ngIf="prescription.diagnosis">{{ prescription.diagnosis }}</div>
+
+  <div class="rx-items">
+    <div class="rx-item" *ngFor="let item of prescription.items">
+      <span class="item-med">{{ item.medicationName }}</span>
+      <span class="item-dosage">{{ item.dosage }}</span>
+      <span class="item-route" *ngIf="item.route">{{ item.route }}</span>
+      <div class="item-progress">
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="
+              item.quantityPrescribed > 0
+                ? (item.quantityDispensed / item.quantityPrescribed) * 100
+                : 0
+            "
+          ></div>
+        </div>
+        <span class="progress-text">
+          {{ item.quantityDispensed }}/{{ item.quantityPrescribed }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

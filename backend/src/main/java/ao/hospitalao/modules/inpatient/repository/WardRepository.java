@@ -23,7 +23,7 @@ public interface WardRepository extends JpaRepository<Ward, UUID> {
 
   @Query(
       """
-        SELECT w FROM Ward w
+        SELECT DISTINCT w FROM Ward w
         LEFT JOIN FETCH w.beds b
         LEFT JOIN FETCH w.responsibleDoctor
         WHERE w.hospital.id = :hospitalId

@@ -31,7 +31,8 @@ public class UserController {
 
   @GetMapping
   @Operation(summary = "List all users (paginated)")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+  @PreAuthorize(
+      "hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name()) or hasRole(T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Page<UserResponse>> findAll(
       @PageableDefault(size = 20, sort = "fullName") Pageable pageable) {
     return ResponseEntity.ok(userService.findAll(pageable));
@@ -39,14 +40,15 @@ public class UserController {
 
   @GetMapping("/{id}")
   @Operation(summary = "Get user by ID")
-  @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or #id == authentication.principal.id")
+  @PreAuthorize(
+      "hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name()) or hasRole(T(ao.hospitalao.security.RoleName).MANAGER.name()) or #id == authentication.principal.id")
   public ResponseEntity<UserResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.findById(id));
   }
 
   @PostMapping
   @Operation(summary = "Create new user")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
     UserResponse created = userService.create(request);
     URI uri =
@@ -59,7 +61,7 @@ public class UserController {
 
   @PutMapping("/{id}")
   @Operation(summary = "Update user")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<UserResponse> update(
       @PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
     return ResponseEntity.ok(userService.update(id, request));
@@ -67,28 +69,28 @@ public class UserController {
 
   @PatchMapping("/{id}/activate")
   @Operation(summary = "Activate user")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<UserResponse> activate(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.ACTIVE));
   }
 
   @PatchMapping("/{id}/deactivate")
   @Operation(summary = "Deactivate user")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<UserResponse> deactivate(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.INACTIVE));
   }
 
   @PatchMapping("/{id}/suspend")
   @Operation(summary = "Suspend user")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<UserResponse> suspend(@PathVariable UUID id) {
     return ResponseEntity.ok(userService.setStatus(id, RegisterStatus.SUSPENDED));
   }
 
   @PatchMapping("/{id}/reset-password")
   @Operation(summary = "Reset user password (admin)")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   public ResponseEntity<Void> resetPassword(
       @PathVariable UUID id, @RequestBody String newPassword) {
     userService.resetPassword(id, newPassword);

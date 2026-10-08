@@ -57,4 +57,7 @@ public interface EquipmentRepository extends JpaRepository<Equipment, UUID> {
   long countByHospitalIdAndActiveTrue(UUID hospitalId);
 
   long countByHospitalIdAndStatus(UUID hospitalId, EquipmentStatus status);
+
+  long countByHospitalIdAndActiveTrueAndWarrantyExpiryBefore(
+      UUID hospitalId, LocalDate warrantyExpiryBefore);
 }

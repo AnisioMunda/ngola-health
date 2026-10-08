@@ -1,22 +1,38 @@
 // ============================================================
 // portal-dashboard.component.ts
 // ============================================================
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import {
   PortalService,
   PortalDashboardDto,
   PortalEpisodeDto,
+  PortalLabResultDto,
   PortalPrescriptionDto,
   PortalInvoiceDto,
 } from '../../../core/services/portal.service';
-import { formatAoaCurrency } from '../../../shared/utils/aoa-currency';
+import { PortalDashboardHomeComponent } from './portal-dashboard-home.component';
+import { PortalDashboardSidebarComponent } from './portal-dashboard-sidebar.component';
+import { PortalEpisodesComponent } from './portal-episodes.component';
+import { PortalInvoicesComponent } from './portal-invoices.component';
+import { PortalLabResultsComponent } from './portal-lab-results.component';
+import { PortalPrescriptionsComponent } from './portal-prescriptions.component';
+import { PortalDashboardTab } from './portal-dashboard.types';
 
 @Component({
   selector: 'app-portal-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    PortalDashboardSidebarComponent,
+    PortalDashboardHomeComponent,
+    PortalLabResultsComponent,
+    PortalEpisodesComponent,
+    PortalPrescriptionsComponent,
+    PortalInvoicesComponent,
+  ],
+  // The shared dashboard stylesheet is scoped under .portal-layout for all child views.
+  encapsulation: ViewEncapsulation.None,
   templateUrl: './portal-dashboard.component.html',
   styleUrls: ['./portal-dashboard.component.scss'],
 })
@@ -25,18 +41,17 @@ export class PortalDashboardComponent implements OnInit {
   prescriptions: PortalPrescriptionDto[] = [];
   invoices: PortalInvoiceDto[] = [];
   episodes: PortalEpisodeDto[] = [];
+  labResults: PortalLabResultDto[] = [];
+  labResultsLoaded = false;
 
   loading = true;
   error = '';
 
-  activeTab: 'home' | 'episodes' | 'prescriptions' | 'invoices' = 'home';
+  activeTab: PortalDashboardTab = 'home';
 
   user = this.portalService.getCurrentUser();
 
-  constructor(
-    private portalService: PortalService,
-    private router: Router,
-  ) {}
+  constructor(private portalService: PortalService) {}
 
   ngOnInit(): void {
     this.loadDashboard();
@@ -56,8 +71,20 @@ export class PortalDashboardComponent implements OnInit {
     });
   }
 
-  onTabChange(tab: 'home' | 'episodes' | 'prescriptions' | 'invoices'): void {
+  onTabChange(tab: PortalDashboardTab): void {
     this.activeTab = tab;
+    this.error = '';
+    if (tab === 'lab-results' && !this.labResultsLoaded) {
+      this.portalService.getLabResults().subscribe({
+        next: (results) => {
+          this.labResults = results;
+          this.labResultsLoaded = true;
+        },
+        error: () => {
+          this.error = 'Erro ao carregar resultados laboratoriais.';
+        },
+      });
+    }
     if (tab === 'prescriptions' && !this.prescriptions.length) {
       this.portalService.getPrescriptions().subscribe((p) => (this.prescriptions = p));
     }
@@ -71,55 +98,5 @@ export class PortalDashboardComponent implements OnInit {
 
   logout(): void {
     this.portalService.logout();
-  }
-
-  getInitials(): string {
-    if (!this.user?.patientName) return 'P';
-    const parts = this.user.patientName.split(' ').filter((p) => p.length > 0);
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : parts[0][0].toUpperCase();
-  }
-
-  statusColor(status: string): string {
-    const map: Record<string, string> = {
-      ACTIVE: '#3b82f6',
-      DISPENSED: '#16a34a',
-      CANCELLED: '#dc2626',
-      EXPIRED: '#9ca3af',
-      PARTIALLY_DISPENSED: '#f59e0b',
-      COMPLETED: '#16a34a',
-      SCHEDULED: '#3b82f6',
-      IN_PROGRESS: '#f59e0b',
-      PAID: '#16a34a',
-      PENDING: '#f59e0b',
-      OVERDUE: '#dc2626',
-    };
-    return map[status] ?? '#9ca3af';
-  }
-
-  invoiceStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      PAID: 'Pago',
-      PENDING: 'Pendente',
-      OVERDUE: 'Em atraso',
-      CANCELLED: 'Cancelado',
-      ISSUED: 'Emitido',
-    };
-    return map[status] ?? status;
-  }
-
-  formatCurrency(val: number): string {
-    return formatAoaCurrency(val);
-  }
-
-  getPatientFirstName(): string {
-    const name = this.dashboard?.patientName;
-
-    if (!name) {
-      return '';
-    }
-
-    return name.trim().split(/\s+/)[0];
   }
 }

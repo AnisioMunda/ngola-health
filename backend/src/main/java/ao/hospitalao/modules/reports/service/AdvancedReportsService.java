@@ -16,6 +16,7 @@ import ao.hospitalao.modules.prescription.repository.PrescriptionRepository;
 import ao.hospitalao.modules.reports.dto.ReportsDtos.*;
 import ao.hospitalao.modules.scheduling.repository.AppointmentRepository;
 import ao.hospitalao.modules.triage.repository.TriageRepository;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.tenant.TenantContext;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -249,7 +250,8 @@ public class AdvancedReportsService {
         .filter(
             u ->
                 u.getRoles() != null
-                    && u.getRoles().stream().anyMatch(r -> r.toString().contains("DOCTOR")))
+                    && u.getRoles().stream()
+                        .anyMatch(role -> RoleName.DOCTOR.name().equals(role.getName())))
         .map(
             u ->
                 DoctorStats.builder()

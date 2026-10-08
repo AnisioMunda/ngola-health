@@ -9,31 +9,48 @@ export type TriageStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'TRANSFERRE
 export interface TriageResponse {
   id: string;
   queueNumber: number;
-  patientId: string;
+  patientId: string | null;
   patientName: string;
-  patientAge: number;
-  patientGender: string;
+  patientAge: number | null;
+  patientGender: string | null;
   priority: TriagePriority;
   priorityLabel: string;
   priorityColor: string;
   chiefComplaint: string;
-  bloodPressure: string;
-  heartRate: number;
-  temperature: number;
-  oxygenSaturation: number;
-  respiratoryRate: number;
-  weightKg: number;
-  painScale: number;
-  triageNotes: string;
+  bloodPressure: string | null;
+  heartRate: number | null;
+  temperature: number | null;
+  oxygenSaturation: number | null;
+  respiratoryRate: number | null;
+  weightKg: number | null;
+  painScale: number | null;
+  triageNotes: string | null;
   status: TriageStatus;
   statusLabel: string;
-  triagedByName: string;
-  episodeId: string;
+  triagedByName: string | null;
+  episodeId: string | null;
   triagedAt: string;
-  attendedAt: string;
-  completedAt: string;
+  attendedAt: string | null;
+  completedAt: string | null;
   waitingMinutes: number;
   overdue: boolean;
+}
+
+export interface CreateTriageRequest {
+  patientId: string | null;
+  patientNameTemp: string | null;
+  patientAgeTemp: number | null;
+  patientGenderTemp: string | null;
+  priority: TriagePriority;
+  chiefComplaint: string;
+  bloodPressure: string | null;
+  heartRate: number | null;
+  temperature: number | null;
+  oxygenSaturation: number | null;
+  respiratoryRate: number | null;
+  weightKg: number | null;
+  painScale: number | null;
+  triageNotes: string | null;
 }
 
 export interface TriageStatsDto {
@@ -104,7 +121,7 @@ export class TriageService {
     return this.http.get<TriageResponse>(`${this.apiUrl}/${id}`);
   }
 
-  create(req: any): Observable<TriageResponse> {
+  create(req: CreateTriageRequest): Observable<TriageResponse> {
     return this.http.post<TriageResponse>(this.apiUrl, req);
   }
 

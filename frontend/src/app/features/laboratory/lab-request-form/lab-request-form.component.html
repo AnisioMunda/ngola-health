@@ -4,26 +4,33 @@
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      Back
+      Voltar
     </button>
-    <h1>New Lab Request</h1>
+    <h1>Novo pedido de laboratório</h1>
   </header>
+
+  <div class="alert-error" *ngIf="error">{{ error }}</div>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
     <div class="form-card">
       <div class="field">
-        <label>Patient *</label>
-        <select formControlName="patientId">
-          <option value="">Select patient...</option>
+        <label>Paciente *</label>
+        <select formControlName="patientId" [disabled]="loadingPatients || !!patientsError">
+          <option value="">Seleccionar paciente...</option>
           <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
         </select>
+        <span class="field-error" *ngIf="loadingPatients">A carregar pacientes...</span>
+        <span class="field-error" *ngIf="patientsError">
+          {{ patientsError }}
+          <button type="button" class="btn-page" (click)="loadPatients()">Tentar novamente</button>
+        </span>
         <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
-          Patient is required
+          Campo obrigatório.
         </span>
       </div>
 
       <div class="field">
-        <label>Priority</label>
+        <label>Prioridade</label>
         <div class="priority-grid">
           <button
             type="button"
@@ -39,17 +46,17 @@
       </div>
 
       <div class="field">
-        <label>Clinical Notes</label>
+        <label>Notas clínicas</label>
         <textarea
           formControlName="clinicalNotes"
           rows="3"
-          placeholder="Reason for testing, relevant clinical history..."
+          placeholder="Motivo do pedido e informação clínica relevante..."
         ></textarea>
       </div>
     </div>
 
     <div class="form-card">
-      <h2 class="section-title">Select Tests *</h2>
+      <h2 class="section-title">Seleccionar exames *</h2>
 
       <div class="tests-grid">
         <button
@@ -57,6 +64,7 @@
           *ngFor="let test of availableTests"
           class="test-card"
           [class.selected]="isTestSelected(test.id)"
+          [disabled]="loadingTests || !!testsError || saving"
           (click)="toggleTest(test.id)"
         >
           <div class="test-check">
@@ -73,22 +81,38 @@
             <span class="test-name">{{ test.name }}</span>
             <span class="test-meta">{{ test.code }} · {{ test.sampleType }}</span>
           </div>
-          <span class="test-price" *ngIf="test.price">{{ test.price }} Kz</span>
+          <span class="test-price" *ngIf="test.price !== null">{{ test.price }} Kz</span>
         </button>
       </div>
 
-      <div class="empty-mini" *ngIf="availableTests.length === 0">
-        No tests available in catalog. Add tests first.
+      <div class="empty-mini" *ngIf="loadingTests">A carregar o catálogo de exames...</div>
+      <div class="empty-mini" *ngIf="testsError">
+        {{ testsError }}
+        <button type="button" class="btn-page" (click)="loadTests()">Tentar novamente</button>
+      </div>
+      <div class="empty-mini" *ngIf="!loadingTests && !testsError && availableTests.length === 0">
+        Não existem exames activos no catálogo.
       </div>
     </div>
 
-    <div class="alert-error" *ngIf="error">{{ error }}</div>
-
     <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="goBack()">Cancel</button>
-      <button type="submit" class="btn-primary" [disabled]="saving">
-        <span *ngIf="!saving">Create Request</span>
-        <span *ngIf="saving" class="saving-state"><span class="spinner-sm"></span> Saving...</span>
+      <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="
+          saving ||
+          loadingPatients ||
+          loadingTests ||
+          !!patientsError ||
+          !!testsError ||
+          selectedTestIds.size === 0
+        "
+      >
+        <span *ngIf="!saving">Criar pedido</span>
+        <span *ngIf="saving" class="saving-state"
+          ><span class="spinner-sm"></span> A guardar...</span
+        >
       </button>
     </div>
   </form>

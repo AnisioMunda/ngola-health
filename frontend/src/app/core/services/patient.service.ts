@@ -47,6 +47,18 @@ export interface CreatePatientRequest {
   notes?: string;
 }
 
+export interface CheckPatientDuplicatesRequest {
+  fullName: string;
+  birthDate: string;
+  phone?: string;
+}
+
+export interface PatientDuplicateCandidate {
+  id: string;
+  fullName: string;
+  birthDate: string;
+}
+
 export interface Page<T> {
   content: T[];
   totalElements: number;
@@ -97,6 +109,15 @@ export class PatientService {
 
   create(request: CreatePatientRequest): Observable<PatientResponse> {
     return this.http.post<PatientResponse>(this.apiUrl, request);
+  }
+
+  findPossibleDuplicates(
+    request: CheckPatientDuplicatesRequest,
+  ): Observable<PatientDuplicateCandidate[]> {
+    return this.http.post<PatientDuplicateCandidate[]>(
+      `${this.apiUrl}/possible-duplicates`,
+      request,
+    );
   }
 
   update(id: string, request: CreatePatientRequest): Observable<PatientResponse> {

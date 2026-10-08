@@ -51,6 +51,10 @@ O detalhe, a ordem e os critérios de aceitação de cada entrega são os do
 [roadmap](ROADMAP.md). Uma fase planeada não deve ser entendida como
 funcionalidade disponível.
 
+O comportamento actualmente implementado no núcleo clínico e os limites do
+fluxo entre pacientes, triagem, episódios, laboratório e prescrições estão
+descritos no [guia de fluxo clínico](clinical-workflow.md).
+
 ## Fora do escopo inicial
 
 - Substituir o julgamento dos profissionais de saúde ou tomar decisões

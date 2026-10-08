@@ -15,13 +15,14 @@ public class AgtProperties {
   @Pattern(regexp = "https?://[^\\s]+", message = "must be an absolute HTTP(S) URL")
   private String apiUrl;
 
-  private String clientId;
-  private String clientSecret;
+  private boolean enabled;
+  private String username;
+  private String password;
   @NotBlank private String nif;
   @NotBlank private String softwareId;
   @NotBlank private String softwareVersion;
   private String softwareValidationNumber;
+  private String taxExemptionCode;
   private String privateKeyPath;
-  private String privateKeyContent;
   private boolean sandbox;
 }

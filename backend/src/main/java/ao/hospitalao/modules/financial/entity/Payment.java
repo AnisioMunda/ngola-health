@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.financial.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -13,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payment {
+public class Payment extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

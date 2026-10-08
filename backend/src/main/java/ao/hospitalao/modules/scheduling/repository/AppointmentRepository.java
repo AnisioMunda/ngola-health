@@ -53,6 +53,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
   Page<Appointment> findByPatientIdOrderByAppointmentDateDescStartTimeDesc(
       UUID patientId, Pageable pageable);
 
+  boolean existsByIdAndHospitalIdAndPatient_IdAndDoctor_Id(
+      UUID id, UUID hospitalId, UUID patientId, UUID doctorId);
+
   // Consultas futuras do paciente — Portal
   @Query(
       """
@@ -76,21 +79,35 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
       @Param("currentTime") LocalTime currentTime,
       Pageable pageable);
 
-  // Verificar conflito de slot
+  // Lugares ocupados num slot; a agenda bloqueada serializa as reservas concorrentes.
   @Query(
       """
-        SELECT COUNT(a) > 0 FROM Appointment a
+        SELECT a.slotPosition FROM Appointment a
         WHERE a.doctor.id = :doctorId
         AND a.appointmentDate = :date
         AND a.startTime = :startTime
         AND a.status NOT IN ('CANCELLED', 'NO_SHOW')
-        AND (:excludeId IS NULL OR a.id <> :excludeId)
+        ORDER BY a.slotPosition
     """)
-  boolean existsConflict(
+  List<Integer> findOccupiedSlotPositions(
       @Param("doctorId") UUID doctorId,
       @Param("date") LocalDate date,
-      @Param("startTime") LocalTime startTime,
-      @Param("excludeId") UUID excludeId);
+      @Param("startTime") LocalTime startTime);
+
+  @Query(
+      """
+        SELECT COUNT(a) > 0 FROM Appointment a
+        WHERE a.patient.id = :patientId
+        AND a.doctor.id = :doctorId
+        AND a.appointmentDate = :date
+        AND a.startTime = :startTime
+        AND a.status NOT IN ('CANCELLED', 'NO_SHOW')
+    """)
+  boolean existsActiveAppointmentForPatientInSlot(
+      @Param("patientId") UUID patientId,
+      @Param("doctorId") UUID doctorId,
+      @Param("date") LocalDate date,
+      @Param("startTime") LocalTime startTime);
 
   // Filtros avançados para lista
   @Query(

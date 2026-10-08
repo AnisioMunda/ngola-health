@@ -147,15 +147,23 @@ jwt:
 # ============================================================
 agt:
   api-url: ${AGT_API_URL}
-  client-id: ${AGT_CLIENT_ID:}
-  client-secret: ${AGT_CLIENT_SECRET:}
+  enabled: ${AGT_ENABLED:false}
+  username: ${AGT_USERNAME:}
+  password: ${AGT_PASSWORD:}
   nif: ${AGT_NIF}
   software-id: ${AGT_SOFTWARE_ID}
   software-version: ${AGT_SOFTWARE_VERSION}
   software-validation-number: ${AGT_SOFTWARE_VALIDATION:}
+  tax-exemption-code: ${AGT_TAX_EXEMPTION_CODE:}
   private-key-path: ${AGT_PRIVATE_KEY_PATH:}
-  private-key-content: ${AGT_PRIVATE_KEY_CONTENT:}
   sandbox: ${AGT_SANDBOX:false}
+
+telemedicine:
+  teams:
+    enabled: ${TEAMS_ENABLED:false}
+    tenant-id: ${TEAMS_TENANT_ID:}
+    client-id: ${TEAMS_CLIENT_ID:}
+    client-secret: ${TEAMS_CLIENT_SECRET:}
 
 app:
   base-url: ${APP_BASE_URL}
@@ -172,9 +180,9 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 
@@ -210,6 +218,19 @@ logging:
     # Formato legível: data hora [thread] nível classe - mensagem
     console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    ao.hospitalao: INFO
+  structured:
+    format:
+      console: logstash
+
 
 # ============================================================
 # PERFIL: dev
@@ -224,6 +245,8 @@ spring:
     show-sql: true  # Ver as queries SQL no terminal em dev
   liquibase:
     contexts: dev
+    parameters:
+      devAdminPasswordBase64: ${DEV_ADMIN_INITIAL_PASSWORD_BASE64}
   web:
     error:
       include-message: always
@@ -239,7 +262,8 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:4200}
 
 agt:
-  api-url: ${AGT_API_URL:https://sandbox.portaldoparceiro.minfin.gov.ao}
+  api-url: ${AGT_API_URL:https://sifphml.minfin.gov.ao}
+  enabled: ${AGT_ENABLED:false}
   nif: ${AGT_NIF:5000413178}
   software-id: ${AGT_SOFTWARE_ID:HospitalAO}
   software-version: ${AGT_SOFTWARE_VERSION:0.0.1-SNAPSHOT}

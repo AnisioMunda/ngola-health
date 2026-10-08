@@ -2,6 +2,7 @@ package ao.hospitalao.modules.auth.entity;
 
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -16,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User implements UserDetails {
+public class User extends TenantScopedEntity implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,6 +45,9 @@ public class User implements UserDetails {
   @Column(name = "professional_card_number", length = 50)
   private String professionalCard;
 
+  @Column(name = "teams_user_id")
+  private UUID teamsUserId;
+
   @Column(name = "register_status", nullable = false)
   @Enumerated(EnumType.STRING)
   private RegisterStatus registerStatus;
@@ -51,12 +55,18 @@ public class User implements UserDetails {
   @Column(name = "must_change_password", nullable = false)
   private boolean mustChangePassword;
 
+  @Column(name = "failed_login_attempts", nullable = false)
+  private int failedLoginAttempts;
+
+  @Column(name = "locked_until")
+  private OffsetDateTime lockedUntil;
+
   @Column(name = "last_login")
   private OffsetDateTime lastLogin;
 
   // Multi-tenancy — hospital a que o utilizador pertence
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "hospital_id")
+  @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
   private Hospital hospital;
 
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -101,7 +111,8 @@ public class User implements UserDetails {
 
   @Override
   public boolean isAccountNonLocked() {
-    return this.registerStatus != RegisterStatus.SUSPENDED;
+    return this.registerStatus != RegisterStatus.SUSPENDED
+        && (this.lockedUntil == null || !this.lockedUntil.isAfter(OffsetDateTime.now()));
   }
 
   @Override

@@ -1,8 +1,7 @@
 package ao.hospitalao.exceptions;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
+import ao.hospitalao.modules.patients.exception.PatientIdentifierConflictException;
+import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,6 +21,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @RestControllerAdvice
@@ -30,6 +31,7 @@ public class GlobalExceptionHandler {
   public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
     var problem =
         problem(HttpStatus.BAD_REQUEST, "Pedido inválido", "Um ou mais campos são inválidos.");
+    problem.setProperty("code", "VALIDATION_ERROR");
     Map<String, String> errors = new TreeMap<>();
     exception
         .getBindingResult()
@@ -75,6 +77,26 @@ public class GlobalExceptionHandler {
         HttpStatus.CONFLICT, "Conflito", "Já existe um registo com os dados informados.");
   }
 
+  @ExceptionHandler(PatientIdentifierConflictException.class)
+  public ProblemDetail handlePatientIdentifierConflict(
+      PatientIdentifierConflictException exception) {
+    var problem =
+        problem(
+            HttpStatus.CONFLICT,
+            "Identificador de paciente duplicado",
+            "Já existe um paciente com o BI/NIF ou número de cartão informado neste hospital.");
+    problem.setProperty("code", "PATIENT_IDENTIFIER_CONFLICT");
+    return problem;
+  }
+
+  @ExceptionHandler(PasswordPolicyException.class)
+  public ProblemDetail handlePasswordPolicy(PasswordPolicyException exception) {
+    return problem(
+        HttpStatus.BAD_REQUEST,
+        "Senha inválida",
+        "A nova senha deve ser diferente da senha actual.");
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException exception) {
     return problem(
@@ -103,12 +125,8 @@ public class GlobalExceptionHandler {
         HttpStatus.UNAUTHORIZED, "Não autenticado", "As credenciais informadas são inválidas.");
   }
 
-  @ExceptionHandler({
-    ExpiredJwtException.class,
-    MalformedJwtException.class,
-    SignatureException.class
-  })
-  public ProblemDetail handleInvalidToken(Exception exception) {
+  @ExceptionHandler(JwtException.class)
+  public ProblemDetail handleInvalidToken(JwtException exception) {
     return problem(
         HttpStatus.UNAUTHORIZED,
         "Não autenticado",
@@ -121,6 +139,25 @@ public class GlobalExceptionHandler {
         HttpStatus.FORBIDDEN, "Acesso proibido", "Não tem permissão para aceder a este recurso.");
   }
 
+  @ExceptionHandler(ResponseStatusException.class)
+  public ProblemDetail handleResponseStatus(ResponseStatusException exception) {
+    int status = exception.getStatusCode().value();
+    String title =
+        switch (status) {
+          case 400 -> "Pedido inválido";
+          case 401 -> "Não autenticado";
+          case 403 -> "Acesso proibido";
+          case 404 -> "Recurso não encontrado";
+          case 409 -> "Conflito";
+          default -> "Pedido não processado";
+        };
+    String detail = exception.getReason();
+    if (detail == null || detail.isBlank()) {
+      detail = "O pedido não pôde ser processado.";
+    }
+    return problem(exception.getStatusCode(), title, detail);
+  }
+
   @ExceptionHandler(Exception.class)
   public ProblemDetail handleUnexpected(Exception exception) {
     log.error("Erro inesperado ao processar o pedido", exception);
@@ -130,7 +167,7 @@ public class GlobalExceptionHandler {
         "Ocorreu um erro interno. Tente novamente mais tarde.");
   }
 
-  private static ProblemDetail problem(HttpStatus status, String title, String detail) {
+  private static ProblemDetail problem(HttpStatusCode status, String title, String detail) {
     var problem = ProblemDetail.forStatusAndDetail(status, detail);
     problem.setTitle(title);
     return problem;

@@ -1,0 +1,65 @@
+<main class="page">
+  <header class="page-header">
+    <button type="button" class="back-button" (click)="goBack()">← Voltar à farmácia</button>
+    <div class="title-block">
+      <h1>Validades próximas</h1>
+      <p>Consulte os lotes com stock disponível cuja validade está a aproximar-se.</p>
+    </div>
+    <label class="window-filter">
+      <span>Período</span>
+      <select
+        [(ngModel)]="days"
+        (ngModelChange)="load()"
+        aria-label="Período do alerta de validade"
+      >
+        <option *ngFor="let window of expiryWindows" [ngValue]="window">{{ window }} dias</option>
+      </select>
+    </label>
+  </header>
+
+  <div class="alert-error" role="alert" *ngIf="error">
+    <span>{{ error }}</span>
+    <button type="button" (click)="load()">Tentar novamente</button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>A carregar lotes...</span>
+  </div>
+
+  <section class="table-card" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Medicamento</th>
+          <th>Lote</th>
+          <th>Data de validade</th>
+          <th>Quantidade disponível</th>
+          <th>Prioridade</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let batch of batches"
+          [class.critical-row]="isCritical(batch)"
+          (click)="goTo(batch.medicationId)"
+        >
+          <td class="medication-name">{{ batch.medicationName }}</td>
+          <td>{{ batch.batchNumber }}</td>
+          <td>{{ batch.expiryDate | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ batch.quantityAvailable }}</td>
+          <td>
+            <span class="status-badge" [class.critical]="isCritical(batch)">
+              {{ isCritical(batch) ? 'Crítica — 7 dias ou menos' : 'A acompanhar' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="batches.length === 0 && !error">
+          <td colspan="5" class="empty-state">
+            Não há lotes com validade nos próximos {{ days }} dias.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>

@@ -47,7 +47,8 @@ public class FinancialController {
 
   @PostMapping("/prices")
   @Operation(summary = "Adicionar preço de serviço")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER','FINANCIAL')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name())")
   public ResponseEntity<ServicePriceResponse> createPrice(
       @Valid @RequestBody CreateServicePriceRequest request) {
     return ResponseEntity.ok(financialService.createPrice(request));
@@ -59,7 +60,8 @@ public class FinancialController {
 
   @GetMapping("/invoices")
   @Operation(summary = "Listar documentos fiscais")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<Page<InvoiceResponse>> findAll(
       @RequestParam(required = false) UUID patientId,
       @RequestParam(required = false) InvoiceStatus status,
@@ -69,14 +71,16 @@ public class FinancialController {
 
   @GetMapping("/invoices/{id}")
   @Operation(summary = "Obter documento fiscal por ID")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','MANAGER','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<InvoiceResponse> findById(@PathVariable UUID id) {
     return ResponseEntity.ok(financialService.findById(id));
   }
 
   @PostMapping("/invoices")
   @Operation(summary = "Criar documento fiscal (FT / FR / NC / ND)")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody CreateInvoiceRequest request) {
     InvoiceResponse created = financialService.create(request);
     URI uri =
@@ -89,14 +93,16 @@ public class FinancialController {
 
   @PatchMapping("/invoices/{id}/issue")
   @Operation(summary = "Emitir documento fiscal (RASCUNHO → EMITIDO + submissão AGT)")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<InvoiceResponse> issue(@PathVariable UUID id) {
     return ResponseEntity.ok(financialService.issue(id));
   }
 
   @PostMapping("/invoices/{id}/payments")
   @Operation(summary = "Registar pagamento (parcial ou total)")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','RECEPTIONIST')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   public ResponseEntity<InvoiceResponse> registerPayment(
       @PathVariable UUID id, @Valid @RequestBody RegisterPaymentRequest request) {
     return ResponseEntity.ok(financialService.registerPayment(id, request));
@@ -104,18 +110,20 @@ public class FinancialController {
 
   @PatchMapping("/invoices/{id}/void")
   @Operation(summary = "Anular documento fiscal")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name())")
   public ResponseEntity<InvoiceResponse> void_(@PathVariable UUID id, @RequestParam String reason) {
     return ResponseEntity.ok(financialService.void_(id, reason));
   }
 
   // ------------------------------------------------
-  // PDF do documento fiscal — layout oficial AGT
+  // PDF do documento fiscal
   // ------------------------------------------------
 
   @GetMapping("/invoices/{id}/pdf")
-  @Operation(summary = "Gerar PDF conforme modelo oficial AGT Angola")
-  @PreAuthorize("hasAnyRole('ADMIN','FINANCIAL','MANAGER','RECEPTIONIST')")
+  @Operation(summary = "Gerar PDF da factura")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   @Transactional(readOnly = true)
   public ResponseEntity<byte[]> downloadPdf(@PathVariable UUID id) throws Exception {
 

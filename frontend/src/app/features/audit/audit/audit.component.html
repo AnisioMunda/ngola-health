@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <div class="stat-card top-users-card" *ngIf="(stats.topActiveUsers?.length ?? 0) > 0">
+    <div class="stat-card top-users-card" *ngIf="stats.topActiveUsers.length > 0">
       <div class="stat-icon purple">
         <svg viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
@@ -90,9 +90,24 @@
     </div>
   </div>
 
+  <div class="stats-loading" *ngIf="loadingStats" role="status">A carregar estatísticas...</div>
+  <div class="alert-error" *ngIf="statsError" role="alert">{{ statsError }}</div>
+
   <!-- Filtros -->
   <div class="filters-card">
     <div class="filters-row">
+      <label class="visually-hidden" for="audit-user-id">Filtrar por ID do utilizador</label>
+      <input
+        id="audit-user-id"
+        class="user-id-filter"
+        type="text"
+        [(ngModel)]="userIdFilter"
+        (ngModelChange)="onFilterChange()"
+        maxlength="36"
+        autocomplete="off"
+        placeholder="ID do utilizador (UUID)"
+      />
+
       <select [(ngModel)]="actionFilter" (ngModelChange)="onFilterChange()">
         <option *ngFor="let a of actions" [value]="a.value">{{ a.label }}</option>
       </select>
@@ -102,14 +117,18 @@
       </select>
 
       <div class="date-range">
+        <label class="visually-hidden" for="audit-date-from">Data inicial</label>
         <input
+          id="audit-date-from"
           type="date"
           [(ngModel)]="dateFrom"
           (ngModelChange)="onFilterChange()"
           placeholder="De"
         />
         <span>—</span>
+        <label class="visually-hidden" for="audit-date-to">Data final</label>
         <input
+          id="audit-date-to"
           type="date"
           [(ngModel)]="dateTo"
           (ngModelChange)="onFilterChange()"
@@ -119,7 +138,8 @@
 
       <button
         class="btn-clear"
-        *ngIf="actionFilter || entityTypeFilter || dateFrom || dateTo"
+        *ngIf="userIdFilter || actionFilter || entityTypeFilter || dateFrom || dateTo"
+        type="button"
         (click)="clearFilters()"
       >
         Limpar
@@ -129,16 +149,17 @@
     <span class="total-count">{{ totalElements }} registos</span>
   </div>
 
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="filterError" role="alert">{{ filterError }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>A carregar logs...</span>
+    <span>A carregar registos de auditoria...</span>
   </div>
 
   <!-- Tabela de logs -->
   <div class="logs-card" *ngIf="!loading">
-    <div class="empty-state" *ngIf="logs.length === 0">
+    <div class="empty-state" *ngIf="logs.length === 0 && !error">
       <svg viewBox="0 0 48 48" fill="none">
         <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2" />
         <path
@@ -172,13 +193,25 @@
             </div>
           </td>
           <td>
-            <span class="user-name">{{ log.userFullName || log.username || '—' }}</span>
+            <button
+              type="button"
+              class="user-filter"
+              *ngIf="log.userId; else userNameOnly"
+              title="Filtrar por este utilizador"
+              (click)="filterByUser(log.userId)"
+            >
+              {{ log.userFullName || log.username || '—' }}
+            </button>
+            <ng-template #userNameOnly>
+              <span class="user-name">{{ log.userFullName || log.username || '—' }}</span>
+            </ng-template>
             <span class="user-email" *ngIf="log.userFullName && log.username">
               {{ log.username }}
             </span>
           </td>
           <td>
             <span class="entity-chip">{{ entityLabels[log.entityType] }}</span>
+            <span class="entity-id" *ngIf="log.entityId">{{ log.entityId }}</span>
           </td>
           <td class="description-cell">{{ log.description }}</td>
           <td class="ip-cell">{{ log.ipAddress || '—' }}</td>

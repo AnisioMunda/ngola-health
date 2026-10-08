@@ -1,12 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   InpatientService,
+  CreateBedRequest,
+  CreateWardRequest,
   WardResponse,
   BedResponse,
+  EditableBedStatus,
   WARD_TYPE_LABELS,
   BED_STATUS_LABELS,
 } from '../../../core/services/inpatient.service';
@@ -20,6 +25,10 @@ import { UserManagementService } from '../../../core/services/user-management.se
   styleUrls: ['./ward-setup.component.scss'],
 })
 export class WardSetupComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private wardLoadSequence = 0;
+  private bedLoadSequence = 0;
+
   wards: WardResponse[] = [];
   selectedWardId = '';
   beds: BedResponse[] = [];
@@ -33,6 +42,7 @@ export class WardSetupComponent implements OnInit {
   showBedForm = false;
   savingWard = false;
   savingBed = false;
+  savingBedStatusId: string | null = null;
 
   wardForm!: FormGroup;
   bedForm!: FormGroup;
@@ -67,126 +77,205 @@ export class WardSetupComponent implements OnInit {
 
   buildForms(): void {
     this.wardForm = this.fb.group({
-      name: ['', Validators.required],
-      code: ['', Validators.required],
+      name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)]],
+      code: ['', [Validators.required, Validators.maxLength(20), Validators.pattern(/\S/)]],
       type: ['GENERAL', Validators.required],
-      floor: [''],
-      notes: [''],
+      floor: ['', Validators.maxLength(10)],
+      notes: ['', Validators.maxLength(500)],
       responsibleDoctorId: [''],
     });
 
     this.bedForm = this.fb.group({
-      bedNumber: ['', Validators.required],
+      bedNumber: ['', [Validators.required, Validators.maxLength(10), Validators.pattern(/\S/)]],
       type: ['STANDARD', Validators.required],
-      notes: [''],
+      notes: ['', Validators.maxLength(300)],
     });
   }
 
-  load(): void {
+  load(preferredWardId?: string): void {
+    const requestSequence = ++this.wardLoadSequence;
     this.loading = true;
-    this.inpatientService.findAllWards().subscribe({
-      next: (w) => {
-        this.wards = w;
-        this.loading = false;
-        if (w.length > 0 && !this.selectedWardId) {
-          this.selectedWardId = w[0].id;
-          this.loadBeds();
-        }
-      },
-      error: () => {
-        this.error = 'Erro ao carregar enfermarias.';
-        this.loading = false;
-      },
-    });
+    this.error = '';
+    this.inpatientService
+      .findAllWards()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (w) => {
+          if (requestSequence !== this.wardLoadSequence) return;
+          this.wards = w;
+          this.loading = false;
+          const selectedWard =
+            w.find((ward) => ward.id === preferredWardId) ??
+            w.find((ward) => ward.id === this.selectedWardId) ??
+            w[0];
+          const nextWardId = selectedWard?.id ?? '';
+          if (nextWardId !== this.selectedWardId) {
+            this.selectedWardId = nextWardId;
+            this.loadBeds();
+          } else if (!nextWardId) {
+            this.bedLoadSequence++;
+            this.beds = [];
+            this.loadingBeds = false;
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          if (requestSequence !== this.wardLoadSequence) return;
+          this.error = this.errorMessage(error, 'Erro ao carregar enfermarias.');
+          this.wards = [];
+          this.selectedWardId = '';
+          this.bedLoadSequence++;
+          this.beds = [];
+          this.loadingBeds = false;
+          this.loading = false;
+        },
+      });
   }
 
   loadBeds(): void {
-    if (!this.selectedWardId) return;
+    const requestSequence = ++this.bedLoadSequence;
+    if (!this.selectedWardId) {
+      this.beds = [];
+      this.loadingBeds = false;
+      return;
+    }
+    const wardId = this.selectedWardId;
     this.loadingBeds = true;
-    this.inpatientService.findBedsByWard(this.selectedWardId).subscribe({
-      next: (b) => {
-        this.beds = b;
-        this.loadingBeds = false;
-      },
-      error: () => {
-        this.loadingBeds = false;
-      },
-    });
+    this.inpatientService
+      .findBedsByWard(wardId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (b) => {
+          if (requestSequence !== this.bedLoadSequence) return;
+          this.beds = b;
+          this.loadingBeds = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          if (requestSequence !== this.bedLoadSequence) return;
+          this.error = this.errorMessage(error, 'Erro ao carregar camas.');
+          this.beds = [];
+          this.loadingBeds = false;
+        },
+      });
   }
 
   loadDoctors(): void {
-    this.userService.findAll(0, 100).subscribe({
-      next: (p) => {
-        this.doctors = p.content
-          .filter((u) => u.roles?.includes('DOCTOR'))
-          .map((u) => ({ id: u.id, fullName: u.fullName }));
-      },
-    });
+    this.userService
+      .findAll(0, 100)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (p) => {
+          this.doctors = p.content
+            .filter((u) => u.roles?.includes('DOCTOR'))
+            .map((u) => ({ id: u.id, fullName: u.fullName }));
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao carregar a lista de médicos.');
+        },
+      });
   }
 
   onWardSelect(): void {
+    this.error = '';
     this.loadBeds();
   }
 
   createWard(): void {
+    if (this.savingWard) return;
     if (this.wardForm.invalid) {
       this.wardForm.markAllAsTouched();
       return;
     }
     this.savingWard = true;
-    this.inpatientService.createWard(this.wardForm.getRawValue()).subscribe({
-      next: (w) => {
-        this.savingWard = false;
-        this.showWardForm = false;
-        this.wardForm.reset({ type: 'GENERAL' });
-        this.flash('Enfermaria criada com sucesso.');
-        this.load();
-        this.selectedWardId = w.id;
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao criar enfermaria.';
-        this.savingWard = false;
-      },
-    });
+    this.error = '';
+    this.success = '';
+    const value = this.wardForm.getRawValue();
+    const request: CreateWardRequest = {
+      name: value.name.trim(),
+      code: value.code.trim().toUpperCase(),
+      type: value.type,
+      floor: (value.floor ?? '').trim() || null,
+      notes: (value.notes ?? '').trim() || null,
+      responsibleDoctorId: value.responsibleDoctorId || null,
+    };
+    this.inpatientService
+      .createWard(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (w) => {
+          this.savingWard = false;
+          this.showWardForm = false;
+          this.wardForm.reset({
+            name: '',
+            code: '',
+            type: 'GENERAL',
+            floor: '',
+            notes: '',
+            responsibleDoctorId: '',
+          });
+          this.flash('Enfermaria criada com sucesso.');
+          this.load(w.id);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao criar enfermaria.');
+          this.savingWard = false;
+        },
+      });
   }
 
   createBed(): void {
+    if (this.savingBed) return;
     if (this.bedForm.invalid || !this.selectedWardId) {
       this.bedForm.markAllAsTouched();
       return;
     }
     this.savingBed = true;
+    this.error = '';
+    this.success = '';
+    const value = this.bedForm.getRawValue();
+    const request: CreateBedRequest = {
+      wardId: this.selectedWardId,
+      bedNumber: value.bedNumber.trim(),
+      type: value.type,
+      notes: (value.notes ?? '').trim() || null,
+    };
     this.inpatientService
-      .createBed({
-        wardId: this.selectedWardId,
-        ...this.bedForm.getRawValue(),
-      })
+      .createBed(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.savingBed = false;
           this.showBedForm = false;
-          this.bedForm.reset({ type: 'STANDARD' });
+          this.bedForm.reset({ bedNumber: '', type: 'STANDARD', notes: '' });
           this.flash('Cama criada com sucesso.');
           this.loadBeds();
-          this.load();
+          this.load(this.selectedWardId);
         },
-        error: (err) => {
-          this.error = err.error?.message ?? 'Erro ao criar cama.';
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao criar cama.');
           this.savingBed = false;
         },
       });
   }
 
-  setBedStatus(bedId: string, status: any): void {
-    this.inpatientService.updateBedStatus(bedId, status).subscribe({
-      next: () => {
-        this.flash('Estado actualizado.');
-        this.loadBeds();
-      },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao actualizar cama.';
-      },
-    });
+  setBedStatus(bedId: string, status: EditableBedStatus): void {
+    if (this.savingBedStatusId) return;
+    this.savingBedStatusId = bedId;
+    this.error = '';
+    this.inpatientService
+      .updateBedStatus(bedId, status)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.savingBedStatusId = null;
+          this.flash('Estado actualizado.');
+          this.loadBeds();
+          this.load(this.selectedWardId);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.errorMessage(error, 'Erro ao actualizar cama.');
+          this.savingBedStatusId = null;
+        },
+      });
   }
 
   flash(msg: string): void {
@@ -206,8 +295,11 @@ export class WardSetupComponent implements OnInit {
   }
 
   getInitials(name: string): string {
-    if (!name) return '?';
-    const parts = name.split(' ').filter((p) => p.length > 0);
+    const parts = name
+      .trim()
+      .split(/\s+/)
+      .filter((part) => part.length > 0);
+    if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
@@ -215,5 +307,9 @@ export class WardSetupComponent implements OnInit {
   getSelectedWardName(): string {
     const ward = this.wards.find((w) => w.id === this.selectedWardId);
     return ward ? ward.name : '';
+  }
+
+  private errorMessage(error: HttpErrorResponse, fallback: string): string {
+    return error.error?.detail ?? error.error?.message ?? fallback;
   }
 }

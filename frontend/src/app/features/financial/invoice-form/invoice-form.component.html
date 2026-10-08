@@ -38,6 +38,8 @@
             <option value="">Seleccionar paciente...</option>
             <option *ngFor="let p of patients" [value]="p.id">{{ p.fullName }}</option>
           </select>
+          <span class="field-hint" *ngIf="patientsLoading">A carregar pacientes...</span>
+          <span class="field-error" *ngIf="patientsError">{{ patientsError }}</span>
           <span class="field-error" *ngIf="f['patientId'].invalid && f['patientId'].touched">
             Paciente é obrigatório
           </span>
@@ -66,6 +68,27 @@
             formControlName="insuranceProvider"
             placeholder="ENSA, AAA, Tranquilidade..."
           />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>N.º da Apólice</label>
+            <input type="text" formControlName="insurancePolicyNumber" maxlength="50" />
+          </div>
+          <div class="field">
+            <label>Cobertura do Seguro (%)</label>
+            <input
+              type="number"
+              formControlName="insuranceCoveragePercent"
+              min="0"
+              max="100"
+              step="0.01"
+            />
+          </div>
+          <div class="field">
+            <label>Data de Vencimento</label>
+            <input type="date" formControlName="dueDate" />
+          </div>
         </div>
 
         <div class="field">
@@ -98,7 +121,8 @@
             />
           </svg>
           <p>
-            O documento será submetido automaticamente à <strong>AGT Angola</strong> após emissão.
+            A comunicação com a <strong>AGT Angola</strong> depende da configuração e homologação do
+            sistema.
           </p>
         </div>
       </div>
@@ -133,15 +157,23 @@
               formControlName="servicePriceId"
               (change)="onPriceSelect(i, $any($event.target).value)"
             >
-              <option value="">Seleccionar...</option>
+              <option value="">Linha manual</option>
               <option *ngFor="let p of servicePrices" [value]="p.id">
                 {{ p.code }} — {{ p.description }}
               </option>
             </select>
+            <span class="field-hint" *ngIf="pricesLoading">A carregar preços...</span>
+            <span class="field-error" *ngIf="pricesError">{{ pricesError }}</span>
           </div>
 
           <div class="col-desc">
-            <input type="text" formControlName="description" placeholder="Descrição" />
+            <input
+              type="text"
+              formControlName="description"
+              placeholder="Descrição"
+              maxlength="300"
+              [readonly]="!!items.at(i).get('servicePriceId')?.value"
+            />
           </div>
 
           <div class="col-qty">
@@ -155,15 +187,23 @@
               min="0"
               step="0.01"
               placeholder="0.00"
+              [readonly]="!!items.at(i).get('servicePriceId')?.value"
             />
           </div>
 
           <div class="col-disc">
-            <input type="number" formControlName="discountPercent" min="0" max="100" step="0.1" />
+            <input type="number" formControlName="discountPercent" min="0" max="100" step="0.01" />
           </div>
 
           <div class="col-vat">
-            <input type="number" formControlName="vatRate" min="0" step="0.1" />
+            <input
+              type="number"
+              formControlName="vatRate"
+              min="0"
+              max="100"
+              step="0.01"
+              [readonly]="!!items.at(i).get('servicePriceId')?.value"
+            />
           </div>
 
           <div class="col-total amount">{{ getLineTotal(i) | number: '1.2-2' }} Kz</div>

@@ -85,7 +85,7 @@ public class EpisodeService {
             .build();
 
     Episode saved = episodeRepository.save(episode);
-    log.info("Episode created: {} for patient {}", saved.getId(), patient.getFullName());
+    log.info("Episode created");
     return episodeMapper.toResponse(saved);
   }
 

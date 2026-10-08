@@ -1,0 +1,21 @@
+<header class="content-header">
+  <h1>Resultados laboratoriais</h1>
+</header>
+
+<div class="empty-state" *ngIf="loaded && results.length === 0">
+  <p>Sem resultados laboratoriais concluídos.</p>
+</div>
+
+<div class="table-card lab-results-list" *ngIf="results.length > 0">
+  <article class="lab-result-row" *ngFor="let result of results">
+    <div class="lab-result-heading">
+      <strong>{{ result.examName }}</strong>
+      <span>{{ result.resultAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+    <p class="lab-result-value">{{ result.result }}</p>
+    <p class="lab-result-reference" *ngIf="result.referenceValues">
+      Valores de referência: {{ result.referenceValues }}
+    </p>
+    <small *ngIf="result.doctorName">Solicitado por: Dr(a). {{ result.doctorName }}</small>
+  </article>
+</div>

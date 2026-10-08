@@ -6,10 +6,13 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.repository.RoleRepository;
 import ao.hospitalao.modules.auth.repository.UserRepository;
+import ao.hospitalao.modules.hospitals.application.HospitalApplicationService;
 import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.dto.UpdateUserRequest;
 import ao.hospitalao.modules.users.dto.UserResponse;
 import ao.hospitalao.modules.users.mapper.UserMapper;
+import ao.hospitalao.security.RoleName;
+import ao.hospitalao.security.tenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +35,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+  private final HospitalApplicationService hospitalApplicationService;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
 
@@ -57,7 +64,7 @@ public class UserService {
   // ------------------------------------------------
   @Transactional
   public UserResponse create(CreateUserRequest request) {
-    log.info("Creating user: {}", request.getUsername());
+    log.info("Creating user");
 
     if (userRepository.existsByUsername(request.getUsername())) {
       throw new IllegalArgumentException("Username already in use: " + request.getUsername());
@@ -67,6 +74,10 @@ public class UserService {
     }
 
     Set<Role> roles = resolveRoles(request.getRoleIds());
+    UUID hospitalId = TenantContext.getCurrentHospital();
+    if (hospitalId == null) {
+      throw new AccessDeniedException("A hospital scope is required to create a user");
+    }
 
     User user =
         User.builder()
@@ -77,13 +88,19 @@ public class UserService {
             .phone(request.getPhone())
             .especiality(request.getEspeciality())
             .professionalCard(request.getProfessionalCard())
+            .teamsUserId(parseTeamsUserId(request.getTeamsUserId()))
             .registerStatus(RegisterStatus.ACTIVE)
             .mustChangePassword(request.isMustChangePassword())
             .roles(roles)
+            .hospital(hospitalApplicationService.getReferenceById(hospitalId))
             .build();
+    if (user.getTeamsUserId() != null && !hasDoctorRole(roles)) {
+      throw new IllegalArgumentException("Only doctors can have a Microsoft Teams user ID");
+    }
+    user.setHospitalId(hospitalId);
 
     User saved = userRepository.save(user);
-    log.info("User created: {} ({})", saved.getUsername(), saved.getId());
+    log.info("User created");
     return userMapper.toResponse(saved);
   }
 
@@ -118,9 +135,18 @@ public class UserService {
     if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
       user.setRoles(resolveRoles(request.getRoleIds()));
     }
+    if (request.getTeamsUserId() != null) {
+      UUID teamsUserId = parseTeamsUserId(request.getTeamsUserId());
+      if (teamsUserId != null && !hasDoctorRole(user.getRoles())) {
+        throw new IllegalArgumentException("Only doctors can have a Microsoft Teams user ID");
+      }
+      user.setTeamsUserId(teamsUserId);
+    } else if (!hasDoctorRole(user.getRoles())) {
+      user.setTeamsUserId(null);
+    }
 
     User saved = userRepository.save(user);
-    log.info("User updated: {}", saved.getId());
+    log.info("User updated");
     return userMapper.toResponse(saved);
   }
 
@@ -136,7 +162,7 @@ public class UserService {
 
     user.setRegisterStatus(status);
     User saved = userRepository.save(user);
-    log.info("User {} status changed to {}", id, status);
+    log.info("User status changed to {}", status);
     return userMapper.toResponse(saved);
   }
 
@@ -153,7 +179,7 @@ public class UserService {
     user.setPasswordHash(passwordEncoder.encode(newPassword));
     user.setMustChangePassword(true);
     userRepository.save(user);
-    log.info("Password reset for user: {}", id);
+    log.info("User password reset");
   }
 
   // ------------------------------------------------
@@ -166,8 +192,27 @@ public class UserService {
           roleRepository
               .findById(roleId)
               .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleId));
+      if (RoleName.SUPER_ADMIN.name().equals(role.getName()) && !canManagePlatformRoles()) {
+        throw new AccessDeniedException("Only a platform super-administrator may assign this role");
+      }
       roles.add(role);
     }
     return roles;
+  }
+
+  private UUID parseTeamsUserId(String teamsUserId) {
+    return teamsUserId == null || teamsUserId.isBlank() ? null : UUID.fromString(teamsUserId);
+  }
+
+  private boolean hasDoctorRole(Set<Role> roles) {
+    return roles.stream().anyMatch(role -> RoleName.DOCTOR.name().equals(role.getName()));
+  }
+
+  private boolean canManagePlatformRoles() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null
+        && authentication.getAuthorities().stream()
+            .anyMatch(
+                authority -> RoleName.SUPER_ADMIN.authority().equals(authority.getAuthority()));
   }
 }

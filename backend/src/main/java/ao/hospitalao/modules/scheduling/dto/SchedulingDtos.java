@@ -2,6 +2,11 @@ package ao.hospitalao.modules.scheduling.dto;
 
 import ao.hospitalao.modules.scheduling.entity.Appointment.AppointmentStatus;
 import ao.hospitalao.modules.scheduling.entity.Appointment.AppointmentType;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -33,12 +38,22 @@ public class SchedulingDtos {
 
   @Data
   public static class CreateScheduleRequest {
-    private UUID doctorId;
-    private int dayOfWeek;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private int slotDurationMinutes;
-    private int maxPatientsPerSlot;
+    @NotNull private UUID doctorId;
+
+    @NotNull
+    @Min(0)
+    @Max(6)
+    private Integer dayOfWeek;
+
+    @NotNull private LocalTime startTime;
+
+    @NotNull private LocalTime endTime;
+
+    @Min(1)
+    private Integer slotDurationMinutes;
+
+    @Min(1)
+    private Integer maxPatientsPerSlot;
   }
 
   // ============================================================
@@ -101,12 +116,21 @@ public class SchedulingDtos {
 
   @Data
   public static class CreateAppointmentRequest {
-    private UUID patientId;
-    private UUID doctorId;
-    private LocalDate appointmentDate;
-    private LocalTime startTime;
+    @NotNull private UUID patientId;
+
+    @NotNull private UUID doctorId;
+
+    @NotNull private LocalDate appointmentDate;
+
+    @NotNull private LocalTime startTime;
+
     private AppointmentType appointmentType;
+
+    @NotBlank
+    @Size(max = 300)
     private String reason;
+
+    @Size(max = 10000)
     private String notes;
   }
 
@@ -123,6 +147,7 @@ public class SchedulingDtos {
   @Builder
   public static class CalendarEventResponse {
     private UUID id;
+    private UUID doctorId;
     private String title;
     private LocalDate date;
     private LocalTime startTime;
@@ -139,8 +164,10 @@ public class SchedulingDtos {
 
   @Data
   public static class CreateBlockRequest {
-    private UUID doctorId;
-    private LocalDate blockDate;
+    @NotNull private UUID doctorId;
+
+    @NotNull private LocalDate blockDate;
+
     private LocalTime startTime;
     private LocalTime endTime;
     private boolean allDay;

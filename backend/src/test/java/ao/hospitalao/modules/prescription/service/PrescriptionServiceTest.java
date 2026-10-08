@@ -34,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PrescriptionService — Testes Unitários")
@@ -99,9 +100,11 @@ class PrescriptionServiceTest {
       var doctor = buildDoctor();
       var hospital = buildHospital();
 
-      when(medicationRepository.findById(medicationId)).thenReturn(Optional.of(medication));
+      when(medicationRepository.findByHospitalIdAndId(hospitalId, medicationId))
+          .thenReturn(Optional.of(medication));
       when(stockBatchRepository.getTotalAvailableQuantity(eq(medicationId), any())).thenReturn(100);
-      when(patientRepository.getReferenceById(patientId)).thenReturn(patient);
+      when(patientRepository.findByHospitalIdAndId(hospitalId, patientId))
+          .thenReturn(Optional.of(patient));
       when(userRepository.findByUsername("doctor1")).thenReturn(Optional.of(doctor));
       when(hospitalRepository.getReferenceById(hospitalId)).thenReturn(hospital);
       when(prescriptionRepository.nextPrescriptionNumber()).thenReturn(1L);
@@ -134,16 +137,13 @@ class PrescriptionServiceTest {
     void shouldRejectPrescriptionWithInsufficientStock() {
       // Arrange
       var medication = buildMedication();
-      var doctor = buildDoctor();
-      var hospital = buildHospital();
 
-      when(medicationRepository.findById(medicationId)).thenReturn(Optional.of(medication));
+      when(medicationRepository.findByHospitalIdAndId(hospitalId, medicationId))
+          .thenReturn(Optional.of(medication));
       when(stockBatchRepository.getTotalAvailableQuantity(eq(medicationId), any()))
           .thenReturn(2); // Só 2 disponíveis, pedimos 5
-      when(patientRepository.getReferenceById(patientId)).thenReturn(buildPatient());
-      when(userRepository.findByUsername("doctor1")).thenReturn(Optional.of(doctor));
-      when(hospitalRepository.getReferenceById(hospitalId)).thenReturn(hospital);
-      when(prescriptionRepository.nextPrescriptionNumber()).thenReturn(1L);
+      when(patientRepository.findByHospitalIdAndId(hospitalId, patientId))
+          .thenReturn(Optional.of(buildPatient()));
 
       try (MockedStatic<TenantContext> tc = mockStatic(TenantContext.class)) {
         tc.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
@@ -152,10 +152,34 @@ class PrescriptionServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> prescriptionService.create(req))
-            .isInstanceOf(IllegalStateException.class)
+            .isInstanceOf(ResponseStatusException.class)
             .hasMessageContaining("Stock insuficiente");
 
         verify(prescriptionRepository, never()).save(any());
+      }
+    }
+
+    @Test
+    @DisplayName("Deve somar linhas repetidas antes de validar o stock")
+    void shouldAggregateDuplicateMedicationItemsWhenCheckingStock() {
+      when(medicationRepository.findByHospitalIdAndId(hospitalId, medicationId))
+          .thenReturn(Optional.of(buildMedication()));
+      when(patientRepository.findByHospitalIdAndId(hospitalId, patientId))
+          .thenReturn(Optional.of(buildPatient()));
+      when(stockBatchRepository.getTotalAvailableQuantity(eq(medicationId), any())).thenReturn(8);
+
+      var request = buildCreateRequest(5);
+      request.setItems(List.of(request.getItems().getFirst(), request.getItems().getFirst()));
+
+      try (MockedStatic<TenantContext> tc = mockStatic(TenantContext.class)) {
+        tc.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+
+        assertThatThrownBy(() -> prescriptionService.create(request))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("Stock insuficiente")
+            .hasMessageContaining("10");
+        verify(prescriptionRepository, never()).save(any());
+        verify(prescriptionRepository, never()).nextPrescriptionNumber();
       }
     }
 
@@ -218,6 +242,35 @@ class PrescriptionServiceTest {
         verify(stockBatchRepository, times(1)).save(batch);
         assertThat(batch.getQuantityAvailable()).isEqualTo(45); // 50 - 5
       }
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar dispensa parcial quando o stock bloqueado é insuficiente")
+    void shouldRejectDispenseWhenLockedStockIsInsufficient() {
+      var prescription = buildActivePrescription();
+      var item = buildPrescriptionItem(prescription, 5, 0);
+      prescription.setItems(new ArrayList<>(List.of(item)));
+      var batch = buildStockBatch(3);
+
+      when(prescriptionRepository.findByIdWithRelations(any()))
+          .thenReturn(Optional.of(prescription));
+      when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+      when(stockBatchRepository.findAvailableBatchesFefo(any(), any())).thenReturn(List.of(batch));
+
+      try (MockedStatic<TenantContext> tc = mockStatic(TenantContext.class)) {
+        tc.when(TenantContext::getCurrentHospital).thenReturn(hospitalId);
+        var req = new DispenseItemRequest();
+        req.setPrescriptionItemId(item.getId());
+        req.setQuantityToDispense(5);
+
+        assertThatThrownBy(() -> prescriptionService.dispense(prescription.getId(), req))
+            .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+            .hasMessageContaining("Stock insuficiente");
+      }
+
+      verify(stockBatchRepository, never()).save(any());
+      verifyNoInteractions(dispensationRepository);
+      assertThat(batch.getQuantityAvailable()).isEqualTo(3);
     }
 
     @Test
@@ -354,6 +407,7 @@ class PrescriptionServiceTest {
     m.setId(medicationId);
     m.setName("Amoxicilina 500mg");
     m.setUnit("comprimido");
+    m.setActive(true);
     return m;
   }
 

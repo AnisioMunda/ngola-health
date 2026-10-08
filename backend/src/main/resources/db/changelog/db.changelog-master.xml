@@ -8,6 +8,7 @@
     <include file="changes/core/000-enable-uuid-ossp.sql" relativeToChangelogFile="true"/>
     <include file="changes/core/001-schema-base.sql" relativeToChangelogFile="true"/>
     <include file="changes/users/001-users-and-roles.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/002-super-admin-role.sql" relativeToChangelogFile="true"/>
     <include file="changes/auth/001-token-blacklist.sql" relativeToChangelogFile="true"/>
     <include file="changes/patients/001-create-patients.sql" relativeToChangelogFile="true"/>
     <include file="changes/patients/002-fix-patient-gender.sql" relativeToChangelogFile="true"/>
@@ -16,8 +17,10 @@
     <include file="changes/laboratory/001-laboratory.sql" relativeToChangelogFile="true"/>
     <include file="changes/pharmacy/001-pharmacy.sql" relativeToChangelogFile="true"/>
     <include file="changes/financial/001-financial.sql" relativeToChangelogFile="true"/>
+    <include file="changes/financial/002-invoice-currency.sql" relativeToChangelogFile="true"/>
     <include file="changes/agt/001-invoice-agt-fields.sql" relativeToChangelogFile="true"/>
     <include file="changes/scheduling/001-scheduling.sql" relativeToChangelogFile="true"/>
+    <include file="changes/scheduling/002-appointment-slot-capacity.sql" relativeToChangelogFile="true"/>
     <include file="changes/notifications/001-notifications.sql" relativeToChangelogFile="true"/>
     <include file="changes/inpatient/001-inpatient.sql" relativeToChangelogFile="true"/>
     <include file="changes/audit/001-audit.sql" relativeToChangelogFile="true"/>
@@ -25,6 +28,15 @@
     <include file="changes/prescriptions/001-prescriptions.sql" relativeToChangelogFile="true"/>
     <include file="changes/triage/001-triage.sql" relativeToChangelogFile="true"/>
     <include file="changes/patient_portal/001-patient-portal.sql" relativeToChangelogFile="true"/>
+    <include file="changes/patient_portal/002-manual-account-approval.sql" relativeToChangelogFile="true"/>
     <include file="changes/telemedicine/001-telemedicine.sql" relativeToChangelogFile="true"/>
     <include file="changes/equipment/001-equipment.sql" relativeToChangelogFile="true"/>
+    <include file="changes/hospitals/002-tenant-scoped-records.sql" relativeToChangelogFile="true"/>
+    <include file="changes/patients/003-hospital-scoped-identifiers.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/003-account-lockout.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/004-dev-seed.sql" relativeToChangelogFile="true"/>
+    <include file="changes/users/005-teams-organizer-id.sql" relativeToChangelogFile="true"/>
+    <include file="changes/inpatient/002-active-admission-integrity.sql" relativeToChangelogFile="true"/>
+    <include file="changes/telemedicine/002-teams-meetings.sql" relativeToChangelogFile="true"/>
+    <include file="changes/performance/001-query-indexes.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

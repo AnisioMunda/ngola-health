@@ -68,7 +68,7 @@
             placeholder="Ex: Consulta de rotina, dores abdominais..."
           />
           <span class="field-error" *ngIf="f['reason'].invalid && f['reason'].touched">
-            Motivo obrigatório (mínimo 5 caracteres)
+            Motivo obrigatório (5 a 300 caracteres)
           </span>
         </div>
 
@@ -138,6 +138,8 @@
           A carregar slots...
         </div>
 
+        <div class="alert-error" *ngIf="slotsError">{{ slotsError }}</div>
+
         <ng-container *ngIf="availability && !loadingSlots">
           <div class="slots-header">
             <span class="slots-date">{{ availability.dateLabel }}</span>
@@ -175,7 +177,11 @@
 
     <div class="form-actions">
       <button type="button" class="btn-secondary" (click)="goBack()">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="saving || !selectedSlot">
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="saving || form.invalid || !selectedSlot"
+      >
         <span *ngIf="!saving">Confirmar Marcação</span>
         <span *ngIf="saving" class="saving-state">
           <span class="spinner-xs"></span> A guardar...

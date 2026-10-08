@@ -4,13 +4,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { PortalService } from '../../../core/services/portal.service';
 
 @Component({
   selector: 'app-portal-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './portal-login.component.html',
   styleUrls: ['./portal-login.component.scss'],
 })
@@ -21,12 +21,13 @@ export class PortalLoginComponent {
   });
   loading = false;
   error = '';
+  registerMessage = '';
   tab: 'login' | 'register' = 'login';
 
-  registerForm = this.fb.group({
+  registerForm = this.fb.nonNullable.group({
     patientNumber: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: ['', [Validators.required, Validators.minLength(12)]],
     confirmPassword: ['', Validators.required],
   });
 
@@ -65,6 +66,7 @@ export class PortalLoginComponent {
     }
     this.loading = true;
     this.error = '';
+    this.registerMessage = '';
     this.portalService
       .register({
         patientNumber: v.patientNumber,
@@ -72,7 +74,11 @@ export class PortalLoginComponent {
         password: v.password,
       })
       .subscribe({
-        next: () => this.router.navigate(['/portal']),
+        next: (response) => {
+          this.registerMessage = response.message;
+          this.registerForm.reset();
+          this.loading = false;
+        },
         error: (e) => {
           this.error = e.error?.message ?? 'Erro ao criar conta.';
           this.loading = false;

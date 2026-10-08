@@ -1,5 +1,6 @@
 package ao.hospitalao.security.jwt;
 
+import ao.hospitalao.security.RoleName;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
@@ -21,7 +22,7 @@ public class PatientPortalPrincipal implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return Collections.singletonList(new SimpleGrantedAuthority("ROLE_PATIENT"));
+    return Collections.singletonList(new SimpleGrantedAuthority(RoleName.PATIENT.authority()));
   }
 
   @Override

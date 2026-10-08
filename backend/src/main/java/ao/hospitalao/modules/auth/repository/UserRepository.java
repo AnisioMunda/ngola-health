@@ -48,6 +48,31 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     """)
   Page<User> findByHospitalIdAndActiveTrue(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
+  @Query(
+      """
+        SELECT DISTINCT u FROM User u
+        JOIN u.roles r
+        WHERE u.hospital.id = :hospitalId
+          AND u.registerStatus = 'ACTIVE'
+          AND u.teamsUserId IS NOT NULL
+          AND r.name = 'DOCTOR'
+        ORDER BY u.fullName
+      """)
+  List<User> findActiveTeamsDoctorsByHospitalId(@Param("hospitalId") UUID hospitalId);
+
+  @Query(
+      """
+        SELECT DISTINCT u FROM User u
+        JOIN u.roles r
+        WHERE u.id = :userId
+          AND u.hospital.id = :hospitalId
+          AND u.registerStatus = 'ACTIVE'
+          AND u.teamsUserId IS NOT NULL
+          AND r.name = 'DOCTOR'
+      """)
+  Optional<User> findActiveTeamsDoctorByIdAndHospitalId(
+      @Param("userId") UUID userId, @Param("hospitalId") UUID hospitalId);
+
   // ------------------------------------------------
   // Dashboard statistics — users grouped by role
   // ------------------------------------------------

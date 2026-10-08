@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,7 +9,9 @@ import {
   PRESCRIPTION_STATUS_LABELS,
   ITEM_STATUS_LABELS,
   STATUS_COLORS,
+  prescriptionErrorMessage,
 } from '../../../core/services/prescription.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-prescription-detail',
@@ -18,7 +20,7 @@ import {
   templateUrl: './prescription-detail.component.html',
   styleUrls: ['./prescription-detail.component.scss'],
 })
-export class PrescriptionDetailComponent implements OnInit {
+export class PrescriptionDetailComponent implements OnInit, OnDestroy {
   prescription: PrescriptionResponse | null = null;
   loading = true;
   error = '';
@@ -35,20 +37,32 @@ export class PrescriptionDetailComponent implements OnInit {
   showCancelForm = false;
   cancelReason = '';
   savingCancel = false;
+  private successTimeout: ReturnType<typeof setTimeout> | null = null;
 
   statusLabels = PRESCRIPTION_STATUS_LABELS;
   itemLabels = ITEM_STATUS_LABELS;
   statusColors = STATUS_COLORS;
 
   constructor(
+    private changeDetectorRef: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
     private prescriptionService: PrescriptionService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.load(id);
+    if (id) {
+      this.load(id);
+    } else {
+      this.error = 'Não foi indicado o identificador da prescrição.';
+      this.loading = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimeout) clearTimeout(this.successTimeout);
   }
 
   load(id: string): void {
@@ -56,11 +70,14 @@ export class PrescriptionDetailComponent implements OnInit {
     this.prescriptionService.findById(id).subscribe({
       next: (p) => {
         this.prescription = p;
+        this.error = '';
         this.loading = false;
+        this.changeDetectorRef.markForCheck();
       },
-      error: () => {
-        this.error = 'Erro ao carregar prescrição.';
+      error: (error: unknown) => {
+        this.error = prescriptionErrorMessage(error, 'Não foi possível carregar a prescrição.');
         this.loading = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -74,17 +91,23 @@ export class PrescriptionDetailComponent implements OnInit {
   }
 
   dispense(): void {
-    if (!this.prescription || !this.selectedItem) return;
-    if (this.quantityToDispense < 1) {
-      this.error = 'Quantidade deve ser pelo menos 1.';
+    if (!this.prescription || !this.selectedItem || !this.canDispense()) return;
+    if (
+      !Number.isInteger(this.quantityToDispense) ||
+      this.quantityToDispense < 1 ||
+      this.quantityToDispense > this.selectedItem.remainingQuantity ||
+      this.quantityToDispense > this.selectedItem.stockAvailable
+    ) {
+      this.error = 'A quantidade deve estar dentro do stock disponível e da quantidade pendente.';
       return;
     }
     this.savingDispense = true;
+    this.error = '';
     this.prescriptionService
       .dispense(this.prescription.id, {
         prescriptionItemId: this.selectedItem.id,
         quantityToDispense: this.quantityToDispense,
-        notes: this.dispenseNotes || null,
+        notes: this.dispenseNotes.trim() || null,
       })
       .subscribe({
         next: (p) => {
@@ -92,34 +115,53 @@ export class PrescriptionDetailComponent implements OnInit {
           this.showDispenseForm = false;
           this.savingDispense = false;
           this.flash('Medicamento dispensado com sucesso.');
+          this.changeDetectorRef.markForCheck();
         },
-        error: (err) => {
-          this.error = err.error?.message ?? 'Erro ao dispensar.';
+        error: (error: unknown) => {
+          this.error = prescriptionErrorMessage(error, 'Não foi possível dispensar o medicamento.');
           this.savingDispense = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
 
   cancel(): void {
-    if (!this.prescription || !this.cancelReason) return;
+    const reason = this.cancelReason.trim();
+    if (!this.prescription || !this.canCancel()) return;
+    if (!reason) {
+      this.error = 'Indique o motivo do cancelamento.';
+      return;
+    }
+    if (reason.length > 300) {
+      this.error = 'O motivo do cancelamento não pode exceder 300 caracteres.';
+      return;
+    }
     this.savingCancel = true;
-    this.prescriptionService.cancel(this.prescription.id, this.cancelReason).subscribe({
+    this.error = '';
+    this.prescriptionService.cancel(this.prescription.id, reason).subscribe({
       next: (p) => {
         this.prescription = p;
         this.showCancelForm = false;
         this.savingCancel = false;
         this.flash('Prescrição cancelada.');
+        this.changeDetectorRef.markForCheck();
       },
-      error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao cancelar.';
+      error: (error: unknown) => {
+        this.error = prescriptionErrorMessage(error, 'Não foi possível cancelar a prescrição.');
         this.savingCancel = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
 
   flash(msg: string): void {
+    if (this.successTimeout) clearTimeout(this.successTimeout);
     this.success = msg;
-    setTimeout(() => (this.success = ''), 4000);
+    this.successTimeout = setTimeout(() => {
+      this.success = '';
+      this.successTimeout = null;
+      this.changeDetectorRef.markForCheck();
+    }, 4000);
   }
 
   goBack(): void {
@@ -130,20 +172,35 @@ export class PrescriptionDetailComponent implements OnInit {
   }
 
   canDispense(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
     return (
-      this.prescription?.status === 'ACTIVE' || this.prescription?.status === 'PARTIALLY_DISPENSED'
+      (roles.includes('ADMIN') || roles.includes('PHARMACIST')) &&
+      !this.prescription?.expired &&
+      (this.prescription?.status === 'ACTIVE' ||
+        this.prescription?.status === 'PARTIALLY_DISPENSED')
     );
   }
 
   canCancel(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
     return (
-      this.prescription?.status === 'ACTIVE' || this.prescription?.status === 'PARTIALLY_DISPENSED'
+      (roles.includes('ADMIN') || roles.includes('DOCTOR') || roles.includes('MANAGER')) &&
+      (this.prescription?.status === 'ACTIVE' ||
+        this.prescription?.status === 'PARTIALLY_DISPENSED')
     );
   }
 
   daysUntilExpiry(): number {
     if (!this.prescription) return 0;
-    return Math.ceil((new Date(this.prescription.expiryDate).getTime() - Date.now()) / 86400000);
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Luanda',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    const todayAtUtc = Date.parse(`${today}T00:00:00Z`);
+    const expiryAtUtc = Date.parse(`${this.prescription.expiryDate}T00:00:00Z`);
+    return Math.ceil((expiryAtUtc - todayAtUtc) / 86400000);
   }
 
   dispensedTotal(): number {

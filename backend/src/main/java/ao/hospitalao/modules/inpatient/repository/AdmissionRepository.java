@@ -5,12 +5,14 @@ package ao.hospitalao.modules.inpatient.repository;
 
 import ao.hospitalao.modules.inpatient.entity.Admission;
 import ao.hospitalao.modules.inpatient.entity.Admission.AdmissionStatus;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -53,6 +55,10 @@ public interface AdmissionRepository extends JpaRepository<Admission, UUID> {
         WHERE a.id = :id
     """)
   Optional<Admission> findByIdWithRelations(@Param("id") UUID id);
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT a FROM Admission a WHERE a.id = :id")
+  Optional<Admission> findByIdForUpdate(@Param("id") UUID id);
 
   // KPI — total de internamentos activos
   long countByHospitalIdAndStatus(UUID hospitalId, AdmissionStatus status);

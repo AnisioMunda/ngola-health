@@ -10,7 +10,11 @@
       <h1>Calendário de Consultas</h1>
     </div>
     <div class="header-actions">
-      <select [(ngModel)]="selectedDoctorId" (ngModelChange)="onDoctorFilter()">
+      <select
+        aria-label="Filtrar calendário por médico"
+        [(ngModel)]="selectedDoctorId"
+        (ngModelChange)="onDoctorFilter()"
+      >
         <option value="">Todos os médicos</option>
         <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
       </select>
@@ -28,15 +32,17 @@
     </div>
   </header>
 
+  <div class="alert-error" *ngIf="doctorError">{{ doctorError }}</div>
+
   <!-- Navegação do mês -->
   <div class="calendar-nav">
-    <button class="btn-nav" (click)="prevMonth()">
+    <button class="btn-nav" aria-label="Mês anterior" (click)="prevMonth()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
     </button>
     <div class="month-label">{{ monthLabel }}</div>
-    <button class="btn-nav" (click)="nextMonth()">
+    <button class="btn-nav" aria-label="Mês seguinte" (click)="nextMonth()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
@@ -72,17 +78,27 @@
 
           <!-- Eventos do dia (máx 3 visíveis) -->
           <div class="day-events">
-            <div
+            <button
+              type="button"
               class="event-chip"
               *ngFor="let ev of day.events.slice(0, 3)"
               [style.background]="statusColor(ev.status) + '22'"
               [style.border-left-color]="statusColor(ev.status)"
               (click)="openEvent(ev)"
+              [attr.aria-label]="
+                ev.startTime +
+                ' — ' +
+                ev.patientName +
+                ' — ' +
+                ev.doctorName +
+                ', ' +
+                statusLabels[ev.status]
+              "
               [title]="ev.patientName + ' — ' + ev.doctorName + ' ' + ev.startTime"
             >
               <span class="event-time">{{ ev.startTime }}</span>
               <span class="event-name">{{ ev.patientName }}</span>
-            </div>
+            </button>
 
             <div class="more-events" *ngIf="day.events.length > 3">
               +{{ day.events.length - 3 }} mais

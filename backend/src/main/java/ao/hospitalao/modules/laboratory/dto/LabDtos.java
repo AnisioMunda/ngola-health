@@ -3,6 +3,12 @@ package ao.hospitalao.modules.laboratory.dto;
 import ao.hospitalao.modules.laboratory.entity.LabRequest.Priority;
 import ao.hospitalao.modules.laboratory.entity.LabRequest.RequestStatus;
 import ao.hospitalao.modules.laboratory.entity.LabTest.TestCategory;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -32,12 +38,25 @@ public class LabDtos {
 
   @Data
   public static class CreateLabTestRequest {
+    @NotBlank
+    @Size(max = 30)
     private String code;
+
+    @NotBlank
+    @Size(max = 200)
     private String name;
-    private TestCategory category;
+
+    @NotNull private TestCategory category;
+
+    @Size(max = 50)
     private String sampleType;
+
+    @Min(1)
     private Integer turnaroundHours;
+
+    @DecimalMin("0.00")
     private BigDecimal price;
+
     private String referenceValues;
   }
 
@@ -80,20 +99,31 @@ public class LabDtos {
 
   @Data
   public static class CreateLabRequestRequest {
-    private UUID patientId;
+    @NotNull private UUID patientId;
+
     private UUID episodeId;
+
     private UUID requestedById;
+
     private Priority priority;
+
     private String clinicalNotes;
-    private List<UUID> labTestIds;
+
+    @NotEmpty private List<@NotNull UUID> labTestIds;
   }
 
   @Data
   public static class SubmitResultRequest {
-    private String resultValue;
+    @NotBlank private String resultValue;
+
+    @Size(max = 30)
     private String resultUnit;
+
+    @Size(max = 100)
     private String referenceRange;
+
     private boolean abnormal;
+
     private String resultNotes;
   }
 }

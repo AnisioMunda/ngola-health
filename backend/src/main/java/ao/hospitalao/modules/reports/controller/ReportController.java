@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
@@ -18,26 +19,30 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/reports")
 @RequiredArgsConstructor
-@Tag(name = "Reports", description = "PDF report generation")
+@Tag(name = "Relatórios", description = "Geração de documentos PDF")
 @SecurityRequirement(name = "bearerAuth")
 public class ReportController {
+
+  private static final ZoneId ANGOLA_ZONE = ZoneId.of("Africa/Luanda");
 
   private final PdfReportService pdfReportService;
 
   @GetMapping("/patients/{id}")
-  @Operation(summary = "Generate patient clinical record PDF")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','MANAGER')")
+  @Operation(summary = "Gerar ficha clínica do paciente em PDF")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).NURSE.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> patientReport(@PathVariable UUID id) throws IOException {
     byte[] pdf = pdfReportService.generatePatientReport(id);
-    return buildPdfResponse(pdf, "patient-report-" + id + ".pdf");
+    return buildPdfResponse(pdf, "ficha-paciente-" + id + ".pdf");
   }
 
   @GetMapping("/stock")
-  @Operation(summary = "Generate pharmacy stock report PDF")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','MANAGER')")
+  @Operation(summary = "Gerar relatório de stock da farmácia em PDF")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).PHARMACIST.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<byte[]> stockReport() throws IOException {
     byte[] pdf = pdfReportService.generateStockReport();
-    return buildPdfResponse(pdf, "stock-report-" + LocalDate.now() + ".pdf");
+    return buildPdfResponse(pdf, "inventario-stock-" + LocalDate.now(ANGOLA_ZONE) + ".pdf");
   }
 
   private ResponseEntity<byte[]> buildPdfResponse(byte[] pdf, String filename) {

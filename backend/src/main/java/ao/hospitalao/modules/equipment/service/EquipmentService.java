@@ -46,6 +46,9 @@ public class EquipmentService {
             equipmentRepository.countByHospitalIdAndStatus(hospitalId, EquipmentStatus.MAINTENANCE))
         .maintenanceDue(equipmentRepository.findMaintenanceDue(hospitalId, today).size())
         .calibrationDue(equipmentRepository.findCalibrationDue(hospitalId, today).size())
+        .warrantyExpired(
+            equipmentRepository.countByHospitalIdAndActiveTrueAndWarrantyExpiryBefore(
+                hospitalId, today))
         .build();
   }
 
@@ -148,7 +151,7 @@ public class EquipmentService {
     }
 
     equipmentRepository.save(e);
-    log.info("Maintenance {} recorded for equipment {}", req.getType(), e.getCode());
+    log.info("Equipment maintenance recorded");
     return toResponse(e, true);
   }
 
@@ -162,7 +165,7 @@ public class EquipmentService {
         .forEach(
             h -> {
               long due = equipmentRepository.findMaintenanceDue(h.getId(), LocalDate.now()).size();
-              if (due > 0) log.warn("Hospital {}: {} equipment need maintenance", h.getName(), due);
+              if (due > 0) log.warn("{} equipment need maintenance", due);
             });
   }
 

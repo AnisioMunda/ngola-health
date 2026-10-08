@@ -2,6 +2,7 @@ package ao.hospitalao.modules.notifications.repository;
 
 import ao.hospitalao.modules.notifications.entity.Notification;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,16 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+
+  @Query(
+      """
+        SELECT n FROM Notification n
+        WHERE n.id = :id
+        AND n.hospital.id = :hospitalId
+        AND (n.user.id = :userId OR n.user IS NULL)
+    """)
+  Optional<Notification> findVisibleToUser(
+      @Param("id") UUID id, @Param("hospitalId") UUID hospitalId, @Param("userId") UUID userId);
 
   /** Notificações do utilizador + notificações globais do hospital */
   @Query(

@@ -15,6 +15,7 @@ export type WardType =
   | 'ISOLATION';
 
 export type BedStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED';
+export type EditableBedStatus = Exclude<BedStatus, 'OCCUPIED'>;
 export type BedType = 'STANDARD' | 'PRIVATE' | 'SEMI_PRIVATE' | 'ICU' | 'ISOLATION';
 export type AdmissionStatus = 'ACTIVE' | 'DISCHARGED' | 'TRANSFERRED' | 'DECEASED';
 export type DischargeCondition =
@@ -26,13 +27,30 @@ export interface WardResponse {
   code: string;
   type: WardType;
   typeLabel: string;
-  floor: string;
+  floor: string | null;
   totalBeds: number;
   availableBeds: number;
   occupiedBeds: number;
-  responsibleDoctorName: string;
-  notes: string;
+  responsibleDoctorName: string | null;
+  notes: string | null;
   active: boolean;
+  beds?: BedResponse[];
+}
+
+export interface CreateWardRequest {
+  name: string;
+  code: string;
+  type: WardType;
+  floor: string | null;
+  notes: string | null;
+  responsibleDoctorId: string | null;
+}
+
+export interface CreateBedRequest {
+  wardId: string;
+  bedNumber: string;
+  type: BedType;
+  notes: string | null;
 }
 
 export interface BedResponse {
@@ -43,10 +61,10 @@ export interface BedResponse {
   type: BedType;
   wardName: string;
   wardId: string;
-  notes: string;
-  patientName: string;
-  admissionId: string;
-  admissionDate: string;
+  notes: string | null;
+  patientName: string | null;
+  admissionId: string | null;
+  admissionDate: string | null;
 }
 
 export interface WardMapResponse {
@@ -66,8 +84,8 @@ export interface TransferResponse {
   fromWardName: string;
   toBedNumber: string;
   toWardName: string;
-  reason: string;
-  transferredByName: string;
+  reason: string | null;
+  transferredByName: string | null;
   transferredAt: string;
 }
 
@@ -75,7 +93,7 @@ export interface AdmissionResponse {
   id: string;
   patientId: string;
   patientName: string;
-  patientPhone: string;
+  patientPhone: string | null;
   bedId: string;
   bedNumber: string;
   wardId: string;
@@ -86,17 +104,36 @@ export interface AdmissionResponse {
   status: AdmissionStatus;
   statusLabel: string;
   admissionDate: string;
-  expectedDischargeDate: string;
-  dischargeDate: string;
+  expectedDischargeDate: string | null;
+  dischargeDate: string | null;
   admissionReason: string;
-  diagnosis: string;
-  dischargeNotes: string;
-  dischargeCondition: DischargeCondition;
+  diagnosis: string | null;
+  dischargeNotes: string | null;
+  dischargeCondition: DischargeCondition | null;
   daysAdmitted: number;
   admittedByName: string;
-  dischargedByName: string;
+  dischargedByName: string | null;
   createdAt: string;
   transfers: TransferResponse[];
+}
+
+export interface CreateAdmissionRequest {
+  patientId: string;
+  bedId: string;
+  episodeId?: string | null;
+  responsibleDoctorId: string;
+  admissionReason: string;
+  expectedDischargeDate: string | null;
+}
+
+export interface DischargeRequest {
+  dischargeNotes: string | null;
+  dischargeCondition: DischargeCondition;
+}
+
+export interface TransferRequest {
+  toBedId: string;
+  reason: string | null;
 }
 
 export interface Page<T> {
@@ -150,8 +187,8 @@ export class InpatientService {
     return this.http.get<WardResponse[]>(`${this.apiUrl}/wards`);
   }
 
-  createWard(req: any): Observable<WardResponse> {
-    return this.http.post<WardResponse>(`${this.apiUrl}/wards`, req);
+  createWard(request: CreateWardRequest): Observable<WardResponse> {
+    return this.http.post<WardResponse>(`${this.apiUrl}/wards`, request);
   }
 
   getWardMap(wardId: string): Observable<WardMapResponse> {
@@ -163,11 +200,15 @@ export class InpatientService {
     return this.http.get<BedResponse[]>(`${this.apiUrl}/wards/${wardId}/beds`);
   }
 
-  createBed(req: any): Observable<BedResponse> {
-    return this.http.post<BedResponse>(`${this.apiUrl}/beds`, req);
+  createBed(request: CreateBedRequest): Observable<BedResponse> {
+    return this.http.post<BedResponse>(`${this.apiUrl}/beds`, request);
   }
 
-  updateBedStatus(bedId: string, status: BedStatus, notes?: string): Observable<BedResponse> {
+  updateBedStatus(
+    bedId: string,
+    status: EditableBedStatus,
+    notes?: string,
+  ): Observable<BedResponse> {
     return this.http.patch<BedResponse>(`${this.apiUrl}/beds/${bedId}/status`, { status, notes });
   }
 
@@ -192,15 +233,15 @@ export class InpatientService {
     return this.http.get<AdmissionResponse>(`${this.apiUrl}/admissions/${id}`);
   }
 
-  admit(req: any): Observable<AdmissionResponse> {
+  admit(req: CreateAdmissionRequest): Observable<AdmissionResponse> {
     return this.http.post<AdmissionResponse>(`${this.apiUrl}/admissions`, req);
   }
 
-  discharge(id: string, req: any): Observable<AdmissionResponse> {
+  discharge(id: string, req: DischargeRequest): Observable<AdmissionResponse> {
     return this.http.patch<AdmissionResponse>(`${this.apiUrl}/admissions/${id}/discharge`, req);
   }
 
-  transfer(id: string, req: any): Observable<AdmissionResponse> {
+  transfer(id: string, req: TransferRequest): Observable<AdmissionResponse> {
     return this.http.patch<AdmissionResponse>(`${this.apiUrl}/admissions/${id}/transfer`, req);
   }
 }

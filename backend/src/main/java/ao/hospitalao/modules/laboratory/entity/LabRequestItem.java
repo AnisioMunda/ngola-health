@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.laboratory.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -12,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LabRequestItem {
+public class LabRequestItem extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

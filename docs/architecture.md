@@ -96,6 +96,11 @@ outros. Quando um caso de uso requer colaboração com outro módulo, a
 comunicação passa pela camada `application` exposta por esse módulo. As
 fronteiras são verificadas por testes ArchUnit, previstos na Tarefa 1.9.
 
+Casos de uso que coordenam operações de vários módulos ficam na camada de
+aplicação da raiz (`ao.hospitalao.application`). Tipos de persistência
+transversais, como a base de isolamento por hospital, ficam fora de
+`modules/`, em `ao.hospitalao.shared`.
+
 Esta regra mantém a propriedade e a evolução dos dados no módulo responsável
 e reduz dependências entre detalhes de implementação. A sequência de entrega
 de funcionalidades segue as etapas de base de dados, API, interface e

@@ -2,6 +2,8 @@ package ao.hospitalao.modules.auth.controller;
 
 import ao.hospitalao.modules.auth.dto.AuthRequest;
 import ao.hospitalao.modules.auth.dto.AuthResponse;
+import ao.hospitalao.modules.auth.dto.ChangePasswordRequest;
+import ao.hospitalao.modules.auth.dto.LogoutRequest;
 import ao.hospitalao.modules.auth.dto.RefreshTokenRequest;
 import ao.hospitalao.modules.auth.dto.RegisterRequest;
 import ao.hospitalao.modules.auth.service.AuthService;
@@ -10,13 +12,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,6 +34,7 @@ public class AuthController {
 
   @PostMapping("/register")
   @Operation(summary = "Register new user", description = "Create a new user account")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).ADMIN.name())")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -87,19 +92,31 @@ public class AuthController {
   @PostMapping("/logout")
   @Operation(
       summary = "Logout User",
-      description = "Invalidate the current JWT and refresh token",
-      security = @SecurityRequirement(name = "JavaBearerAuth"))
+      description = "Revoga o refresh token e, quando válido, o token de acesso associado")
   @ApiResponses(
       value = {
-        @ApiResponse(responseCode = "200", description = "Logout successful"),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Missing or malformed authorization header"),
+        @ApiResponse(responseCode = "204", description = "Logout successful"),
+        @ApiResponse(responseCode = "400", description = "Refresh token ausente ou malformado"),
         @ApiResponse(responseCode = "401", description = "Invalid or expired token")
       })
-  public ResponseEntity<Void> logout(HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
-    authService.logout(authHeader);
+  public ResponseEntity<Void> logout(
+      @Valid @RequestBody LogoutRequest logoutRequest, HttpServletRequest request) {
+    authService.logout(request.getHeader("Authorization"), logoutRequest.getRefreshToken());
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/change-password")
+  @Operation(summary = "Alterar senha da conta autenticada")
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "204", description = "Senha alterada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Nova senha inválida"),
+        @ApiResponse(responseCode = "401", description = "Senha actual inválida")
+      })
+  public ResponseEntity<Void> changePassword(
+      @AuthenticationPrincipal UserDetails user,
+      @Valid @RequestBody ChangePasswordRequest request) {
+    authService.changePassword(user.getUsername(), request);
     return ResponseEntity.noContent().build();
   }
 }

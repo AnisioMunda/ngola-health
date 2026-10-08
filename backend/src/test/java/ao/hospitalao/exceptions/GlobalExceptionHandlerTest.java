@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 class GlobalExceptionHandlerTest {
 
@@ -84,6 +87,27 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void preservesResponseStatusExceptionStatusAndSafeReason() throws Exception {
+    mockMvc
+        .perform(get("/status-conflict"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.status").value(409))
+        .andExpect(jsonPath("$.title").value("Conflito"))
+        .andExpect(jsonPath("$.detail").value("Não é possível repetir este pedido."));
+  }
+
+  @Test
+  void returnsUnauthorizedForJwtErrors() throws Exception {
+    mockMvc
+        .perform(get("/invalid-token"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.title").value("Não autenticado"))
+        .andExpect(
+            jsonPath("$.detail").value("O token é inválido ou expirou. Inicie sessão novamente."));
+  }
+
+  @Test
   void hidesUnexpectedExceptionDetailsFromProblemDetail() throws Exception {
     mockMvc
         .perform(get("/unexpected"))
@@ -111,9 +135,19 @@ class GlobalExceptionHandlerTest {
       throw new EmailAlreadyExistsException("sensitive account details");
     }
 
+    @GetMapping("/status-conflict")
+    void statusConflict() {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Não é possível repetir este pedido.");
+    }
+
     @GetMapping("/unexpected")
     void unexpected() {
       throw new IllegalStateException("database credentials");
+    }
+
+    @GetMapping("/invalid-token")
+    void invalidToken() {
+      throw new JwtException("internal token validation details");
     }
   }
 

@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
  * Protege rotas que requerem autenticação.
  * Se o utilizador não tiver token válido, redirige para /login.
  */
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -15,8 +15,31 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
-  router.navigate(['/login']);
-  return false;
+  return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+};
+
+/**
+ * Guard para operações de gestão de utilizadores, reservadas ao administrador do hospital.
+ */
+export const adminGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.getCurrentUser()?.roles?.includes('ADMIN')
+    ? true
+    : router.createUrlTree(['/users']);
+};
+
+/**
+ * Guard para a gestão global de hospitais, reservada ao super-administrador da plataforma.
+ */
+export const superAdminGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.getCurrentUser()?.roles?.includes('SUPER_ADMIN')
+    ? true
+    : router.createUrlTree(['/dashboard']);
 };
 
 /**
@@ -28,10 +51,5 @@ export const publicGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn()) {
-    router.navigate(['/dashboard']);
-    return false;
-  }
-
-  return true;
+  return authService.isLoggedIn() ? router.createUrlTree(['/dashboard']) : true;
 };

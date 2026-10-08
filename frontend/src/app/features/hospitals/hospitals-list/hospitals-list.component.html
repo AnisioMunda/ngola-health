@@ -1,0 +1,96 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Gestão de hospitais</h1>
+      <p>Instituições de saúde registadas na plataforma.</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="goToCreate()">
+      <span aria-hidden="true">+</span>
+      Registar hospital
+    </button>
+  </header>
+
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="loading-state" *ngIf="loading" role="status">
+    <span class="spinner" aria-hidden="true"></span>
+    A carregar hospitais...
+  </div>
+
+  <section class="table-card" *ngIf="!loading">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Instituição</th>
+            <th>Código</th>
+            <th>Tipo</th>
+            <th>Localização</th>
+            <th>Contacto</th>
+            <th>Estado</th>
+            <th><span class="visually-hidden">Acções</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let hospital of hospitals">
+            <td>
+              <strong>{{ hospital.name }}</strong>
+              <span class="subtext">{{ hospital.email || 'Sem correio electrónico' }}</span>
+            </td>
+            <td>
+              <span class="code">{{ hospital.code }}</span>
+            </td>
+            <td>{{ getTypeLabel(hospital.type) }}</td>
+            <td>
+              {{ hospital.municipality ? hospital.municipality + ', ' : '' }}{{ hospital.province }}
+            </td>
+            <td>{{ hospital.phone || '—' }}</td>
+            <td>
+              <span class="status" [class.status-active]="hospital.active">
+                {{ hospital.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="btn-icon"
+                  title="Editar hospital"
+                  [attr.aria-label]="'Editar ' + hospital.name"
+                  (click)="goToEdit(hospital.id)"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path
+                      d="M14.7 3.3a1 1 0 011.4 1.4L6 14.8l-3 .5.5-3L14.7 3.3z"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="btn-icon"
+                  [title]="hospital.active ? 'Desactivar hospital' : 'Activar hospital'"
+                  [attr.aria-label]="(hospital.active ? 'Desactivar ' : 'Activar ') + hospital.name"
+                  (click)="toggleStatus(hospital)"
+                >
+                  {{ hospital.active ? '−' : '+' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!error && hospitals.length === 0">
+            <td colspan="7" class="empty-state">
+              <strong>Nenhum hospital registado.</strong>
+              <span>Registe a primeira instituição para começar.</span>
+              <button class="btn-secondary" type="button" (click)="goToCreate()">
+                Registar hospital
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -4,6 +4,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.scheduling.entity.Appointment;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -16,7 +17,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TelemedicineSession {
+public class TelemedicineSession extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,7 +25,7 @@ public class TelemedicineSession {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -47,6 +48,15 @@ public class TelemedicineSession {
   @Column(name = "room_token", nullable = false, unique = true)
   private String roomToken;
 
+  @Column(name = "provider_meeting_id", length = 255)
+  private String providerMeetingId;
+
+  @Column(name = "provider_organizer_id")
+  private UUID providerOrganizerId;
+
+  @Column(name = "room_url", columnDefinition = "TEXT")
+  private String roomUrl;
+
   @Column(name = "scheduled_at", nullable = false)
   private OffsetDateTime scheduledAt;
 
@@ -68,6 +78,10 @@ public class TelemedicineSession {
   @PrePersist
   protected void onCreate() {
     this.createdAt = OffsetDateTime.now();
+  }
+
+  public void setAppointmentId(UUID appointmentId) {
+    this.appointment = appointmentId == null ? null : new Appointment(appointmentId);
   }
 
   public void calculateDuration() {

@@ -1,38 +1,34 @@
 <div class="page">
-  <!-- Header -->
   <header class="page-header">
     <div class="header-left">
-      <h1>Users</h1>
-      <span class="total-badge">{{ totalElements }} total</span>
+      <h1>Utilizadores</h1>
+      <span class="total-badge">{{ totalElements }} no total</span>
     </div>
-    <button class="btn-primary" (click)="goToCreate()">
+    <button class="btn-primary" *ngIf="canManageUsers" (click)="goToCreate()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      New User
+      Novo utilizador
     </button>
   </header>
 
-  <!-- Error -->
   <div class="alert-error" *ngIf="error">{{ error }}</div>
 
-  <!-- Loading -->
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading users...</span>
+    <span>A carregar utilizadores...</span>
   </div>
 
-  <!-- Table -->
   <div class="table-card" *ngIf="!loading">
     <table>
       <thead>
         <tr>
-          <th>User</th>
-          <th>Roles</th>
-          <th>Speciality</th>
-          <th>Status</th>
-          <th>Last Login</th>
-          <th></th>
+          <th>Utilizador</th>
+          <th>Perfis</th>
+          <th>Especialidade</th>
+          <th>Estado</th>
+          <th>Último acesso</th>
+          <th *ngIf="canManageUsers"></th>
         </tr>
       </thead>
       <tbody>
@@ -65,11 +61,16 @@
             </span>
           </td>
           <td class="text-muted">
-            {{ user.lastLogin ? (user.lastLogin | date: 'dd/MM/yyyy HH:mm') : 'Never' }}
+            {{ user.lastLogin ? (user.lastLogin | date: 'dd/MM/yyyy HH:mm') : 'Nunca' }}
           </td>
-          <td>
+          <td *ngIf="canManageUsers">
             <div class="actions">
-              <button class="btn-icon" title="Edit" (click)="goToEdit(user.id)">
+              <button
+                class="btn-icon"
+                title="Editar utilizador"
+                aria-label="Editar utilizador"
+                (click)="goToEdit(user.id)"
+              >
                 <svg viewBox="0 0 20 20" fill="none">
                   <path
                     d="M14.7 3.3a1 1 0 011.4 1.4L6 14.8l-3 .5.5-3L14.7 3.3z"
@@ -81,7 +82,12 @@
               </button>
               <button
                 class="btn-icon"
-                [title]="user.registerStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+                [title]="
+                  user.registerStatus === 'ACTIVE' ? 'Desactivar utilizador' : 'Activar utilizador'
+                "
+                [attr.aria-label]="
+                  user.registerStatus === 'ACTIVE' ? 'Desactivar utilizador' : 'Activar utilizador'
+                "
                 (click)="toggleStatus(user)"
               >
                 <svg
@@ -110,9 +116,8 @@
           </td>
         </tr>
 
-        <!-- Empty state -->
-        <tr *ngIf="users.length === 0">
-          <td colspan="6" class="empty-state">
+        <tr *ngIf="!error && users.length === 0">
+          <td [attr.colspan]="canManageUsers ? 6 : 5" class="empty-state">
             <svg viewBox="0 0 48 48" fill="none">
               <circle cx="24" cy="18" r="8" stroke="currentColor" stroke-width="2" />
               <path
@@ -122,8 +127,10 @@
                 stroke-linecap="round"
               />
             </svg>
-            <p>No users found</p>
-            <button class="btn-primary" (click)="goToCreate()">Create first user</button>
+            <p>Nenhum utilizador encontrado.</p>
+            <button class="btn-primary" *ngIf="canManageUsers" (click)="goToCreate()">
+              Criar o primeiro utilizador
+            </button>
           </td>
         </tr>
       </tbody>
@@ -132,11 +139,11 @@
     <!-- Pagination -->
     <div class="pagination" *ngIf="totalPages > 1">
       <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
-        ← Previous
+        ← Anterior
       </button>
-      <span class="page-info"> Page {{ currentPage + 1 }} of {{ totalPages }} </span>
+      <span class="page-info">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
       <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-        Next →
+        Seguinte →
       </button>
     </div>
   </div>

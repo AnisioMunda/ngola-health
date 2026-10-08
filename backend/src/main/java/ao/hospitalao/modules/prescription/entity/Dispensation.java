@@ -3,6 +3,7 @@ package ao.hospitalao.modules.prescription.entity;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.pharmacy.entity.Medication;
 import ao.hospitalao.modules.pharmacy.entity.StockBatch;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Dispensation {
+public class Dispensation extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

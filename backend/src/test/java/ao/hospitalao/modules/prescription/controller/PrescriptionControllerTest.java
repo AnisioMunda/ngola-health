@@ -8,11 +8,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import ao.hospitalao.config.SecurityConfig;
+import ao.hospitalao.modules.audit.entity.AuditLog.AuditAction;
+import ao.hospitalao.modules.audit.entity.AuditLog.AuditResult;
+import ao.hospitalao.modules.audit.entity.AuditLog.EntityType;
 import ao.hospitalao.modules.audit.service.AuditService;
 import ao.hospitalao.modules.auth.service.TokenBlackListService;
 import ao.hospitalao.modules.prescription.dto.PrescriptionDtos.*;
 import ao.hospitalao.modules.prescription.entity.Prescription.PrescriptionStatus;
 import ao.hospitalao.modules.prescription.service.PrescriptionService;
+import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.UserDetailsServiceImpl;
 import ao.hospitalao.security.jwt.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +24,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -170,13 +177,49 @@ class PrescriptionControllerTest {
   @Test
   @DisplayName("POST / — deve rejeitar acesso sem role adequada")
   void shouldRejectCreationWithoutProperRole() throws Exception {
+    var item = new CreatePrescriptionItemRequest();
+    item.setMedicationId(UUID.randomUUID());
+    item.setQuantityPrescribed(1);
+    item.setDosage("1 comprimido");
+    var req = new CreatePrescriptionRequest();
+    req.setPatientId(UUID.randomUUID());
+    req.setItems(List.of(item));
+
     mockMvc
         .perform(
             api(post("/api/prescriptions"), "nurse", "NURSE")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("POST / — deve rejeitar prescrição sem paciente e itens")
+  void shouldRejectInvalidPrescriptionRequest() throws Exception {
+    mockMvc
+        .perform(
+            api(post("/api/prescriptions"), "doctor", "DOCTOR")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(prescriptionService);
+  }
+
+  @ParameterizedTest
+  @EnumSource(RoleName.class)
+  @DisplayName("GET /stats — deve aplicar a matriz de perfis")
+  void shouldEnforceStatsRoleMatrix(RoleName role) throws Exception {
+    Set<RoleName> allowedRoles =
+        Set.of(RoleName.ADMIN, RoleName.MANAGER, RoleName.DOCTOR, RoleName.PHARMACIST);
+    int expectedStatus = allowedRoles.contains(role) ? 200 : 403;
+    when(prescriptionService.getStats()).thenReturn(PrescriptionStatsDto.builder().build());
+
+    mockMvc
+        .perform(api(get("/api/prescriptions/stats"), role.name().toLowerCase(), role.name()))
+        .andExpect(status().is(expectedStatus));
   }
 
   // ------------------------------------------------
@@ -208,6 +251,24 @@ class PrescriptionControllerTest {
         .andExpect(jsonPath("$.status").value("DISPENSED"));
   }
 
+  @Test
+  @DisplayName("POST /{id}/dispense — deve recusar gestores")
+  void shouldRejectDispensingByManagers() throws Exception {
+    var req = new DispenseItemRequest();
+    req.setPrescriptionItemId(UUID.randomUUID());
+    req.setQuantityToDispense(1);
+
+    mockMvc
+        .perform(
+            api(post("/api/prescriptions/{id}/dispense", prescriptionId), "manager", "MANAGER")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isForbidden());
+
+    verifyNoInteractions(prescriptionService);
+  }
+
   // ------------------------------------------------
   // PATCH /prescriptions/{id}/cancel
   // ------------------------------------------------
@@ -235,6 +296,37 @@ class PrescriptionControllerTest {
         .andExpect(jsonPath("$.cancelledReason").value("Paciente com alergia"));
   }
 
+  @Test
+  @DisplayName("PATCH /{id}/cancel — deve registar auditoria com o ID da prescrição")
+  void shouldAuditPrescriptionMutationWithEntityId() throws Exception {
+    var req = new CancelPrescriptionRequest();
+    req.setReason("Registo de auditoria");
+    when(prescriptionService.cancel(eq(prescriptionId), any())).thenReturn(sampleResponse);
+
+    mockMvc
+        .perform(
+            api(patch("/api/prescriptions/{id}/cancel", prescriptionId), "doctor", "DOCTOR")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isOk());
+
+    verify(auditService)
+        .log(
+            eq(AuditAction.UPDATE),
+            eq(EntityType.PRESCRIPTION),
+            eq(prescriptionId.toString()),
+            anyString(),
+            isNull(),
+            isNull(),
+            any(),
+            nullable(String.class),
+            eq(AuditResult.SUCCESS),
+            isNull(),
+            eq("PATCH"),
+            contains("/prescriptions/" + prescriptionId));
+  }
+
   // ------------------------------------------------
   // Segurança
   // ------------------------------------------------
@@ -243,6 +335,66 @@ class PrescriptionControllerTest {
   @DisplayName("GET / — deve rejeitar acesso não autenticado")
   void shouldRejectUnauthenticatedAccess() throws Exception {
     mockMvc.perform(api(get("/api/prescriptions"))).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @DisplayName("GET / — deve rejeitar paciente em endpoint interno")
+  void shouldRejectPatientRoleFromInternalEndpoint() throws Exception {
+    mockMvc
+        .perform(api(get("/api/prescriptions"), "patient", "PATIENT"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("GET /portal/dashboard — deve rejeitar papel interno no portal")
+  void shouldRejectInternalRoleFromPatientPortal() throws Exception {
+    mockMvc
+        .perform(api(get("/api/portal/dashboard"), "doctor", "DOCTOR"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("Actuator e Swagger — devem exigir papel administrativo")
+  void shouldProtectActuatorAndApiDocumentation() throws Exception {
+    mockMvc.perform(api(get("/api/actuator/health"))).andExpect(status().isUnauthorized());
+    mockMvc.perform(api(get("/api/actuator/metrics"))).andExpect(status().isUnauthorized());
+    mockMvc.perform(api(get("/api/actuator/prometheus"))).andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(api(get("/api/v3/api-docs"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/health"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/metrics"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/prometheus"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  @DisplayName("CORS — deve aceitar apenas a origem configurada")
+  void shouldAllowConfiguredCorsOrigin() throws Exception {
+    mockMvc
+        .perform(
+            api(options("/api/prescriptions"))
+                .header("Origin", "http://localhost:4200")
+                .header("Access-Control-Request-Method", "GET")
+                .header("Access-Control-Request-Headers", "authorization,content-type"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:4200"));
+  }
+
+  @Test
+  @DisplayName("CORS — deve rejeitar origens não configuradas")
+  void shouldRejectUnconfiguredCorsOrigin() throws Exception {
+    mockMvc
+        .perform(
+            api(options("/api/prescriptions"))
+                .header("Origin", "https://untrusted.example")
+                .header("Access-Control-Request-Method", "GET"))
+        .andExpect(status().isForbidden());
   }
 
   // ------------------------------------------------

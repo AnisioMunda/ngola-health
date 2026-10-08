@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.prescription.entity;
 
 import ao.hospitalao.modules.pharmacy.entity.Medication;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.util.UUID;
 import lombok.*;
@@ -11,7 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PrescriptionItem {
+public class PrescriptionItem extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)

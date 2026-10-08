@@ -8,4 +8,3 @@ target
 # Exclude local duplicate exports that are not part of the tracked source.
 **/* 2.java
 **/* 2.xml
-src/main/resources/db/changelog/seed.sql

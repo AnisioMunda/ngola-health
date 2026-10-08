@@ -15,4 +15,6 @@ public interface HospitalRepository extends JpaRepository<Hospital, UUID> {
   Optional<Hospital> findByCode(String code);
 
   boolean existsByCode(String code);
+
+  boolean existsByCodeAndIdNot(String code, UUID id);
 }

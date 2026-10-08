@@ -23,21 +23,24 @@ public class AdvancedReportsController {
 
   @GetMapping("/executive")
   @Operation(summary = "Dashboard executivo — KPIs financeiros, clínicos e operacionais")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<ExecutiveDashboardDto> getExecutiveDashboard() {
     return ResponseEntity.ok(reportsService.getExecutiveDashboard());
   }
 
   @GetMapping("/bed-occupancy")
   @Operation(summary = "Relatório de ocupação de camas por enfermaria")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<BedOccupancyReportDto> getBedOccupancy() {
     return ResponseEntity.ok(reportsService.getBedOccupancy());
   }
 
   @GetMapping("/financial")
   @Operation(summary = "Relatório financeiro por período")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<FinancialReportDto> getFinancialReport(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {

@@ -1,0 +1,168 @@
+:host {
+  display: block;
+}
+
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0;
+    color: #1a1f2e;
+    font-size: 1.5rem;
+  }
+}
+
+.btn-back,
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.btn-back,
+.btn-secondary {
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #475569;
+}
+
+.btn-primary {
+  border: 0;
+  background: #203a43;
+  color: white;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+}
+
+.form-section {
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: white;
+
+  h2 {
+    margin: 0 0 1.25rem;
+    color: #1a1f2e;
+    font-size: 1rem;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.field {
+  min-width: 0;
+
+  label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #374151;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  input,
+  select,
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 42px;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #1a1f2e;
+    font: inherit;
+    font-size: 0.9rem;
+
+    &:focus {
+      border-color: #203a43;
+      outline: 3px solid rgb(32 58 67 / 10%);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #b91c1c;
+  font-size: 0.8rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.alert-error {
+  margin: 1rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.loading-state {
+  padding: 4rem 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-wide {
+    grid-column: auto;
+  }
+}

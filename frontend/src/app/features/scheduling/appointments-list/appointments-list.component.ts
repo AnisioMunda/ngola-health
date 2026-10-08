@@ -19,9 +19,12 @@ import { UserManagementService } from '../../../core/services/user-management.se
   styleUrls: ['./appointments-list.component.scss'],
 })
 export class AppointmentsListComponent implements OnInit {
+  private loadSequence = 0;
+
   appointments: AppointmentResponse[] = [];
   loading = true;
   error = '';
+  doctorsError = '';
 
   statusFilter: AppointmentStatus | '' = '';
   doctorFilter = '';
@@ -62,12 +65,18 @@ export class AppointmentsListComponent implements OnInit {
         this.doctors = page.content
           .filter((u) => u.roles?.includes('DOCTOR'))
           .map((u) => ({ id: u.id, fullName: u.fullName, especiality: u.especiality ?? '' }));
+        this.doctorsError = '';
+      },
+      error: () => {
+        this.doctorsError = 'Erro ao carregar a lista de médicos.';
       },
     });
   }
 
   load(): void {
+    const requestSequence = ++this.loadSequence;
     this.loading = true;
+    this.error = '';
     this.schedulingService
       .findAll(
         this.doctorFilter || undefined,
@@ -78,12 +87,17 @@ export class AppointmentsListComponent implements OnInit {
       )
       .subscribe({
         next: (page) => {
+          if (requestSequence !== this.loadSequence) return;
           this.appointments = page.content;
           this.totalElements = page.totalElements;
           this.totalPages = page.totalPages;
           this.loading = false;
         },
         error: () => {
+          if (requestSequence !== this.loadSequence) return;
+          this.appointments = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
           this.error = 'Erro ao carregar agendamentos.';
           this.loading = false;
         },
@@ -111,27 +125,21 @@ export class AppointmentsListComponent implements OnInit {
   confirm(id: string, e: Event): void {
     e.stopPropagation();
     this.schedulingService.confirm(id).subscribe({
-      next: (u) => {
-        const i = this.appointments.findIndex((a) => a.id === u.id);
-        if (i !== -1) this.appointments[i] = u;
-      },
+      next: () => this.load(),
       error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao confirmar.';
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao confirmar.';
       },
     });
   }
 
   cancel(id: string, e: Event): void {
     e.stopPropagation();
-    const reason = prompt('Motivo do cancelamento:');
+    const reason = prompt('Motivo do cancelamento:')?.trim();
     if (!reason) return;
     this.schedulingService.cancel(id, reason).subscribe({
-      next: (u) => {
-        const i = this.appointments.findIndex((a) => a.id === u.id);
-        if (i !== -1) this.appointments[i] = u;
-      },
+      next: () => this.load(),
       error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao cancelar.';
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao cancelar.';
       },
     });
   }
@@ -139,9 +147,9 @@ export class AppointmentsListComponent implements OnInit {
   noShow(id: string, e: Event): void {
     e.stopPropagation();
     this.schedulingService.noShow(id).subscribe({
-      next: (u) => {
-        const i = this.appointments.findIndex((a) => a.id === u.id);
-        if (i !== -1) this.appointments[i] = u;
+      next: () => this.load(),
+      error: (err) => {
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao registar falta.';
       },
     });
   }

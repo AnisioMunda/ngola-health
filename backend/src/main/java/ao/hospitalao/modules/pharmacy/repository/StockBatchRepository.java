@@ -1,10 +1,12 @@
 package ao.hospitalao.modules.pharmacy.repository;
 
 import ao.hospitalao.modules.pharmacy.entity.StockBatch;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,17 +14,16 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StockBatchRepository extends JpaRepository<StockBatch, UUID> {
 
-  List<StockBatch> findByMedicationId(UUID medicationId);
+  List<StockBatch> findByMedicationIdAndHospitalId(UUID medicationId, UUID hospitalId);
 
-  // FEFO — First Expired, First Out: lotes com stock disponível,
-  // ordenados pela validade mais próxima primeiro
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(
       """
         SELECT b FROM StockBatch b
         WHERE b.medication.id = :medicationId
         AND b.quantityAvailable > 0
         AND b.expiryDate >= :today
-        ORDER BY b.expiryDate ASC
+        ORDER BY b.expiryDate ASC, b.id ASC
     """)
   List<StockBatch> findAvailableBatchesFefo(
       @Param("medicationId") UUID medicationId, @Param("today") LocalDate today);

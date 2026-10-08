@@ -31,7 +31,7 @@ public class PatientPortalAccount {
 
   @Column(name = "active", nullable = false)
   @Builder.Default
-  private boolean active = true;
+  private boolean active = false;
 
   @Column(name = "email_verified", nullable = false)
   @Builder.Default

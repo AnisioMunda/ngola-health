@@ -1,7 +1,7 @@
 <div class="page">
   <header class="page-header">
     <div class="header-left">
-      <button class="btn-back" (click)="goToMap()">
+      <button type="button" class="btn-back" (click)="goToMap()">
         <svg viewBox="0 0 20 20" fill="none">
           <path d="M12 4L6 10l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
@@ -12,7 +12,7 @@
         <p>Gerir enfermarias e camas do hospital</p>
       </div>
     </div>
-    <button class="btn-primary" (click)="showWardForm = !showWardForm">
+    <button type="button" class="btn-primary" (click)="showWardForm = !showWardForm">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -20,8 +20,8 @@
     </button>
   </header>
 
-  <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
-  <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-success" *ngIf="success" role="status">{{ success }}</div>
+  <div class="alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
   <!-- Formulário nova enfermaria -->
   <div class="form-card" *ngIf="showWardForm">
@@ -29,39 +29,63 @@
     <form [formGroup]="wardForm" (ngSubmit)="createWard()" novalidate>
       <div class="form-grid-3">
         <div class="field">
-          <label>Nome *</label>
-          <input type="text" formControlName="name" placeholder="Ex: Medicina Interna A" />
+          <label for="ward-name">Nome *</label>
+          <input
+            id="ward-name"
+            type="text"
+            formControlName="name"
+            maxlength="100"
+            placeholder="Ex: Medicina Interna A"
+          />
           <span class="field-error" *ngIf="wf['name'].invalid && wf['name'].touched"
             >Obrigatório</span
           >
         </div>
         <div class="field">
-          <label>Código *</label>
-          <input type="text" formControlName="code" placeholder="Ex: MIA" />
+          <label for="ward-code">Código *</label>
+          <input
+            id="ward-code"
+            type="text"
+            formControlName="code"
+            maxlength="20"
+            placeholder="Ex: MIA"
+          />
           <span class="field-error" *ngIf="wf['code'].invalid && wf['code'].touched"
             >Obrigatório</span
           >
         </div>
         <div class="field">
-          <label>Tipo *</label>
-          <select formControlName="type">
+          <label for="ward-type">Tipo *</label>
+          <select id="ward-type" formControlName="type">
             <option *ngFor="let t of wardTypes" [value]="t.value">{{ t.label }}</option>
           </select>
         </div>
         <div class="field">
-          <label>Piso</label>
-          <input type="text" formControlName="floor" placeholder="Ex: 2º Piso" />
+          <label for="ward-floor">Piso</label>
+          <input
+            id="ward-floor"
+            type="text"
+            formControlName="floor"
+            maxlength="10"
+            placeholder="Ex: 2º Piso"
+          />
         </div>
         <div class="field">
-          <label>Médico Responsável</label>
-          <select formControlName="responsibleDoctorId">
+          <label for="ward-doctor">Médico Responsável</label>
+          <select id="ward-doctor" formControlName="responsibleDoctorId">
             <option value="">Seleccionar...</option>
             <option *ngFor="let d of doctors" [value]="d.id">{{ d.fullName }}</option>
           </select>
         </div>
         <div class="field">
-          <label>Notas</label>
-          <input type="text" formControlName="notes" placeholder="Observações..." />
+          <label for="ward-notes">Notas</label>
+          <input
+            id="ward-notes"
+            type="text"
+            formControlName="notes"
+            maxlength="500"
+            placeholder="Observações..."
+          />
         </div>
       </div>
       <div class="form-actions">
@@ -89,7 +113,9 @@
       />
     </svg>
     <p>Nenhuma enfermaria configurada.</p>
-    <button class="btn-primary" (click)="showWardForm = true">Criar primeira enfermaria</button>
+    <button type="button" class="btn-primary" (click)="showWardForm = true">
+      Criar primeira enfermaria
+    </button>
   </div>
 
   <div class="layout" *ngIf="!loading && wards.length > 0">
@@ -97,23 +123,25 @@
     <div class="wards-panel">
       <h2 class="panel-title">Enfermarias</h2>
       <div class="ward-list">
-        <div
+        <button
+          type="button"
           class="ward-item"
           *ngFor="let w of wards"
           [class.active]="selectedWardId === w.id"
+          [attr.aria-pressed]="selectedWardId === w.id"
           (click)="selectedWardId = w.id; onWardSelect()"
         >
-          <div class="ward-avatar">{{ getInitials(w.name) }}</div>
-          <div class="ward-info">
+          <span class="ward-avatar">{{ getInitials(w.name) }}</span>
+          <span class="ward-info">
             <span class="ward-name">{{ w.name }}</span>
             <span class="ward-meta">{{ wardTypeLabels[w.type] }} · {{ w.totalBeds }} camas</span>
-          </div>
-          <div class="ward-occ">
+          </span>
+          <span class="ward-occ">
             <span class="occ-avail">{{ w.availableBeds }}</span>
             <span class="occ-sep">/</span>
             <span class="occ-total">{{ w.totalBeds }}</span>
-          </div>
-        </div>
+          </span>
+        </button>
       </div>
     </div>
 
@@ -121,7 +149,9 @@
     <div class="beds-panel" *ngIf="selectedWardId">
       <div class="beds-header">
         <h2 class="panel-title">Camas — {{ getSelectedWardName() }}</h2>
-        <button class="btn-add-bed" (click)="showBedForm = !showBedForm">+ Adicionar Cama</button>
+        <button type="button" class="btn-add-bed" (click)="showBedForm = !showBedForm">
+          + Adicionar Cama
+        </button>
       </div>
 
       <!-- Formulário nova cama -->
@@ -129,21 +159,33 @@
         <form [formGroup]="bedForm" (ngSubmit)="createBed()" novalidate>
           <div class="bed-form-row">
             <div class="field">
-              <label>Nº Cama *</label>
-              <input type="text" formControlName="bedNumber" placeholder="Ex: 01A" />
+              <label for="bed-number">Nº Cama *</label>
+              <input
+                id="bed-number"
+                type="text"
+                formControlName="bedNumber"
+                maxlength="10"
+                placeholder="Ex: 01A"
+              />
               <span class="field-error" *ngIf="bf['bedNumber'].invalid && bf['bedNumber'].touched">
                 Obrigatório
               </span>
             </div>
             <div class="field">
-              <label>Tipo</label>
-              <select formControlName="type">
+              <label for="bed-type">Tipo</label>
+              <select id="bed-type" formControlName="type">
                 <option *ngFor="let t of bedTypes" [value]="t.value">{{ t.label }}</option>
               </select>
             </div>
             <div class="field">
-              <label>Notas</label>
-              <input type="text" formControlName="notes" placeholder="Observações..." />
+              <label for="bed-notes">Notas</label>
+              <input
+                id="bed-notes"
+                type="text"
+                formControlName="notes"
+                maxlength="300"
+                placeholder="Observações..."
+              />
             </div>
           </div>
           <div class="form-actions">
@@ -182,7 +224,7 @@
               <td class="bed-number-cell">{{ b.bedNumber }}</td>
               <td>{{ b.type }}</td>
               <td>
-                <span class="status-chip" [class]="'s-' + b.status.toLowerCase()">
+                <span class="status-chip" [ngClass]="'s-' + b.status.toLowerCase()">
                   {{ bedStatusLabels[b.status] }}
                 </span>
               </td>
@@ -190,22 +232,28 @@
               <td>
                 <div class="row-actions" *ngIf="b.status !== 'OCCUPIED'">
                   <button
+                    type="button"
                     class="btn-xs green"
                     *ngIf="b.status !== 'AVAILABLE'"
+                    [disabled]="savingBedStatusId === b.id"
                     (click)="setBedStatus(b.id, 'AVAILABLE')"
                   >
                     Disponível
                   </button>
                   <button
+                    type="button"
                     class="btn-xs amber"
                     *ngIf="b.status !== 'MAINTENANCE'"
+                    [disabled]="savingBedStatusId === b.id"
                     (click)="setBedStatus(b.id, 'MAINTENANCE')"
                   >
                     Manutenção
                   </button>
                   <button
+                    type="button"
                     class="btn-xs blue"
                     *ngIf="b.status !== 'RESERVED'"
+                    [disabled]="savingBedStatusId === b.id"
                     (click)="setBedStatus(b.id, 'RESERVED')"
                   >
                     Reservar

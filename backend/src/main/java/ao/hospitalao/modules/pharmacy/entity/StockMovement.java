@@ -1,8 +1,8 @@
 package ao.hospitalao.modules.pharmacy.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
-import ao.hospitalao.modules.episodes.entity.Episode;
 import ao.hospitalao.modules.patients.entity.Patient;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -14,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StockMovement {
+public class StockMovement extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,9 +36,8 @@ public class StockMovement {
   @JoinColumn(name = "patient_id")
   private Patient patient;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "episode_id")
-  private Episode episode;
+  @Column(name = "episode_id")
+  private UUID episodeId;
 
   @Column(name = "reason", length = 500)
   private String reason;

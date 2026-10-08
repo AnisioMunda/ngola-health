@@ -1,6 +1,7 @@
 package ao.hospitalao.modules.patients.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -8,12 +9,21 @@ import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(name = "patients")
+@Table(
+    name = "patients",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uq_patients_hospital_national_id",
+          columnNames = {"hospital_id", "national_id"}),
+      @UniqueConstraint(
+          name = "uq_patients_hospital_health_card",
+          columnNames = {"hospital_id", "health_card_number"})
+    })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Patient {
+public class Patient extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -22,9 +32,6 @@ public class Patient {
 
   @Column(name = "full_name", nullable = false, length = 200)
   private String fullName;
-
-  @Column(name = "hospital_id")
-  private UUID hospitalId;
 
   @Column(name = "birth_date", nullable = false)
   private LocalDate birthDate;
@@ -35,10 +42,10 @@ public class Patient {
   @Enumerated(EnumType.STRING)
   private Gender gender;
 
-  @Column(name = "national_id", length = 20, unique = true)
+  @Column(name = "national_id", length = 20)
   private String nationalId;
 
-  @Column(name = "health_card_number", length = 30, unique = true)
+  @Column(name = "health_card_number", length = 30)
   private String healthCardNumber;
 
   @Column(name = "phone", length = 20)

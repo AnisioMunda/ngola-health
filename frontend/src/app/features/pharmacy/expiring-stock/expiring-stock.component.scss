@@ -1,0 +1,195 @@
+:host {
+  display: block;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.title-block {
+  flex: 1;
+
+  h1 {
+    margin: 0;
+    color: #1a1f2e;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+}
+
+.window-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+
+  select {
+    min-height: 38px;
+    padding: 0 0.7rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    color: #374151;
+    font: inherit;
+  }
+}
+
+.alert-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: #991b1b;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 220px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #203a43;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.table-card {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #374151;
+    font-size: 0.875rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    background: #f8f9fb;
+    color: #6b7280;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover {
+      background: #f8fafc;
+    }
+
+    &.critical-row {
+      background: #fff7f7;
+    }
+  }
+}
+
+.medication-name {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  &.critical {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.empty-state {
+  padding: 3rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .title-block {
+    flex-basis: calc(100% - 1rem);
+    order: 1;
+  }
+
+  .window-filter {
+    margin-left: auto;
+  }
+}

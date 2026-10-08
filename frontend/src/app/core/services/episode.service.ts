@@ -10,22 +10,22 @@ export interface EpisodeResponse {
   id: string;
   patientId: string;
   patientName: string;
-  doctorId: string;
-  doctorName: string;
+  doctorId: string | null;
+  doctorName: string | null;
   episodeType: EpisodeType;
   status: EpisodeStatus;
-  scheduledAt: string;
-  startedAt: string;
-  completedAt: string;
-  reason: string;
-  symptoms: string;
-  diagnosis: string;
-  prescription: string;
-  notes: string;
-  bloodPressure: string;
-  heartRate: number;
-  temperature: number;
-  weightKg: number;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  reason: string | null;
+  symptoms: string | null;
+  diagnosis: string | null;
+  prescription: string | null;
+  notes: string | null;
+  bloodPressure: string | null;
+  heartRate: number | null;
+  temperature: number | null;
+  weightKg: number | null;
   createdAt: string;
 }
 
@@ -67,18 +67,18 @@ export interface Page<T> {
 }
 
 export const EPISODE_TYPE_LABELS: Record<EpisodeType, string> = {
-  EMERGENCY: 'Emergency',
-  OUTPATIENT: 'Outpatient',
-  INPATIENT: 'Inpatient',
-  OUTPATIENT_SURGERY: 'Surgery',
-  EXAM: 'Exam',
+  EMERGENCY: 'Urgência',
+  OUTPATIENT: 'Consulta externa',
+  INPATIENT: 'Internamento',
+  OUTPATIENT_SURGERY: 'Cirurgia ambulatória',
+  EXAM: 'Exame',
 };
 
 export const EPISODE_STATUS_LABELS: Record<EpisodeStatus, string> = {
-  SCHEDULED: 'Scheduled',
-  IN_PROGRESS: 'In Progress',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  SCHEDULED: 'Agendado',
+  IN_PROGRESS: 'Em curso',
+  COMPLETED: 'Concluído',
+  CANCELLED: 'Cancelado',
 };
 
 @Injectable({ providedIn: 'root' })

@@ -1,35 +1,37 @@
 package ao.hospitalao.modules.financial.agt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Serviço responsável pela assinatura digital JWS RS256 conforme exigido pela API AGT Angola.
+ * Creates compact JWS signatures with RS256. The AGT protocol and payload schemas remain
+ * unverified; see ADR-0009 before treating this signing format as AGT-compliant.
  *
- * <p>Gera as 3 assinaturas obrigatórias: 1. jwsSoftwareSignature — identidade do software 2.
- * jwsDocumentSignature — integridade do documento fiscal 3. jwsSignature — autenticidade da
- * requisição
- *
- * <p>Documentação: quiosqueagt.minfin.gov.ao/doc-agt/faturacao-electronica/1/estrutura.html
+ * <p>The payloads built by the public methods are provisional and must be confirmed against the
+ * official partner documentation before they are sent to AGT.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgtSigningService {
 
+  private static final byte[] PROTECTED_HEADER =
+      "{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8);
+
   private final AgtProperties properties;
 
-  @SuppressWarnings("unused")
   private final ObjectMapper objectMapper;
 
   private PrivateKey cachedPrivateKey;
@@ -38,10 +40,7 @@ public class AgtSigningService {
   // 1. jwsSoftwareSignature
   // ------------------------------------------------
 
-  /**
-   * Assina os dados do software de facturação. Payload: { productId, productVersion,
-   * softwareValidationNumber }
-   */
+  /** Signs the current provisional software-identification payload. */
   public String signSoftware() throws Exception {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("productId", properties.getSoftwareId());
@@ -56,9 +55,8 @@ public class AgtSigningService {
   // ------------------------------------------------
 
   /**
-   * Assina os campos fiscais obrigatórios do documento. Payload conforme especificação AGT: {
-   * documentNo, taxRegistrationNumber, documentType, documentDate, customerTaxID, customerCountry,
-   * companyName, documentTotals }
+   * Signs the current provisional document payload. Its field names and contents are not confirmed
+   * as an AGT contract.
    */
   public String signDocument(
       String documentNo,
@@ -93,10 +91,7 @@ public class AgtSigningService {
   // 3. jwsSignature (assinatura da requisição)
   // ------------------------------------------------
 
-  /**
-   * Assina o objecto principal da requisição à API AGT. Payload: { taxRegistrationNumber, requestID
-   * }
-   */
+  /** Signs the current provisional request payload. */
   public String signRequest(String requestId) throws Exception {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("taxRegistrationNumber", properties.getNif());
@@ -109,14 +104,30 @@ public class AgtSigningService {
   // Assinatura JWS RS256
   // ------------------------------------------------
 
-  @SuppressWarnings("deprecation")
   private String sign(Map<String, Object> payload) throws Exception {
-    PrivateKey privateKey = getPrivateKey();
+    return signPayload(objectMapper.writeValueAsBytes(payload), getPrivateKey());
+  }
 
-    return Jwts.builder()
-        .setClaims(payload)
-        .signWith(privateKey, SignatureAlgorithm.RS256)
-        .compact();
+  static String signPayload(byte[] payload, PrivateKey privateKey) throws GeneralSecurityException {
+    return signPayload(PROTECTED_HEADER, payload, privateKey);
+  }
+
+  static String signPayload(byte[] header, byte[] payload, PrivateKey privateKey)
+      throws GeneralSecurityException {
+    Objects.requireNonNull(header, "header must not be null");
+    Objects.requireNonNull(payload, "payload must not be null");
+    Objects.requireNonNull(privateKey, "privateKey must not be null");
+
+    String signingInput =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(header)
+            + "."
+            + Base64.getUrlEncoder().withoutPadding().encodeToString(payload);
+
+    Signature signer = Signature.getInstance("SHA256withRSA");
+    signer.initSign(privateKey);
+    signer.update(signingInput.getBytes(StandardCharsets.US_ASCII));
+    String encodedSignature = Base64.getUrlEncoder().withoutPadding().encodeToString(signer.sign());
+    return signingInput + "." + encodedSignature;
   }
 
   // ------------------------------------------------
@@ -126,21 +137,23 @@ public class AgtSigningService {
   private PrivateKey getPrivateKey() throws Exception {
     if (cachedPrivateKey != null) return cachedPrivateKey;
 
-    String pemContent;
-
-    // Prioridade: conteúdo directo > ficheiro
-    if (properties.getPrivateKeyContent() != null && !properties.getPrivateKeyContent().isBlank()) {
-      pemContent = properties.getPrivateKeyContent();
-    } else if (properties.getPrivateKeyPath() != null) {
-      pemContent =
-          java.nio.file.Files.readString(java.nio.file.Path.of(properties.getPrivateKeyPath()));
-    } else {
-      throw new IllegalStateException(
-          "AGT private key not configured. Set agt.private-key-content or agt.private-key-path");
+    String privateKeyPath = properties.getPrivateKeyPath();
+    if (privateKeyPath == null || privateKeyPath.isBlank()) {
+      throw new IllegalStateException("AGT_PRIVATE_KEY_PATH is not configured.");
     }
 
+    String pemContent = java.nio.file.Files.readString(java.nio.file.Path.of(privateKeyPath));
     cachedPrivateKey = parsePemPrivateKey(pemContent);
     return cachedPrivateKey;
+  }
+
+  public void validatePrivateKey() {
+    try {
+      getPrivateKey();
+    } catch (Exception exception) {
+      throw new IllegalStateException(
+          "The AGT signing key file is unavailable or invalid.", exception);
+    }
   }
 
   private PrivateKey parsePemPrivateKey(String pem) throws Exception {

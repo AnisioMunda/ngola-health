@@ -92,8 +92,10 @@ Os pontos seguintes não devem ser inferidos apenas a partir deste documento:
 - A distinção, o âmbito e as permissões do administrador da plataforma e do
   administrador de cada hospital (ADR-0003).
 - A matriz completa de permissões para cada perfil e endpoint.
-- Os requisitos clínicos e tempos-alvo exactos da triagem adoptada.
-- As regras clínicas e operacionais para duplicados de pacientes, prescrições,
-  resultados de laboratório e encerramento de episódios.
+- A validação clínica dos tempos-alvo de triagem actualmente configurados e a
+  sua adequação ao protocolo adoptado por cada hospital.
+- A resolução e eventual fusão de candidatos a pacientes duplicados, a
+  correcção auditável de resultados laboratoriais, a validação clínica das
+  regras de prescrição e os critérios para encerramento de episódios.
 - Os requisitos vigentes da AGT antes da Fase 5.
 - O modelo final de telemedicina e os requisitos de privacidade aplicáveis.

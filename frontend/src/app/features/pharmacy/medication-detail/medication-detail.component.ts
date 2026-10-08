@@ -1,20 +1,50 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
 import {
-  PharmacyService,
-  MedicationResponse,
-  StockBatchResponse,
   DOSAGE_FORM_LABELS,
+  DispenseRequest,
+  MedicationResponse,
+  PharmacyService,
+  ReceiveStockRequest,
+  StockBatchResponse,
+  pharmacyErrorMessage,
 } from '../../../core/services/pharmacy.service';
-import { PatientService } from '../../../core/services/patient.service';
+
+type ReceiveFormGroup = FormGroup<{
+  batchNumber: FormControl<string>;
+  expiryDate: FormControl<string>;
+  quantity: FormControl<number | null>;
+  unitCost: FormControl<number | null>;
+  supplier: FormControl<string>;
+}>;
+
+type DispenseFormGroup = FormGroup<{
+  quantity: FormControl<number | null>;
+  reason: FormControl<string>;
+}>;
+
+function todayInLuanda(): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Luanda',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
 
 @Component({
   selector: 'app-medication-detail',
@@ -23,140 +53,201 @@ import { PatientService } from '../../../core/services/patient.service';
   templateUrl: './medication-detail.component.html',
   styleUrls: ['./medication-detail.component.scss'],
 })
-export class MedicationDetailComponent implements OnInit {
+export class MedicationDetailComponent implements OnInit, OnDestroy {
   medication: MedicationResponse | null = null;
   batches: StockBatchResponse[] = [];
   loading = true;
+  batchesLoading = true;
   error = '';
   successMsg = '';
   activeTab: 'batches' | 'receive' | 'dispense' = 'batches';
-  formLabels = DOSAGE_FORM_LABELS;
-  patients: { id: string; fullName: string }[] = [];
+  readonly formLabels = DOSAGE_FORM_LABELS;
+  readonly minimumExpiryDate = todayInLuanda();
   saving = false;
-  receiveForm!: FormGroup;
-  dispenseForm!: FormGroup;
+  receiveForm: ReceiveFormGroup;
+  dispenseForm: DispenseFormGroup;
   medicationId = '';
+
+  private successTimeoutId?: ReturnType<typeof setTimeout>;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
     private pharmacyService: PharmacyService,
-    private patientService: PatientService,
-  ) {}
+    private authService: AuthService,
+  ) {
+    this.receiveForm = this.fb.group({
+      batchNumber: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
+      expiryDate: this.fb.nonNullable.control('', Validators.required),
+      quantity: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
+      unitCost: this.fb.control<number | null>(null, Validators.min(0)),
+      supplier: this.fb.nonNullable.control('', Validators.maxLength(200)),
+    });
+    this.dispenseForm = this.fb.group({
+      quantity: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
+      reason: this.fb.nonNullable.control('', Validators.maxLength(500)),
+    });
+  }
 
   ngOnInit(): void {
     this.medicationId = this.route.snapshot.paramMap.get('id') ?? '';
-    this.buildForms();
-    this.loadPatients();
-    if (this.medicationId) {
-      this.loadMedication();
-      this.loadBatches();
+    if (!this.medicationId || !this.canViewStockDetails) {
+      void this.router.navigate(['/pharmacy']);
+      return;
     }
+    this.loadMedication();
+    this.loadBatches();
   }
 
-  buildForms(): void {
-    this.receiveForm = this.fb.group({
-      batchNumber: ['', Validators.required],
-      expiryDate: ['', Validators.required],
-      quantity: [null, [Validators.required, Validators.min(1)]],
-      unitCost: [null],
-      supplier: [''],
-    });
-    this.dispenseForm = this.fb.group({
-      quantity: [null, [Validators.required, Validators.min(1)]],
-      patientId: [''],
-      reason: [''],
-    });
+  ngOnDestroy(): void {
+    if (this.successTimeoutId) clearTimeout(this.successTimeoutId);
+  }
+
+  get canViewStockDetails(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return roles.some((role) => ['ADMIN', 'MANAGER', 'PHARMACIST'].includes(role));
+  }
+
+  get canManageStock(): boolean {
+    const roles = this.authService.getCurrentUser()?.roles ?? [];
+    return roles.some((role) => role === 'ADMIN' || role === 'PHARMACIST');
   }
 
   loadMedication(): void {
     this.loading = true;
-    this.pharmacyService.findAllMedications('', 0, 1000).subscribe({
-      next: (page) => {
-        this.medication = page.content.find((m) => m.id === this.medicationId) ?? null;
+    this.error = '';
+    this.pharmacyService.findMedication(this.medicationId).subscribe({
+      next: (medication) => {
+        this.medication = medication;
         this.loading = false;
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        this.error = pharmacyErrorMessage(error, 'Não foi possível carregar o medicamento.');
         this.loading = false;
       },
     });
   }
 
   loadBatches(): void {
+    this.batchesLoading = true;
     this.pharmacyService.findBatches(this.medicationId).subscribe({
-      next: (b) => {
-        this.batches = b;
+      next: (batches) => {
+        this.batches = batches;
+        this.batchesLoading = false;
       },
-    });
-  }
-
-  loadPatients(): void {
-    this.patientService.findAll('', 0, 100).subscribe({
-      next: (p) => {
-        this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
+      error: (error: HttpErrorResponse) => {
+        this.error = pharmacyErrorMessage(error, 'Não foi possível carregar os lotes de stock.');
+        this.batchesLoading = false;
       },
     });
   }
 
   receiveStock(): void {
-    if (!this.medication || this.receiveForm.invalid) {
+    if (!this.canManageStock || !this.medication || this.receiveForm.invalid) {
       this.receiveForm.markAllAsTouched();
       return;
     }
+
+    const value = this.receiveForm.getRawValue();
+    const request: ReceiveStockRequest = {
+      medicationId: this.medication.id,
+      batchNumber: value.batchNumber.trim(),
+      expiryDate: value.expiryDate,
+      quantity: value.quantity ?? 0,
+      ...(value.unitCost !== null ? { unitCost: value.unitCost } : {}),
+      ...(value.supplier.trim() ? { supplier: value.supplier.trim() } : {}),
+    };
+
     this.saving = true;
+    this.error = '';
     this.pharmacyService
-      .receiveStock({ medicationId: this.medication.id, ...this.receiveForm.value })
+      .receiveStock(request)
+      .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (batch) => {
-          this.batches.unshift(batch);
-          this.medication!.totalAvailable += batch.quantityAvailable;
-          this.receiveForm.reset();
-          this.successMsg = 'Stock received successfully.';
+          this.resetReceiveForm();
+          this.flashSuccess(`${batch.quantityReceived} ${this.medication?.unit} recebidos.`);
           this.activeTab = 'batches';
-          this.saving = false;
-          setTimeout(() => (this.successMsg = ''), 3000);
+          this.loadMedication();
+          this.loadBatches();
         },
-        error: (err) => {
-          this.error = err.error?.message ?? 'Failed.';
-          this.saving = false;
+        error: (error: HttpErrorResponse) => {
+          this.error = pharmacyErrorMessage(error, 'Não foi possível registar a entrada de stock.');
         },
       });
   }
 
   dispense(): void {
-    if (!this.medication || this.dispenseForm.invalid) {
+    if (!this.canManageStock || !this.medication || this.dispenseForm.invalid) {
       this.dispenseForm.markAllAsTouched();
       return;
     }
+
+    const value = this.dispenseForm.getRawValue();
+    const request: DispenseRequest = {
+      medicationId: this.medication.id,
+      quantity: value.quantity ?? 0,
+      ...(value.reason.trim() ? { reason: value.reason.trim() } : {}),
+    };
+
     this.saving = true;
+    this.error = '';
     this.pharmacyService
-      .dispense({ medicationId: this.medication.id, ...this.dispenseForm.value })
+      .dispense(request)
+      .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: (result) => {
-          this.medication!.totalAvailable = result.remainingStock;
-          this.loadBatches();
-          this.dispenseForm.reset();
-          this.successMsg = `Dispensed ${result.quantityDispensed} ${this.medication!.unit}. Remaining: ${result.remainingStock}`;
+          this.resetDispenseForm();
+          this.flashSuccess(
+            `${result.quantityDispensed} ${this.medication?.unit} dispensados. Stock restante: ${result.remainingStock}.`,
+          );
           this.activeTab = 'batches';
-          this.saving = false;
-          setTimeout(() => (this.successMsg = ''), 4000);
+          this.loadMedication();
+          this.loadBatches();
         },
-        error: (err) => {
-          this.error = err.error?.message ?? 'Failed.';
-          this.saving = false;
+        error: (error: HttpErrorResponse) => {
+          this.error = pharmacyErrorMessage(error, 'Não foi possível dispensar o medicamento.');
         },
       });
   }
 
   isLowStock(): boolean {
-    return !!this.medication && this.medication.totalAvailable <= this.medication.minStockLevel;
+    return (
+      !!this.medication &&
+      this.medication.minStockLevel !== null &&
+      this.medication.totalAvailable <= this.medication.minStockLevel
+    );
   }
 
   goBack(): void {
-    this.router.navigate(['/pharmacy']);
+    void this.router.navigate(['/pharmacy']);
   }
+
   get f() {
     return { receiveForm: this.receiveForm.controls, dispenseForm: this.dispenseForm.controls };
+  }
+
+  private resetReceiveForm(): void {
+    this.receiveForm.reset({
+      batchNumber: '',
+      expiryDate: '',
+      quantity: null,
+      unitCost: null,
+      supplier: '',
+    });
+  }
+
+  private resetDispenseForm(): void {
+    this.dispenseForm.reset({ quantity: null, reason: '' });
+  }
+
+  private flashSuccess(message: string): void {
+    this.successMsg = message;
+    if (this.successTimeoutId) clearTimeout(this.successTimeoutId);
+    this.successTimeoutId = setTimeout(() => {
+      this.successMsg = '';
+      this.successTimeoutId = undefined;
+    }, 4000);
   }
 }

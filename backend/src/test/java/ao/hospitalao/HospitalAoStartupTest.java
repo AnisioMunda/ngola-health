@@ -44,11 +44,83 @@ class HospitalAoStartupTest {
     Long appliedChangesets =
         jdbcTemplate.queryForObject("SELECT COUNT(*) FROM databasechangelog", Long.class);
 
-    assertThat(appliedChangesets).isEqualTo(51L);
+    assertThat(appliedChangesets).isEqualTo(80L);
     assertThat(
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'hospitals'",
                 Long.class))
         .isEqualTo(1L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT name FROM hospitals WHERE code = 'HCL-001'", String.class))
+        .isEqualTo("Hospital Central de Luanda");
+    assertThat(jdbcTemplate.queryForList("SELECT name FROM roles", String.class))
+        .containsExactlyInAnyOrder(
+            "ADMIN",
+            "DOCTOR",
+            "NURSE",
+            "RECEPTIONIST",
+            "PHARMACIST",
+            "FINANCIAL",
+            "MANAGER",
+            "LAB_TECHNICIAN",
+            "SUPER_ADMIN");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.tables
+                    WHERE table_schema = current_schema()
+                      AND table_name IN ('users', 'roles', 'permissions', 'user_roles', 'role_permissions')
+                    """,
+                Long.class))
+        .isEqualTo(5L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND column_name = 'hospital_id'
+                    """,
+                Long.class))
+        .isEqualTo(34L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND table_name = 'invoices'
+                      AND column_name = 'currency'
+                      AND data_type = 'character varying'
+                      AND character_maximum_length = 3
+                      AND is_nullable = 'NO'
+                      AND column_default LIKE '%AOA%'
+                    """,
+                Long.class))
+        .isEqualTo(1L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND table_name = 'users'
+                      AND column_name = 'teams_user_id'
+                    """,
+                Long.class))
+        .isEqualTo(1L);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND table_name = 'telemedicine_sessions'
+                      AND column_name IN ('provider_meeting_id', 'provider_organizer_id', 'room_url')
+                    """,
+                Long.class))
+        .isEqualTo(3L);
   }
 }

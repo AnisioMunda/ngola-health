@@ -4,6 +4,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.episodes.entity.Episode;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.modules.patients.entity.Patient;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Invoice {
+public class Invoice extends TenantScopedEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,7 +28,7 @@ public class Invoice {
   private UUID id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
+  @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)
   private Hospital hospital;
 
   /**
@@ -36,6 +37,10 @@ public class Invoice {
    */
   @Column(name = "invoice_number", nullable = false, unique = true, length = 30)
   private String invoiceNumber;
+
+  @Column(name = "currency", nullable = false, length = 3)
+  @Builder.Default
+  private String currency = "AOA";
 
   /**
    * Tipo de documento fiscal — DP 50/19 AGT Angola: FT = Factura | FR = Factura/Recibo | NC = Nota

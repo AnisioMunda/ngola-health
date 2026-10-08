@@ -1,14 +1,14 @@
 <div class="page">
   <header class="page-header">
     <div class="header-left">
-      <h1>Patients</h1>
-      <span class="total-badge">{{ totalElements }} registered</span>
+      <h1>Pacientes</h1>
+      <span class="total-badge">{{ totalElements }} registados</span>
     </div>
     <button class="btn-primary" (click)="goToCreate()">
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
-      New Patient
+      Novo paciente
     </button>
   </header>
 
@@ -22,27 +22,29 @@
       type="text"
       [(ngModel)]="searchQuery"
       (ngModelChange)="onSearch()"
-      placeholder="Search by name, national ID or health card..."
+      aria-label="Pesquisar pacientes"
+      placeholder="Pesquisar por nome, BI/NIF, cartão de saúde ou telefone..."
     />
   </div>
 
   <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="reportError" role="alert">{{ reportError }}</div>
 
   <div class="loading-state" *ngIf="loading">
     <div class="spinner-lg"></div>
-    <span>Loading patients...</span>
+    <span>A carregar pacientes...</span>
   </div>
 
   <div class="table-card" *ngIf="!loading">
     <table>
       <thead>
         <tr>
-          <th>Patient</th>
-          <th>Age / Gender</th>
-          <th>National ID</th>
-          <th>Contact</th>
-          <th>Blood Type</th>
-          <th>Province</th>
+          <th>Paciente</th>
+          <th>Idade / género</th>
+          <th>BI/NIF</th>
+          <th>Contacto</th>
+          <th>Grupo sanguíneo</th>
+          <th>Província</th>
           <th></th>
         </tr>
       </thead>
@@ -61,7 +63,7 @@
           </td>
           <td>
             <div class="age-gender">
-              <span class="age">{{ p.age }} yrs</span>
+              <span class="age">{{ p.age }} anos</span>
               <span
                 class="gender-badge"
                 [class.male]="p.gender === 'MALE'"
@@ -79,7 +81,30 @@
           </td>
           <td class="text-muted">{{ p.province || '—' }}</td>
           <td>
-            <button class="btn-icon" title="Edit" (click)="goToEdit(p.id, $event)">
+            <button
+              *ngIf="canDownloadPatientReport"
+              class="btn-icon"
+              title="Descarregar ficha em PDF"
+              aria-label="Descarregar ficha do paciente em PDF"
+              [disabled]="downloadingPatientReport"
+              (click)="downloadPatientReport(p.id, $event)"
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M10 3v9m0 0 3-3m-3 3L7 9m-3 6v2h12v-2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              class="btn-icon"
+              title="Editar paciente"
+              aria-label="Editar paciente"
+              (click)="goToEdit(p.id, $event)"
+            >
               <svg viewBox="0 0 20 20" fill="none">
                 <path
                   d="M14.7 3.3a1 1 0 011.4 1.4L6 14.8l-3 .5.5-3L14.7 3.3z"
@@ -106,12 +131,12 @@
             <p>
               {{
                 searchQuery
-                  ? 'No patients found for "' + searchQuery + '"'
-                  : 'No patients registered yet'
+                  ? 'Não foram encontrados pacientes para "' + searchQuery + '".'
+                  : 'Ainda não existem pacientes registados.'
               }}
             </p>
-            <button class="btn-primary" (click)="goToCreate()" *ngIf="!searchQuery">
-              Register first patient
+            <button class="btn-primary" (click)="goToCreate()" *ngIf="!searchQuery.trim()">
+              Registar o primeiro paciente
             </button>
           </td>
         </tr>
@@ -120,11 +145,11 @@
 
     <div class="pagination" *ngIf="totalPages > 1">
       <button class="btn-page" (click)="prevPage()" [disabled]="currentPage === 0">
-        ← Previous
+        ← Anterior
       </button>
-      <span class="page-info">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <span class="page-info">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
       <button class="btn-page" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
-        Next →
+        Seguinte →
       </button>
     </div>
   </div>

@@ -45,8 +45,28 @@ public final class PdfDocumentBuilder implements AutoCloseable {
     stream.setNonStrokingColor(background);
     stream.addRect(margin, top - 58, PAGE_WIDTH - 2 * margin, 58);
     stream.fill();
-    drawText(title, margin + 12, top - 23, 14, FONT_BOLD, Color.WHITE);
-    drawText(subtitle, margin + 12, top - 42, 9, FONT_REGULAR, accent);
+    drawText(
+        sanitize(title == null ? "" : title), margin + 12, top - 23, 14, FONT_BOLD, Color.WHITE);
+    drawText(
+        sanitize(subtitle == null ? "" : subtitle), margin + 12, top - 42, 9, FONT_REGULAR, accent);
+    y -= 70;
+  }
+
+  public void addBrandBanner(
+      String title, String subtitle, Color background, Color accent, BufferedImage logo)
+      throws IOException {
+    ensureSpace(58);
+    float top = y;
+    stream.setNonStrokingColor(background);
+    stream.addRect(margin, top - 58, PAGE_WIDTH - 2 * margin, 58);
+    stream.fill();
+
+    var pdfLogo = LosslessFactory.createFromImage(document, logo);
+    stream.drawImage(pdfLogo, margin + 12, top - 46, 34, 34);
+    drawText(
+        sanitize(title == null ? "" : title), margin + 58, top - 23, 14, FONT_BOLD, Color.WHITE);
+    drawText(
+        sanitize(subtitle == null ? "" : subtitle), margin + 58, top - 42, 9, FONT_REGULAR, accent);
     y -= 70;
   }
 

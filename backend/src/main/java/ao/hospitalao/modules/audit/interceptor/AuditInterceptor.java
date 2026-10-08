@@ -6,6 +6,8 @@ import ao.hospitalao.modules.audit.entity.AuditLog.EntityType;
 import ao.hospitalao.modules.audit.service.AuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.net.URI;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -56,8 +58,11 @@ public class AuditInterceptor implements HandlerInterceptor {
           default -> AuditAction.READ;
         };
 
+    if (url.contains("/patients/possible-duplicates")) action = AuditAction.READ;
+
     // Sobrescrever acções especiais baseado no URL
     if (url.contains("/issue")) action = AuditAction.APPROVE;
+    if (url.contains("/approve")) action = AuditAction.APPROVE;
     if (url.contains("/void")) action = AuditAction.REJECT;
     if (url.contains("/discharge")) action = AuditAction.UPDATE;
     if (url.contains("/pdf")) action = AuditAction.PRINT;
@@ -74,18 +79,21 @@ public class AuditInterceptor implements HandlerInterceptor {
 
     String ip = getClientIp(request);
     String ua = request.getHeader("User-Agent");
+    String entityId = resolveEntityId(request, response);
 
     auditService.log(
         action,
         entityType,
-        null,
+        entityId,
         description,
         null,
         null,
         ip,
         ua,
         result,
-        ex != null ? ex.getMessage() : null);
+        ex != null ? ex.getMessage() : null,
+        method,
+        url);
   }
 
   // ------------------------------------------------
@@ -93,18 +101,55 @@ public class AuditInterceptor implements HandlerInterceptor {
   // ------------------------------------------------
 
   private EntityType detectEntityType(String url) {
+    if (url.contains("/portal/register") || url.contains("/patient-portal/accounts")) {
+      return EntityType.PATIENT;
+    }
     if (url.contains("/patients")) return EntityType.PATIENT;
     if (url.contains("/episodes")) return EntityType.EPISODE;
+    if (url.contains("/prescriptions")) return EntityType.PRESCRIPTION;
     if (url.contains("/lab")) return EntityType.LAB_REQUEST;
     if (url.contains("/pharmacy") || url.contains("/medications")) return EntityType.MEDICATION;
     if (url.contains("/financial") || url.contains("/invoices")) return EntityType.INVOICE;
     if (url.contains("/scheduling") || url.contains("/appointments")) return EntityType.APPOINTMENT;
     if (url.contains("/inpatient") || url.contains("/admissions")) return EntityType.ADMISSION;
     if (url.contains("/users")) return EntityType.USER;
+    if (url.contains("/hospitals")) return EntityType.HOSPITAL;
     if (url.contains("/notifications")) return EntityType.NOTIFICATION;
     if (url.contains("/reports")) return EntityType.REPORT;
     if (url.contains("/wards") || url.contains("/beds")) return EntityType.WARD;
     return EntityType.SYSTEM;
+  }
+
+  private String resolveEntityId(HttpServletRequest request, HttpServletResponse response) {
+    String location = response.getHeader("Location");
+    if (location != null && !location.isBlank()) {
+      String locationId = lastPathSegment(URI.create(location).getPath());
+      if (locationId != null) return locationId;
+    }
+
+    String[] segments = request.getRequestURI().split("/");
+    for (int i = segments.length - 1; i >= 0; i--) {
+      String segment = segments[i];
+      if (isUuid(segment)) return segment;
+    }
+    return null;
+  }
+
+  private String lastPathSegment(String path) {
+    if (path == null || path.isBlank()) return null;
+    String[] segments = path.split("/");
+    String lastSegment = segments[segments.length - 1];
+    return lastSegment.isBlank() ? null : lastSegment;
+  }
+
+  private boolean isUuid(String value) {
+    if (value == null || value.isBlank()) return false;
+    try {
+      UUID.fromString(value);
+      return true;
+    } catch (IllegalArgumentException ignored) {
+      return false;
+    }
   }
 
   private String buildDescription(String method, String url, int status) {

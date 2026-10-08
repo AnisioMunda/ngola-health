@@ -5,6 +5,9 @@ import ao.hospitalao.modules.inpatient.entity.Admission.DischargeCondition;
 import ao.hospitalao.modules.inpatient.entity.Bed.BedStatus;
 import ao.hospitalao.modules.inpatient.entity.Bed.BedType;
 import ao.hospitalao.modules.inpatient.entity.Ward.WardType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -38,11 +41,21 @@ public class InpatientDtos {
 
   @Data
   public static class CreateWardRequest {
+    @NotBlank
+    @Size(max = 100)
     private String name;
+
+    @NotBlank
+    @Size(max = 20)
     private String code;
+
     private WardType type;
+
+    @Size(max = 10)
     private String floor;
+
     private String notes;
+
     private UUID responsibleDoctorId;
   }
 
@@ -69,15 +82,23 @@ public class InpatientDtos {
 
   @Data
   public static class CreateBedRequest {
-    private UUID wardId;
+    @NotNull private UUID wardId;
+
+    @NotBlank
+    @Size(max = 10)
     private String bedNumber;
+
     private BedType type;
+
+    @Size(max = 300)
     private String notes;
   }
 
   @Data
   public static class UpdateBedStatusRequest {
-    private BedStatus status;
+    @NotNull private BedStatus status;
+
+    @Size(max = 300)
     private String notes;
   }
 
@@ -117,23 +138,34 @@ public class InpatientDtos {
 
   @Data
   public static class CreateAdmissionRequest {
-    private UUID patientId;
-    private UUID bedId;
+    @NotNull private UUID patientId;
+
+    @NotNull private UUID bedId;
+
     private UUID episodeId;
-    private UUID responsibleDoctorId;
+
+    @NotNull private UUID responsibleDoctorId;
+
+    @NotBlank
+    @Size(max = 500)
     private String admissionReason;
+
     private LocalDate expectedDischargeDate;
   }
 
   @Data
   public static class DischargeRequest {
+    @Size(max = 10000)
     private String dischargeNotes;
+
     private DischargeCondition dischargeCondition;
   }
 
   @Data
   public static class TransferRequest {
-    private UUID toBedId;
+    @NotNull private UUID toBedId;
+
+    @Size(max = 300)
     private String reason;
   }
 

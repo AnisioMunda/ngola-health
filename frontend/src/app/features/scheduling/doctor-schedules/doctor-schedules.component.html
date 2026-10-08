@@ -14,6 +14,7 @@
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
   <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="doctorError">{{ doctorError }}</div>
 
   <!-- Formulário -->
   <div class="form-card" *ngIf="showForm">
@@ -49,6 +50,23 @@
         <div class="field">
           <label>Hora de Fim *</label>
           <input type="time" formControlName="endTime" />
+          <span
+            class="field-error"
+            *ngIf="
+              form.hasError('invalidTimeRange') && (f['startTime'].touched || f['endTime'].touched)
+            "
+          >
+            A hora de fim deve ser posterior à hora de início.
+          </span>
+          <span
+            class="field-error"
+            *ngIf="
+              form.hasError('slotExceedsInterval') &&
+              (f['startTime'].touched || f['endTime'].touched)
+            "
+          >
+            A duração do slot não pode exceder o horário configurado.
+          </span>
         </div>
 
         <div class="field">
@@ -154,7 +172,14 @@
             <div class="schedule-meta">
               {{ slotsPerDay(s) }} slots · {{ s.slotDurationMinutes }}min
             </div>
-            <button class="btn-remove" (click)="delete(s.id)" title="Remover">✕</button>
+            <button
+              class="btn-remove"
+              (click)="delete(s.id)"
+              [attr.aria-label]="'Remover horário de ' + s.startTime + ' a ' + s.endTime"
+              title="Remover"
+            >
+              ✕
+            </button>
           </div>
 
           <div class="day-empty" *ngIf="!hasScheduleOnDay(group.schedules, day.value)">

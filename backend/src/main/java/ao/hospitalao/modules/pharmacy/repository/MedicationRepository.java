@@ -2,6 +2,7 @@ package ao.hospitalao.modules.pharmacy.repository;
 
 import ao.hospitalao.modules.pharmacy.entity.Medication;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +14,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MedicationRepository extends JpaRepository<Medication, UUID> {
 
+  Optional<Medication> findByHospitalIdAndId(UUID hospitalId, UUID id);
+
   Page<Medication> findByHospitalIdAndActiveTrue(UUID hospitalId, Pageable pageable);
+
+  List<Medication> findByHospitalIdAndActiveTrueOrderByNameAsc(UUID hospitalId);
 
   @Query(
       """

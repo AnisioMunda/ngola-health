@@ -1,6 +1,10 @@
 package ao.hospitalao.modules.telemedicine.dto;
 
 import ao.hospitalao.modules.telemedicine.entity.TelemedicineSession.SessionStatus;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.Builder;
@@ -20,7 +24,7 @@ public class TelemedicineDtos {
     private SessionStatus status;
     private String statusLabel;
     private String roomToken;
-    private String roomUrl; // URL para entrar na sala
+    private String roomUrl;
     private OffsetDateTime scheduledAt;
     private OffsetDateTime startedAt;
     private OffsetDateTime endedAt;
@@ -31,9 +35,22 @@ public class TelemedicineDtos {
 
   @Data
   public static class CreateSessionRequest {
-    private UUID patientId;
+    @NotNull private UUID patientId;
+    @NotNull private UUID doctorId;
     private UUID appointmentId; // opcional
-    private OffsetDateTime scheduledAt;
+    @NotNull @Future private OffsetDateTime scheduledAt;
+
+    @NotNull
+    @Positive
+    @Max(1440)
+    private Integer durationMinutes;
+  }
+
+  @Data
+  @Builder
+  public static class DoctorOptionDto {
+    private UUID id;
+    private String fullName;
   }
 
   @Data
@@ -49,5 +66,6 @@ public class TelemedicineDtos {
     private long inProgress;
     private long completedThisMonth;
     private double avgDurationMinutes;
+    private boolean teamsConfigured;
   }
 }

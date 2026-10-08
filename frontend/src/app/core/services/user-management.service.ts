@@ -11,6 +11,7 @@ export interface UserResponse {
   phone: string;
   especiality: string;
   professionalCard: string;
+  teamsUserId: string | null;
   registerStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   mustChangePassword: boolean;
   lastLogin: string;
@@ -34,6 +35,7 @@ export interface CreateUserRequest {
   phone?: string;
   especiality?: string;
   professionalCard?: string;
+  teamsUserId?: string;
   mustChangePassword: boolean;
   roleIds: string[];
 }
@@ -44,6 +46,7 @@ export interface UpdateUserRequest {
   phone?: string;
   especiality?: string;
   professionalCard?: string;
+  teamsUserId?: string;
   roleIds?: string[];
 }
 

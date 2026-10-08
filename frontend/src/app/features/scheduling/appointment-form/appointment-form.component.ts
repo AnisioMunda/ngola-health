@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   SchedulingService,
   DayAvailabilityResponse,
@@ -20,9 +21,13 @@ import { UserManagementService } from '../../../core/services/user-management.se
   styleUrls: ['./appointment-form.component.scss'],
 })
 export class AppointmentFormComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private slotLoadSequence = 0;
+
   form!: FormGroup;
   saving = false;
   error = '';
+  slotsError = '';
 
   patients: { id: string; fullName: string; phone: string }[] = [];
   doctors: { id: string; fullName: string; specialty: string }[] = [];
@@ -63,37 +68,50 @@ export class AppointmentFormComponent implements OnInit {
       appointmentDate: ['', Validators.required],
       startTime: ['', Validators.required],
       appointmentType: ['OUTPATIENT', Validators.required],
-      reason: ['', [Validators.required, Validators.minLength(5)]],
-      notes: [''],
+      reason: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(300)]],
+      notes: ['', Validators.maxLength(10000)],
     });
 
     // Quando médico ou data mudar, buscar slots
-    this.form.get('doctorId')?.valueChanges.subscribe(() => this.onDoctorOrDateChange());
-    this.form.get('appointmentDate')?.valueChanges.subscribe(() => this.onDoctorOrDateChange());
+    this.form
+      .get('doctorId')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onDoctorOrDateChange());
+    this.form
+      .get('appointmentDate')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onDoctorOrDateChange());
   }
 
   onDoctorOrDateChange(): void {
     const doctorId = this.form.get('doctorId')?.value;
     const date = this.form.get('appointmentDate')?.value;
+    this.form.get('startTime')?.setValue('');
+    this.selectedSlot = null;
     if (doctorId && date) {
       this.loadSlots(doctorId, date);
     } else {
+      this.slotLoadSequence++;
       this.availability = null;
-      this.selectedSlot = null;
+      this.loadingSlots = false;
+      this.slotsError = '';
     }
-    this.form.get('startTime')?.setValue('');
-    this.selectedSlot = null;
   }
 
   loadSlots(doctorId: string, date: string): void {
+    const requestSequence = ++this.slotLoadSequence;
     this.loadingSlots = true;
     this.availability = null;
+    this.slotsError = '';
     this.schedulingService.getAvailability(doctorId, date).subscribe({
       next: (av) => {
+        if (requestSequence !== this.slotLoadSequence) return;
         this.availability = av;
         this.loadingSlots = false;
       },
       error: () => {
+        if (requestSequence !== this.slotLoadSequence) return;
+        this.slotsError = 'Erro ao carregar slots disponíveis.';
         this.loadingSlots = false;
       },
     });
@@ -114,6 +132,9 @@ export class AppointmentFormComponent implements OnInit {
           phone: x.phone ?? '',
         }));
       },
+      error: () => {
+        this.error = 'Erro ao carregar a lista de pacientes.';
+      },
     });
   }
 
@@ -124,10 +145,14 @@ export class AppointmentFormComponent implements OnInit {
           .filter((u) => u.roles?.includes('DOCTOR'))
           .map((u) => ({ id: u.id, fullName: u.fullName, specialty: u.especiality ?? '' }));
       },
+      error: () => {
+        this.error = 'Erro ao carregar a lista de médicos.';
+      },
     });
   }
 
   onSubmit(): void {
+    if (this.saving) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -138,14 +163,17 @@ export class AppointmentFormComponent implements OnInit {
     this.schedulingService.create(this.form.getRawValue()).subscribe({
       next: () => this.router.navigate(['/scheduling']),
       error: (err) => {
-        this.error = err.error?.message ?? 'Erro ao criar agendamento.';
+        this.error = err.error?.detail ?? err.error?.message ?? 'Erro ao criar agendamento.';
         this.saving = false;
       },
     });
   }
 
   get minDate(): string {
-    return new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${today.getFullYear()}-${month}-${day}`;
   }
   get f() {
     return this.form.controls;

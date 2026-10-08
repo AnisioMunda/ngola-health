@@ -99,6 +99,7 @@ public class AuditLog {
   public enum EntityType {
     PATIENT,
     EPISODE,
+    PRESCRIPTION,
     LAB_REQUEST,
     MEDICATION,
     INVOICE,
@@ -109,6 +110,7 @@ public class AuditLog {
     REPORT,
     WARD,
     BED,
+    HOSPITAL,
     SYSTEM
   }
 

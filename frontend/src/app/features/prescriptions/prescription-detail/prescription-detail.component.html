@@ -64,12 +64,14 @@
         </div>
         <div class="info-block">
           <span class="info-label">Data de Emissão</span>
-          <span class="info-value">{{ prescription.prescriptionDate | date: 'dd/MM/yyyy' }}</span>
+          <span class="info-value">
+            {{ prescription.prescriptionDate | date: 'dd/MM/yyyy' : 'Africa/Luanda' }}
+          </span>
         </div>
         <div class="info-block">
           <span class="info-label">Validade</span>
           <span class="info-value" [class.expired-text]="prescription.expired">
-            {{ prescription.expiryDate | date: 'dd/MM/yyyy' }}
+            {{ prescription.expiryDate | date: 'dd/MM/yyyy' : 'Africa/Luanda' }}
           </span>
         </div>
         <div class="info-block" *ngIf="prescription.diagnosis">
@@ -102,11 +104,20 @@
       <h3>Cancelar Prescrição</h3>
       <div class="field">
         <label>Motivo *</label>
-        <input type="text" [(ngModel)]="cancelReason" placeholder="Motivo do cancelamento..." />
+        <input
+          type="text"
+          [(ngModel)]="cancelReason"
+          maxlength="300"
+          placeholder="Motivo do cancelamento..."
+        />
       </div>
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showCancelForm = false">Voltar</button>
-        <button class="btn-danger" [disabled]="!cancelReason || savingCancel" (click)="cancel()">
+        <button
+          class="btn-danger"
+          [disabled]="!cancelReason.trim() || cancelReason.length > 300 || savingCancel"
+          (click)="cancel()"
+        >
           {{ savingCancel ? 'A cancelar...' : 'Confirmar Cancelamento' }}
         </button>
       </div>
@@ -168,7 +179,12 @@
             </div>
             <button
               class="btn-dispense"
-              *ngIf="canDispense() && item.status !== 'DISPENSED' && item.status !== 'CANCELLED'"
+              *ngIf="
+                canDispense() &&
+                item.status !== 'DISPENSED' &&
+                item.status !== 'CANCELLED' &&
+                item.remainingQuantity > 0
+              "
               (click)="openDispense(item)"
             >
               Dispensar
@@ -206,13 +222,23 @@
       </div>
       <div class="field">
         <label>Notas</label>
-        <input type="text" [(ngModel)]="dispenseNotes" placeholder="Observações da dispensa..." />
+        <input
+          type="text"
+          [(ngModel)]="dispenseNotes"
+          maxlength="300"
+          placeholder="Observações da dispensa..."
+        />
       </div>
       <div class="action-buttons">
         <button class="btn-secondary" (click)="showDispenseForm = false">Cancelar</button>
         <button
           class="btn-dispense-confirm"
-          [disabled]="quantityToDispense < 1 || savingDispense"
+          [disabled]="
+            quantityToDispense < 1 ||
+            quantityToDispense > selectedItem.remainingQuantity ||
+            quantityToDispense > selectedItem.stockAvailable ||
+            savingDispense
+          "
           (click)="dispense()"
         >
           {{ savingDispense ? 'A dispensar...' : 'Confirmar Dispensa' }}
@@ -221,7 +247,7 @@
     </div>
 
     <!-- Histórico de dispensas -->
-    <div class="section-card" *ngIf="(prescription.dispensations?.length ?? 0) > 0">
+    <div class="section-card" *ngIf="prescription.dispensations.length > 0">
       <h2 class="section-title">Histórico de Dispensas</h2>
       <table class="dispensations-table">
         <thead>
@@ -239,7 +265,7 @@
             <td class="batch">{{ d.batchNumber }}</td>
             <td class="qty">{{ d.quantityDispensed }}</td>
             <td>{{ d.dispensedByName }}</td>
-            <td class="dt">{{ d.dispensedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="dt">{{ d.dispensedAt | date: 'dd/MM/yyyy HH:mm' : 'Africa/Luanda' }}</td>
           </tr>
         </tbody>
       </table>

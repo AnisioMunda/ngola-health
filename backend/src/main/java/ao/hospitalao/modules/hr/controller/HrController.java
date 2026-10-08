@@ -1,7 +1,10 @@
 package ao.hospitalao.modules.hr.controller;
 
 import ao.hospitalao.modules.hr.dto.HrDtos.*;
-import ao.hospitalao.modules.hr.service.HrService;
+import ao.hospitalao.modules.hr.service.AttendanceService;
+import ao.hospitalao.modules.hr.service.HrDashboardService;
+import ao.hospitalao.modules.hr.service.LeaveService;
+import ao.hospitalao.modules.hr.service.ShiftService;
 import ao.hospitalao.security.jwt.JwtUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,7 +34,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @SecurityRequirement(name = "bearerAuth")
 public class HrController {
 
-  private final HrService hrService;
+  private final HrDashboardService hrDashboardService;
+  private final ShiftService shiftService;
+  private final LeaveService leaveService;
+  private final AttendanceService attendanceService;
 
   // ------------------------------------------------
   // Dashboard
@@ -39,9 +45,10 @@ public class HrController {
 
   @GetMapping("/stats")
   @Operation(summary = "Estatísticas RH — turnos hoje, ausências, presenças")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<HrStatsDto> getStats() {
-    return ResponseEntity.ok(hrService.getStats());
+    return ResponseEntity.ok(hrDashboardService.getStats());
   }
 
   // ------------------------------------------------
@@ -58,7 +65,7 @@ public class HrController {
       // Início da semana actual (segunda-feira)
       weekStart = LocalDate.now().with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1);
     }
-    return ResponseEntity.ok(hrService.getWeeklySchedule(weekStart));
+    return ResponseEntity.ok(shiftService.getWeeklySchedule(weekStart));
   }
 
   @GetMapping("/shifts/my")
@@ -68,14 +75,15 @@ public class HrController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @AuthenticationPrincipal JwtUserDetails userDetails) {
-    return ResponseEntity.ok(hrService.getMyShifts(userDetails.getUserId(), from, to));
+    return ResponseEntity.ok(shiftService.getMyShifts(userDetails.getUserId(), from, to));
   }
 
   @PostMapping("/shifts")
   @Operation(summary = "Criar turno (ADMIN/MANAGER)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<ShiftResponse> createShift(@Valid @RequestBody CreateShiftRequest request) {
-    ShiftResponse created = hrService.createShift(request);
+    ShiftResponse created = shiftService.createShift(request);
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -86,17 +94,19 @@ public class HrController {
 
   @PatchMapping("/shifts/{id}/status")
   @Operation(summary = "Actualizar estado do turno")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<ShiftResponse> updateShiftStatus(
       @PathVariable UUID id, @Valid @RequestBody UpdateShiftStatusRequest request) {
-    return ResponseEntity.ok(hrService.updateShiftStatus(id, request));
+    return ResponseEntity.ok(shiftService.updateShiftStatus(id, request));
   }
 
   @DeleteMapping("/shifts/{id}")
   @Operation(summary = "Eliminar turno")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<Void> deleteShift(@PathVariable UUID id) {
-    hrService.deleteShift(id);
+    shiftService.deleteShift(id);
     return ResponseEntity.noContent().build();
   }
 
@@ -106,9 +116,10 @@ public class HrController {
 
   @GetMapping("/leaves/pending")
   @Operation(summary = "Pedidos de folga pendentes (para aprovação)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<LeaveRequestResponse>> getPendingLeaves() {
-    return ResponseEntity.ok(hrService.getPendingLeaves());
+    return ResponseEntity.ok(leaveService.getPendingLeaves());
   }
 
   @GetMapping("/leaves/my")
@@ -117,16 +128,17 @@ public class HrController {
   public ResponseEntity<Page<LeaveRequestResponse>> getMyLeaves(
       @AuthenticationPrincipal JwtUserDetails userDetails,
       @PageableDefault(size = 20) Pageable pageable) {
-    return ResponseEntity.ok(hrService.getMyLeaves(userDetails.getUserId(), pageable));
+    return ResponseEntity.ok(leaveService.getMyLeaves(userDetails.getUserId(), pageable));
   }
 
   @GetMapping("/leaves/approved")
   @Operation(summary = "Ausências aprovadas num período — para mapa")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<LeaveRequestResponse>> getApprovedLeaves(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-    return ResponseEntity.ok(hrService.getApprovedInPeriod(from, to));
+    return ResponseEntity.ok(leaveService.getApprovedInPeriod(from, to));
   }
 
   @PostMapping("/leaves")
@@ -135,7 +147,7 @@ public class HrController {
   public ResponseEntity<LeaveRequestResponse> requestLeave(
       @Valid @RequestBody CreateLeaveRequest request,
       @AuthenticationPrincipal JwtUserDetails userDetails) {
-    LeaveRequestResponse created = hrService.requestLeave(userDetails.getUserId(), request);
+    LeaveRequestResponse created = leaveService.requestLeave(userDetails.getUserId(), request);
     URI uri =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -146,17 +158,18 @@ public class HrController {
 
   @PatchMapping("/leaves/{id}/approve")
   @Operation(summary = "Aprovar ou rejeitar pedido de folga")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<LeaveRequestResponse> approveLeave(
       @PathVariable UUID id, @Valid @RequestBody ApproveLeaveRequest request) {
-    return ResponseEntity.ok(hrService.approveLeave(id, request));
+    return ResponseEntity.ok(leaveService.approveLeave(id, request));
   }
 
   @PatchMapping("/leaves/{id}/cancel")
   @Operation(summary = "Cancelar pedido de folga")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<LeaveRequestResponse> cancelLeave(@PathVariable UUID id) {
-    return ResponseEntity.ok(hrService.cancelLeave(id));
+    return ResponseEntity.ok(leaveService.cancelLeave(id));
   }
 
   // ------------------------------------------------
@@ -168,7 +181,7 @@ public class HrController {
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<AttendanceResponse> checkIn(
       @RequestBody CheckInRequest request, @AuthenticationPrincipal JwtUserDetails userDetails) {
-    return ResponseEntity.ok(hrService.checkIn(userDetails.getUserId(), request));
+    return ResponseEntity.ok(attendanceService.checkIn(userDetails.getUserId(), request));
   }
 
   @PatchMapping("/attendance/check-out")
@@ -176,7 +189,7 @@ public class HrController {
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<AttendanceResponse> checkOut(
       @RequestBody CheckOutRequest request, @AuthenticationPrincipal JwtUserDetails userDetails) {
-    return ResponseEntity.ok(hrService.checkOut(userDetails.getUserId(), request));
+    return ResponseEntity.ok(attendanceService.checkOut(userDetails.getUserId(), request));
   }
 
   @GetMapping("/attendance/my")
@@ -186,16 +199,18 @@ public class HrController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @AuthenticationPrincipal JwtUserDetails userDetails) {
-    return ResponseEntity.ok(hrService.getAttendanceByPeriod(userDetails.getUserId(), from, to));
+    return ResponseEntity.ok(
+        attendanceService.getAttendanceByPeriod(userDetails.getUserId(), from, to));
   }
 
   @GetMapping("/attendance/daily")
   @Operation(summary = "Presenças do dia (todos os funcionários)")
-  @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).MANAGER.name())")
   public ResponseEntity<List<AttendanceResponse>> getDailyAttendance(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate date) {
     if (date == null) date = LocalDate.now();
-    return ResponseEntity.ok(hrService.getDailyAttendance(date));
+    return ResponseEntity.ok(attendanceService.getDailyAttendance(date));
   }
 }

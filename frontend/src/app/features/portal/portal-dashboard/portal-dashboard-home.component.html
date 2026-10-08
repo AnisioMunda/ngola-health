@@ -1,0 +1,71 @@
+<header class="content-header">
+  <h1>Olá, {{ getPatientFirstName() }} 👋</h1>
+  <p>O seu resumo de saúde</p>
+</header>
+
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <span class="kpi-icon">📋</span>
+    <div class="kpi-data">
+      <span class="kpi-value">{{ dashboard.totalEpisodes }}</span>
+      <span class="kpi-label">Consultas</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <span class="kpi-icon">📅</span>
+    <div class="kpi-data">
+      <span class="kpi-value">{{ dashboard.upcomingAppointments }}</span>
+      <span class="kpi-label">Próximas consultas</span>
+    </div>
+  </div>
+
+  <div class="kpi-card" [class.alert-card]="dashboard.pendingInvoices > 0">
+    <span class="kpi-icon">💰</span>
+    <div class="kpi-data">
+      <span class="kpi-value">{{ dashboard.pendingInvoices }}</span>
+      <span class="kpi-label">Facturas pendentes</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-card" *ngIf="dashboard.upcomingAppointmentsList.length > 0">
+  <h2>Próximas Consultas</h2>
+  <div class="appointment-list">
+    <div class="appointment-row" *ngFor="let appointment of dashboard.upcomingAppointmentsList">
+      <div class="appt-icon">📅</div>
+      <div class="appt-info">
+        <span class="appt-doctor">{{ appointment.doctorName }}</span>
+        <span class="appt-date">{{ appointment.scheduledAt | date: 'dd MMM yyyy, HH:mm' }}</span>
+        <span class="appt-reason" *ngIf="appointment.reason">{{ appointment.reason }}</span>
+      </div>
+      <span class="appt-status" [style.color]="statusColor(appointment.status)">
+        {{ appointment.status }}
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="section-card" *ngIf="dashboard.recentEpisodes.length > 0">
+  <h2>Últimas Consultas</h2>
+  <div class="episode-list">
+    <div class="episode-row" *ngFor="let episode of dashboard.recentEpisodes">
+      <div class="ep-date">
+        <span class="ep-day">{{ episode.scheduledAt | date: 'dd' }}</span>
+        <span class="ep-mon">{{ episode.scheduledAt | date: 'MMM' }}</span>
+      </div>
+      <div class="ep-info">
+        <span class="ep-type">{{ episode.episodeType }}</span>
+        <span class="ep-doctor" *ngIf="episode.doctorName">Dr(a). {{ episode.doctorName }}</span>
+        <span class="ep-reason" *ngIf="episode.reason">{{ episode.reason }}</span>
+      </div>
+      <span
+        class="ep-status"
+        [style.background]="statusColor(episode.status) + '22'"
+        [style.color]="statusColor(episode.status)"
+      >
+        {{ episode.statusLabel || episode.status }}
+      </span>
+    </div>
+  </div>
+</div>
