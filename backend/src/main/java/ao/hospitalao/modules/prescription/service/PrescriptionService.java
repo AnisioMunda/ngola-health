@@ -174,7 +174,7 @@ public class PrescriptionService {
     }
 
     Prescription saved = prescriptionRepository.save(prescription);
-    log.info("Prescription {} created for patient {}", number, req.getPatientId());
+    log.info("Prescription created");
 
     return toResponse(saved);
   }
@@ -351,11 +351,7 @@ public class PrescriptionService {
     // Actualizar estado da prescrição
     updatePrescriptionStatus(prescription);
 
-    log.info(
-        "Dispensed {} units of {} for prescription {}",
-        req.getQuantityToDispense(),
-        item.getMedication().getName(),
-        prescription.getPrescriptionNumber());
+    log.info("Prescription dispensed");
 
     return toResponseWithDispensations(getOrThrow(prescriptionId));
   }

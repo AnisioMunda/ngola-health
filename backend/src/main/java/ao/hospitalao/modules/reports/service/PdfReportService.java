@@ -123,7 +123,7 @@ public class PdfReportService {
 
       addFooter(pdf);
       byte[] result = pdf.toByteArray();
-      log.info("Patient report generated for: {}", patient.getId());
+      log.info("Patient report generated");
       return result;
     }
   }

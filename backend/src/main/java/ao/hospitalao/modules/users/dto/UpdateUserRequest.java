@@ -18,6 +18,11 @@ public class UpdateUserRequest {
   private String especiality;
   private String professionalCard;
 
+  @Pattern(
+      regexp = "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      message = "Microsoft Entra user ID must be a UUID")
+  private String teamsUserId;
+
   // Null = não alterar os roles
   private Set<UUID> roleIds;
 }

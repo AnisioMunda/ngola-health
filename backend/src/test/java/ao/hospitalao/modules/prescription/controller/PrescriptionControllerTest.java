@@ -357,11 +357,19 @@ class PrescriptionControllerTest {
   @DisplayName("Actuator e Swagger — devem exigir papel administrativo")
   void shouldProtectActuatorAndApiDocumentation() throws Exception {
     mockMvc.perform(api(get("/api/actuator/health"))).andExpect(status().isUnauthorized());
+    mockMvc.perform(api(get("/api/actuator/metrics"))).andExpect(status().isUnauthorized());
+    mockMvc.perform(api(get("/api/actuator/prometheus"))).andExpect(status().isUnauthorized());
     mockMvc
         .perform(api(get("/api/v3/api-docs"), "financial", "FINANCIAL"))
         .andExpect(status().isForbidden());
     mockMvc
         .perform(api(get("/api/actuator/health"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/metrics"), "financial", "FINANCIAL"))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(api(get("/api/actuator/prometheus"), "financial", "FINANCIAL"))
         .andExpect(status().isForbidden());
   }
 

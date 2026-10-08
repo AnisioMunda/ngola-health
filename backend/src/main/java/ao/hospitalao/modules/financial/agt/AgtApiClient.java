@@ -66,7 +66,7 @@ public class AgtApiClient {
     }
 
     ObjectNode request = buildInvoicePayload(invoice);
-    log.info("Submitting invoice {} to AGT", invoice.getInvoiceNumber());
+    log.info("Submitting invoice to AGT");
 
     try {
       JsonNode response = postWithRetry(REGISTER_PATH, request);

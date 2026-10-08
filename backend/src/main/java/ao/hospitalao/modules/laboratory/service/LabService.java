@@ -171,7 +171,7 @@ public class LabService {
     }
 
     LabRequest saved = requestRepository.save(request);
-    log.info("Lab request created: {} for patient {}", saved.getId(), patient.getFullName());
+    log.info("Lab request created");
     return toRequestResponse(saved);
   }
 
@@ -229,7 +229,7 @@ public class LabService {
               ? request.getRequestedBy().getId()
               : request.getCreatedBy() != null ? request.getCreatedBy().getId() : null;
       if (recipientId == null) {
-        log.warn("Completed lab request {} has no notification recipient", request.getId());
+        log.warn("Completed lab request has no notification recipient");
       } else {
         eventPublisher.publishEvent(
             new LabResultsAvailableEvent(request.getHospitalId(), request.getId(), recipientId));

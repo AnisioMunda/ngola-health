@@ -96,7 +96,7 @@ public class PatientService {
             .build();
 
     Patient saved = patientRepository.save(patient);
-    log.info("Patient created: {}", saved.getId());
+    log.info("Patient created");
     return patientMapper.toResponse(saved);
   }
 

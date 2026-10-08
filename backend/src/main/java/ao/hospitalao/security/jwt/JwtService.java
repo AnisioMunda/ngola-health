@@ -5,9 +5,8 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.security.RoleName;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +24,10 @@ import org.springframework.stereotype.Service;
 public class JwtService {
 
   private static final String TOKEN_TYPE_CLAIM = "token_type";
+  private static final String AUDIENCE_CLAIM = "aud";
+  private static final String ROLE_CLAIM = "role";
+  private static final String INTERNAL_AUDIENCE = "hospital-api";
+  private static final String PATIENT_PORTAL_AUDIENCE = "patient-portal";
   private static final String ACCESS_TOKEN_TYPE = "ACCESS";
   private static final String REFRESH_TOKEN_TYPE = "REFRESH";
   private static final String PATIENT_PORTAL_TOKEN_TYPE = "PATIENT_PORTAL";
@@ -32,7 +35,7 @@ public class JwtService {
   private final JwtProperties properties;
 
   public String extractUsername(String token) {
-    return extractClaim(token, Claims::getSubject);
+    return extractClaim(token, claims -> claims.getSubject());
   }
 
   public UUID extractHospitalId(String token) {
@@ -53,8 +56,22 @@ public class JwtService {
     return hasTokenType(token, REFRESH_TOKEN_TYPE);
   }
 
+  public boolean hasAudience(String token, String expectedAudience) {
+    Object audience = extractClaim(token, claims -> claims.get(AUDIENCE_CLAIM));
+    if (audience instanceof String singleAudience) {
+      return expectedAudience.equals(singleAudience);
+    }
+    return audience instanceof Collection<?> audiences && audiences.contains(expectedAudience);
+  }
+
+  public boolean hasPatientPortalRole(String token) {
+    return RoleName.PATIENT
+        .name()
+        .equals(extractClaim(token, claims -> claims.get(ROLE_CLAIM, String.class)));
+  }
+
   public Date extractExpiration(String token) {
-    return extractClaim(token, Claims::getExpiration);
+    return extractClaim(token, claims -> claims.getExpiration());
   }
 
   public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -70,6 +87,7 @@ public class JwtService {
     Map<String, Object> claims = new HashMap<>(extraClaims);
     addIdentityClaims(claims, userDetails);
     claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
+    claims.put(AUDIENCE_CLAIM, INTERNAL_AUDIENCE);
     return buildToken(claims, userDetails, properties.expirationMs());
   }
 
@@ -77,6 +95,7 @@ public class JwtService {
     Map<String, Object> claims = new HashMap<>();
     addIdentityClaims(claims, userDetails);
     claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE);
+    claims.put(AUDIENCE_CLAIM, INTERNAL_AUDIENCE);
     return buildToken(claims, userDetails, properties.refreshExpirationMs());
   }
 
@@ -103,12 +122,12 @@ public class JwtService {
   private String buildToken(
       Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
     return Jwts.builder()
-        .setClaims(extraClaims)
-        .setSubject(userDetails.getUsername())
-        .setId(UUID.randomUUID().toString())
-        .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + expiration))
-        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .claims(extraClaims)
+        .subject(userDetails.getUsername())
+        .id(UUID.randomUUID().toString())
+        .issuedAt(new Date(System.currentTimeMillis()))
+        .expiration(new Date(System.currentTimeMillis() + expiration))
+        .signWith(getSignInKey())
         .compact();
   }
 
@@ -127,14 +146,10 @@ public class JwtService {
   }
 
   private Claims extractAllClaims(String token) {
-    return Jwts.parser()
-        .verifyWith((SecretKey) getSignInKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+    return Jwts.parser().verifyWith(getSignInKey()).build().parseSignedClaims(token).getPayload();
   }
 
-  private Key getSignInKey() {
+  private SecretKey getSignInKey() {
     byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(properties.secret());
     return Keys.hmacShaKeyFor(keyBytes);
   }
@@ -151,15 +166,17 @@ public class JwtService {
     Map<String, Object> claims = new HashMap<>();
     claims.put("patient_id", patientId.toString());
     claims.put(TOKEN_TYPE_CLAIM, PATIENT_PORTAL_TOKEN_TYPE);
+    claims.put(AUDIENCE_CLAIM, PATIENT_PORTAL_AUDIENCE);
+    claims.put(ROLE_CLAIM, RoleName.PATIENT.name());
     claims.put("email", email);
     claims.put("hospital_id", hospitalId.toString());
 
     return Jwts.builder()
-        .setClaims(claims)
-        .setSubject(email)
-        .setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis() + properties.expirationMs()))
-        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .claims(claims)
+        .subject(email)
+        .issuedAt(new Date(System.currentTimeMillis()))
+        .expiration(new Date(System.currentTimeMillis() + properties.expirationMs()))
+        .signWith(getSignInKey())
         .compact();
   }
 

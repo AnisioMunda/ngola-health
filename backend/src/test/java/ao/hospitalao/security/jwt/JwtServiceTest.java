@@ -6,7 +6,6 @@ import ao.hospitalao.config.properties.JwtProperties;
 import ao.hospitalao.modules.auth.entity.Role;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.security.RoleName;
-import io.jsonwebtoken.Claims;
 import java.util.Base64;
 import java.util.Set;
 import java.util.UUID;
@@ -39,11 +38,26 @@ class JwtServiceTest {
 
     String firstToken = jwtService.generateRefreshToken(user);
     String secondToken = jwtService.generateRefreshToken(user);
-    String firstTokenId = jwtService.extractClaim(firstToken, Claims::getId);
-    String secondTokenId = jwtService.extractClaim(secondToken, Claims::getId);
+    String firstTokenId = jwtService.extractClaim(firstToken, claims -> claims.getId());
+    String secondTokenId = jwtService.extractClaim(secondToken, claims -> claims.getId());
 
     assertThat(secondToken).isNotEqualTo(firstToken);
     assertThat(firstTokenId).isNotEqualTo(secondTokenId);
+  }
+
+  @Test
+  void portalAndInternalTokensHaveDifferentAudiencesAndPatientRole() {
+    UUID hospitalId = UUID.randomUUID();
+    String internalToken = jwtService.generateToken(userInHospital(hospitalId));
+    String portalToken =
+        jwtService.generatePortalToken(UUID.randomUUID(), "patient@example.com", hospitalId);
+
+    assertThat(jwtService.hasAudience(internalToken, "hospital-api")).isTrue();
+    assertThat(jwtService.hasAudience(portalToken, "patient-portal")).isTrue();
+    assertThat(jwtService.hasAudience(internalToken, "patient-portal")).isFalse();
+    assertThat(jwtService.hasAudience(portalToken, "hospital-api")).isFalse();
+    assertThat(jwtService.hasPatientPortalRole(portalToken)).isTrue();
+    assertThat(jwtService.isPatientPortalToken(internalToken)).isFalse();
   }
 
   @Test

@@ -87,6 +87,7 @@ class JwtAuthFilterTest {
     when(jwtService.extractUsername("access-token")).thenReturn("new-user");
     when(jwtService.isPatientPortalToken("access-token")).thenReturn(false);
     when(jwtService.isAccessToken("access-token")).thenReturn(true);
+    when(jwtService.hasAudience("access-token", "hospital-api")).thenReturn(true);
     when(jwtService.extractHospitalId("access-token")).thenReturn(hospitalId);
     when(jwtService.isPlatformAdminToken("access-token")).thenReturn(false);
     when(jwtService.isTokenValid("access-token", user)).thenReturn(true);
@@ -103,6 +104,27 @@ class JwtAuthFilterTest {
 
     assertThat(response.getStatus()).isEqualTo(403);
     assertThat(response.getContentAsString()).contains("Altere a sua senha");
+    assertThat(chainInvoked).isFalse();
+  }
+
+  @Test
+  void portalTokensWithTheWrongAudienceAreRejected() throws Exception {
+    when(tokenBlackListService.isBlacklisted("portal-token")).thenReturn(false);
+    when(jwtService.extractUsername("portal-token")).thenReturn("patient@example.com");
+    when(jwtService.isPatientPortalToken("portal-token")).thenReturn(true);
+    when(jwtService.hasAudience("portal-token", "patient-portal")).thenReturn(false);
+
+    JwtAuthFilter filter =
+        new JwtAuthFilter(
+            jwtService, userDetailsService, new ObjectMapper(), tokenBlackListService);
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/portal/dashboard");
+    request.addHeader("Authorization", "Bearer portal-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    AtomicBoolean chainInvoked = new AtomicBoolean();
+
+    filter.doFilter(request, response, (servletRequest, servletResponse) -> chainInvoked.set(true));
+
+    assertThat(response.getStatus()).isEqualTo(401);
     assertThat(chainInvoked).isFalse();
   }
 }

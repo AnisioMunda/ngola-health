@@ -59,10 +59,7 @@ public class DischargeService {
     bed.setStatus(BedStatus.AVAILABLE);
     bedRepository.save(bed);
 
-    log.info(
-        "Patient {} discharged from bed {}",
-        admission.getPatient().getFullName(),
-        bed.getBedNumber());
+    log.info("Patient discharged from inpatient care");
     return responseMapper.toResponse(admissionRepository.save(admission));
   }
 }

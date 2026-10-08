@@ -49,7 +49,7 @@ public class AuthService {
 
   @Transactional
   public AuthResponse register(RegisterRequest request) {
-    log.info("Register attempt for email: {}", request.getEmail());
+    log.info("Registration attempt");
 
     UUID hospitalId = TenantContext.getCurrentHospital();
     if (hospitalId == null) {
@@ -57,7 +57,7 @@ public class AuthService {
     }
 
     if (userRepository.existsByEmail(request.getEmail())) {
-      log.warn("Register attempt with existing email: {}", request.getEmail());
+      log.warn("Registration attempt with an existing email");
       throw new EmailAlreadyExistsException("Email " + request.getEmail() + " is already in use");
     }
 
@@ -78,14 +78,14 @@ public class AuthService {
     String accessToken = jwtService.generateToken(savedUser);
     String refreshToken = jwtService.generateRefreshToken(savedUser);
 
-    log.info("User registered successfully: {}", savedUser.getEmail());
+    log.info("User registered successfully");
     return authMapper.toAuthResponse(savedUser, accessToken, refreshToken);
   }
 
   public AuthResponse authenticate(AuthRequest request) {
     TenantContext.setPlatformAccess();
     try {
-      log.info("Authentication attempt for email: {}", request.getEmail());
+      log.info("Authentication attempt");
 
       User user =
           userRepository
@@ -96,11 +96,11 @@ public class AuthService {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
       } catch (BadCredentialsException e) {
-        log.warn("Authentication failed for email: {}", request.getEmail());
+        log.warn("Authentication failed");
         recordFailedLogin(user);
         throw new BadCredentialsException("Invalid email or password");
       } catch (AuthenticationException e) {
-        log.warn("Authentication rejected for email: {}", request.getEmail());
+        log.warn("Authentication rejected");
         throw new BadCredentialsException("Invalid email or password");
       }
 
@@ -120,7 +120,7 @@ public class AuthService {
       String accessToken = jwtService.generateToken(user);
       String refreshToken = jwtService.generateRefreshToken(user);
 
-      log.info("Authentication successful for: {}", user.getEmail());
+      log.info("Authentication successful");
       return authMapper.toAuthResponse(user, accessToken, refreshToken);
     } finally {
       TenantContext.clear();
@@ -210,7 +210,7 @@ public class AuthService {
     if (!tokenBlackListService.isBlacklisted(refreshToken)) {
       tokenBlackListService.addToBlacklist(
           refreshToken, jwtService.extractExpiration(refreshToken));
-      log.info("Refresh token revoked for {}", username);
+      log.info("Refresh token revoked");
     }
 
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -221,7 +221,7 @@ public class AuthService {
             && !tokenBlackListService.isBlacklisted(accessToken)) {
           tokenBlackListService.addToBlacklist(
               accessToken, jwtService.extractExpiration(accessToken));
-          log.info("Access token revoked for {}", username);
+          log.info("Access token revoked");
         }
       } catch (JwtException exception) {
         log.debug("Skipping invalid or expired access token during logout");
@@ -241,7 +241,7 @@ public class AuthService {
       user.setFailedLoginAttempts(failedAttempts);
       if (failedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
         user.setLockedUntil(now.plus(ACCOUNT_LOCK_DURATION));
-        log.warn("Account temporarily locked after failed login attempts: {}", user.getId());
+        log.warn("Account temporarily locked after failed login attempts");
       }
       userRepository.save(user);
     }

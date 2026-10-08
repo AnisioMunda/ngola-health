@@ -82,7 +82,7 @@ public class PharmacyService {
             .build();
 
     Medication saved = medicationRepository.save(med);
-    log.info("Medication created: {} ({})", saved.getName(), saved.getId());
+    log.info("Medication created");
     return toMedicationResponse(saved);
   }
 
@@ -137,11 +137,7 @@ public class PharmacyService {
             .performedBy(currentUser)
             .build());
 
-    log.info(
-        "Stock received: {} units of {} (batch {})",
-        req.getQuantity(),
-        med.getName(),
-        saved.getBatchNumber());
+    log.info("Medication stock received");
     return toBatchResponse(saved);
   }
 
@@ -215,7 +211,7 @@ public class PharmacyService {
     }
 
     int newTotal = batchRepository.getTotalAvailableQuantity(med.getId(), today);
-    log.info("Dispensed {} units of medication {}", req.getQuantity(), med.getId());
+    log.info("Medication dispensed");
 
     return DispenseResponse.builder()
         .medicationId(med.getId())

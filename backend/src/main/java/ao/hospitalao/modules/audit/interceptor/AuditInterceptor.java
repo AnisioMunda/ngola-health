@@ -62,6 +62,7 @@ public class AuditInterceptor implements HandlerInterceptor {
 
     // Sobrescrever acções especiais baseado no URL
     if (url.contains("/issue")) action = AuditAction.APPROVE;
+    if (url.contains("/approve")) action = AuditAction.APPROVE;
     if (url.contains("/void")) action = AuditAction.REJECT;
     if (url.contains("/discharge")) action = AuditAction.UPDATE;
     if (url.contains("/pdf")) action = AuditAction.PRINT;
@@ -100,6 +101,9 @@ public class AuditInterceptor implements HandlerInterceptor {
   // ------------------------------------------------
 
   private EntityType detectEntityType(String url) {
+    if (url.contains("/portal/register") || url.contains("/patient-portal/accounts")) {
+      return EntityType.PATIENT;
+    }
     if (url.contains("/patients")) return EntityType.PATIENT;
     if (url.contains("/episodes")) return EntityType.EPISODE;
     if (url.contains("/prescriptions")) return EntityType.PRESCRIPTION;

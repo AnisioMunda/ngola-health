@@ -84,7 +84,7 @@ public class NotificationService {
   @Transactional
   public void markAllAsRead(UUID hospitalId, UUID userId) {
     int count = notificationRepository.markAllAsRead(hospitalId, userId);
-    log.info("Marked {} notifications as read for user {}", count, userId);
+    log.info("Marked {} notifications as read", count);
   }
 
   // ------------------------------------------------
@@ -124,7 +124,7 @@ public class NotificationService {
             .build();
 
     notificationRepository.save(notification);
-    log.info("Notification created: [{}] {} for hospital {}", type, title, hospitalId);
+    log.info("Notification created");
   }
 
   // ------------------------------------------------

@@ -48,6 +48,15 @@ public class TelemedicineSession extends TenantScopedEntity {
   @Column(name = "room_token", nullable = false, unique = true)
   private String roomToken;
 
+  @Column(name = "provider_meeting_id", length = 255)
+  private String providerMeetingId;
+
+  @Column(name = "provider_organizer_id")
+  private UUID providerOrganizerId;
+
+  @Column(name = "room_url", columnDefinition = "TEXT")
+  private String roomUrl;
+
   @Column(name = "scheduled_at", nullable = false)
   private OffsetDateTime scheduledAt;
 
@@ -69,6 +78,10 @@ public class TelemedicineSession extends TenantScopedEntity {
   @PrePersist
   protected void onCreate() {
     this.createdAt = OffsetDateTime.now();
+  }
+
+  public void setAppointmentId(UUID appointmentId) {
+    this.appointment = appointmentId == null ? null : new Appointment(appointmentId);
   }
 
   public void calculateDuration() {

@@ -133,7 +133,7 @@ public class TriageService {
     }
 
     TriageRecord saved = triageRepository.save(record);
-    log.info("Triage #{} created — priority: {}", queueNum, saved.getPriority());
+    log.info("Triage record created");
     return toResponse(saved);
   }
 
@@ -180,8 +180,7 @@ public class TriageService {
     }
     record.setStatus(TriageStatus.IN_PROGRESS);
     record.setAttendedAt(OffsetDateTime.now());
-    log.info(
-        "Triage #{} called — waited {} min", record.getQueueNumber(), record.getWaitingMinutes());
+    log.info("Triage record called");
     return toResponse(triageRepository.save(record));
   }
 

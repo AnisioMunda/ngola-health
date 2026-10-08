@@ -13,9 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
-@Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
   Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
@@ -185,4 +183,19 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
   // ------------------------------------------------
 
   List<Invoice> findByPatientIdOrderByIssuedAtDesc(UUID patientId, Pageable pageable);
+
+  List<Invoice> findByPatientIdAndStatusInOrderByIssuedAtDesc(
+      UUID patientId, List<InvoiceStatus> statuses, Pageable pageable);
+
+  long countByPatientIdAndStatusIn(UUID patientId, List<InvoiceStatus> statuses);
+
+  @Query(
+      """
+        SELECT COALESCE(SUM(i.totalAmount - i.paidAmount), 0)
+        FROM Invoice i
+        WHERE i.patient.id = :patientId
+        AND i.status IN :statuses
+    """)
+  BigDecimal sumBalanceByPatientIdAndStatusIn(
+      @Param("patientId") UUID patientId, @Param("statuses") List<InvoiceStatus> statuses);
 }

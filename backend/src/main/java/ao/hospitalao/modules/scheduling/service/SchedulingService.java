@@ -377,12 +377,7 @@ public class SchedulingService {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "O lugar deste horário acabou de ser reservado.", exception);
     }
-    log.info(
-        "Appointment created: {} {} {} for patient {}",
-        saved.getAppointmentDate(),
-        saved.getStartTime(),
-        doctor.getFullName(),
-        patient.getFullName());
+    log.info("Appointment created");
     return toAppointmentResponse(saved);
   }
 
@@ -445,7 +440,7 @@ public class SchedulingService {
     a.setStatus(AppointmentStatus.CANCELLED);
     a.setCancellationReason(reason);
     a.setCancelledAt(OffsetDateTime.now());
-    log.info("Appointment {} cancelled: {}", a.getId(), reason);
+    log.info("Appointment cancelled");
     Appointment saved = appointmentRepository.save(a);
     if (!wasAlreadyCancelled) {
       eventPublisher.publishEvent(
@@ -505,8 +500,7 @@ public class SchedulingService {
             .build();
 
     blockRepository.save(block);
-    log.info(
-        "Schedule block created for doctor {} on {}", doctor.getFullName(), req.getBlockDate());
+    log.info("Schedule block created");
   }
 
   // ------------------------------------------------

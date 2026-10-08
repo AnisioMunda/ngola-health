@@ -53,6 +53,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
   Page<Appointment> findByPatientIdOrderByAppointmentDateDescStartTimeDesc(
       UUID patientId, Pageable pageable);
 
+  boolean existsByIdAndHospitalIdAndPatient_IdAndDoctor_Id(
+      UUID id, UUID hospitalId, UUID patientId, UUID doctorId);
+
   // Consultas futuras do paciente — Portal
   @Query(
       """

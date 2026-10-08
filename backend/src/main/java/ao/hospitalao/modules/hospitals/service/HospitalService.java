@@ -57,7 +57,7 @@ public class HospitalService {
             .build();
 
     Hospital saved = hospitalRepository.save(hospital);
-    log.info("Hospital created: {} ({})", saved.getName(), saved.getId());
+    log.info("Hospital created");
     return toResponse(saved);
   }
 
@@ -84,7 +84,7 @@ public class HospitalService {
     hospital.setTaxId(request.getTaxId());
 
     Hospital saved = hospitalRepository.save(hospital);
-    log.info("Hospital updated: {} ({})", saved.getName(), saved.getId());
+    log.info("Hospital updated");
     return toResponse(saved);
   }
 

@@ -44,37 +44,25 @@ public class AgtPollingService {
             invoice.setAgtStatus("ACEITE");
             invoice.setAgtValidationCode(result.validationCode());
             invoice.setAgtQrCode(result.qrCode());
-            log.info(
-                "Invoice {} ACEITE by AGT. ValidationCode: {}",
-                invoice.getInvoiceNumber(),
-                result.validationCode());
+            log.info("Invoice accepted by AGT");
           }
           case "REJEITADO", "REJECTED" -> {
             invoice.setAgtStatus("REJEITADO");
             invoice.setAgtErrorMessage(result.message());
-            log.warn(
-                "Invoice {} REJEITADO by AGT: {}", invoice.getInvoiceNumber(), result.message());
+            log.warn("Invoice rejected by AGT");
           }
           case "PENDING", "PROCESSANDO" -> {
-            log.debug(
-                "Invoice {} still pending at AGT: {}",
-                invoice.getInvoiceNumber(),
-                result.message());
+            log.debug("Invoice remains pending at AGT");
           }
           default -> {
-            log.warn(
-                "Unknown AGT status '{}' for invoice {}: {}",
-                result.status(),
-                invoice.getInvoiceNumber(),
-                result.message());
+            log.warn("AGT returned an unknown invoice status");
           }
         }
 
         invoiceRepository.save(invoice);
 
       } catch (Exception e) {
-        log.error(
-            "Error polling AGT for invoice {}: {}", invoice.getInvoiceNumber(), e.getMessage());
+        log.error("AGT invoice status polling failed ({})", e.getClass().getSimpleName());
       }
     }
   }

@@ -123,11 +123,7 @@ public class AdmissionService {
     bed.setStatus(BedStatus.OCCUPIED);
     bedRepository.save(bed);
     Admission saved = admissionRepository.save(admission);
-    log.info(
-        "Patient {} admitted to bed {} in ward {}",
-        patient.getFullName(),
-        bed.getBedNumber(),
-        bed.getWard().getName());
+    log.info("Patient admitted to inpatient care");
     return responseMapper.toResponse(saved);
   }
 

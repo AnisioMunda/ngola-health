@@ -158,6 +158,13 @@ agt:
   private-key-path: ${AGT_PRIVATE_KEY_PATH:}
   sandbox: ${AGT_SANDBOX:false}
 
+telemedicine:
+  teams:
+    enabled: ${TEAMS_ENABLED:false}
+    tenant-id: ${TEAMS_TENANT_ID:}
+    client-id: ${TEAMS_CLIENT_ID:}
+    client-secret: ${TEAMS_CLIENT_SECRET:}
+
 app:
   base-url: ${APP_BASE_URL}
 # ============================================================
@@ -173,9 +180,9 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 
@@ -210,6 +217,19 @@ logging:
   pattern:
     # Formato legível: data hora [thread] nível classe - mensagem
     console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    ao.hospitalao: INFO
+  structured:
+    format:
+      console: logstash
 
 
 # ============================================================

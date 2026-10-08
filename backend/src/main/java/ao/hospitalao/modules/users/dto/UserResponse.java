@@ -17,6 +17,7 @@ public class UserResponse {
   private String phone;
   private String especiality;
   private String professionalCard;
+  private UUID teamsUserId;
   private RegisterStatus registerStatus;
   private boolean mustChangePassword;
   private OffsetDateTime lastLogin;

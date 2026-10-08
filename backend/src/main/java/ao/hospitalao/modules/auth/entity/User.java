@@ -45,6 +45,9 @@ public class User extends TenantScopedEntity implements UserDetails {
   @Column(name = "professional_card_number", length = 50)
   private String professionalCard;
 
+  @Column(name = "teams_user_id")
+  private UUID teamsUserId;
+
   @Column(name = "register_status", nullable = false)
   @Enumerated(EnumType.STRING)
   private RegisterStatus registerStatus;

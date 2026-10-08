@@ -87,11 +87,7 @@ public class BedTransferService {
     bedRepository.save(oldBed);
     bedRepository.save(newBed);
 
-    log.info(
-        "Patient {} transferred from bed {} to bed {}",
-        admission.getPatient().getFullName(),
-        oldBed.getBedNumber(),
-        newBed.getBedNumber());
+    log.info("Inpatient bed transfer completed");
     return responseMapper.toResponse(admissionRepository.save(admission));
   }
 

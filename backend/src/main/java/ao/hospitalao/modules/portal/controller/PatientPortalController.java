@@ -31,11 +31,11 @@ public class PatientPortalController {
 
   @PostMapping("/register")
   @Operation(summary = "Registar conta no portal")
-  public ResponseEntity<PortalLoginResponse> register(
+  public ResponseEntity<PortalRegistrationResponse> register(
       @Valid @RequestBody PortalRegisterRequest request) {
     TenantContext.setPlatformAccess();
     try {
-      return ResponseEntity.ok(portalService.register(request));
+      return ResponseEntity.accepted().body(portalService.register(request));
     } finally {
       TenantContext.clear();
     }
@@ -68,6 +68,13 @@ public class PatientPortalController {
   @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
   public ResponseEntity<List<PortalEpisodeDto>> getEpisodes(Authentication auth) {
     return ResponseEntity.ok(portalService.getEpisodes(extractPatientId(auth)));
+  }
+
+  @GetMapping("/lab-results")
+  @Operation(summary = "Resultados laboratoriais concluídos do paciente")
+  @PreAuthorize("hasRole(T(ao.hospitalao.security.RoleName).PATIENT.name())")
+  public ResponseEntity<List<PortalLabResultDto>> getLabResults(Authentication auth) {
+    return ResponseEntity.ok(portalService.getLabResults(extractPatientId(auth)));
   }
 
   @GetMapping("/prescriptions")

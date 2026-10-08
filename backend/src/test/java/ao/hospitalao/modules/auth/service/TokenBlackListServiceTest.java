@@ -3,7 +3,7 @@ package ao.hospitalao.modules.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import ao.hospitalao.HospitalAoApplication;
+import ao.hospitalao.config.SchedulingConfiguration;
 import ao.hospitalao.modules.auth.repository.TokenBlackListRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -36,6 +36,6 @@ class TokenBlackListServiceTest {
                 .getMethod("clearExpiredTokens")
                 .isAnnotationPresent(Scheduled.class))
         .isTrue();
-    assertThat(HospitalAoApplication.class.isAnnotationPresent(EnableScheduling.class)).isTrue();
+    assertThat(SchedulingConfiguration.class.isAnnotationPresent(EnableScheduling.class)).isTrue();
   }
 }

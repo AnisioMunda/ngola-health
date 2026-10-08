@@ -41,7 +41,6 @@ ao.hospitalao.modules.episodes.mapper.EpisodeMapper -> ao.hospitalao.modules.aut
 ao.hospitalao.modules.episodes.mapper.EpisodeMapper -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.episodes.service.EpisodeService -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.episodes.service.EpisodeService -> ao.hospitalao.modules.auth.repository.UserRepository
-ao.hospitalao.modules.episodes.service.EpisodeService -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.episodes.service.EpisodeService -> ao.hospitalao.modules.patients.repository.PatientRepository
 ao.hospitalao.modules.equipment.entity.Equipment -> ao.hospitalao.modules.hospitals.entity.Hospital
 ao.hospitalao.modules.equipment.entity.Equipment -> ao.hospitalao.modules.inpatient.entity.Ward
@@ -178,10 +177,6 @@ ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modul
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.episodes.entity.Episode$EpisodeStatus
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.episodes.entity.Episode$EpisodeType
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.episodes.repository.EpisodeRepository
-ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.financial.entity.Invoice
-ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.financial.entity.Invoice$InvoiceStatus
-ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.financial.repository.InvoiceRepository
-ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.laboratory.repository.LabRequestRepository
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.patients.repository.PatientRepository
 ao.hospitalao.modules.portal.service.PatientPortalService -> ao.hospitalao.modules.pharmacy.entity.Medication

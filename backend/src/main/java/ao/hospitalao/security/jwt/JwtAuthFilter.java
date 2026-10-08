@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -42,9 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     try {
       String authHeader = request.getHeader("Authorization");
@@ -54,23 +51,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
           }
         } catch (ExpiredJwtException e) {
-          log.warn("Expired JWT token: {}", e.getMessage());
+          log.warn("Expired JWT token");
           handleException(response, HttpStatus.UNAUTHORIZED, "Token expired. Please login again.");
           return;
         } catch (MalformedJwtException e) {
-          log.warn("Malformed JWT token: {}", e.getMessage());
+          log.warn("Malformed JWT token");
           handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
           return;
         } catch (JwtException e) {
-          log.warn("JWT validation error: {}", e.getMessage());
+          log.warn("JWT validation error ({})", e.getClass().getSimpleName());
           handleException(response, HttpStatus.UNAUTHORIZED, "Invalid token.");
           return;
         } catch (UsernameNotFoundException e) {
-          log.warn("User not found: {}", e.getMessage());
+          log.warn("Authentication principal not found");
           handleException(response, HttpStatus.UNAUTHORIZED, "User not found.");
           return;
         } catch (Exception e) {
-          log.warn("Authentication error: {}", e.getMessage());
+          log.warn("Authentication error ({})", e.getClass().getSimpleName());
           handleException(response, HttpStatus.UNAUTHORIZED, "Authentication error.");
           return;
         }
@@ -112,6 +109,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   }
 
   private void authenticatePatientPortal(String jwt, String email, HttpServletRequest request) {
+    if (!jwtService.hasAudience(jwt, "patient-portal") || !jwtService.hasPatientPortalRole(jwt)) {
+      throw new UsernameNotFoundException("Patient portal token audience or role is invalid");
+    }
 
     UUID patientId =
         jwtService.extractClaim(
@@ -122,7 +122,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             });
 
     if (patientId == null) {
-      log.warn("Portal token sem patient_id para email: {}", email);
+      log.warn("Portal token is missing the patient identifier");
       throw new UsernameNotFoundException("Patient portal token has no patient ID");
     }
 
@@ -141,7 +141,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-    log.debug("Portal autenticado: patientId={}, email={}", patientId, email);
+    log.debug("Portal user authenticated");
   }
 
   // ----------------------------------------------------------------
@@ -152,8 +152,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       String jwt, String username, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    if (!jwtService.isAccessToken(jwt)) {
-      throw new UsernameNotFoundException("Expected an access token");
+    if (!jwtService.isAccessToken(jwt) || !jwtService.hasAudience(jwt, "hospital-api")) {
+      throw new UsernameNotFoundException("Expected an internal access token");
     }
 
     UUID hospitalId = jwtService.extractHospitalId(jwt);
@@ -201,7 +201,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     SecurityContextHolder.getContext().setAuthentication(authToken);
 
-    log.debug("Interno autenticado: {} (hospital: {})", username, hospitalId);
+    log.debug("Internal user authenticated");
     return true;
   }
 

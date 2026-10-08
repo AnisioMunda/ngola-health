@@ -17,6 +17,7 @@ public class UserMapper {
         .phone(user.getPhone())
         .especiality(user.getEspeciality())
         .professionalCard(user.getProfessionalCard())
+        .teamsUserId(user.getTeamsUserId())
         .registerStatus(user.getRegisterStatus())
         .mustChangePassword(user.isMustChangePassword())
         .lastLogin(user.getLastLogin())

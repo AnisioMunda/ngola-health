@@ -207,8 +207,7 @@ public class FinancialService {
 
     recalculateTotals(invoice);
     Invoice saved = invoiceRepository.save(invoice);
-    log.info(
-        "Documento criado: {} para paciente {}", saved.getInvoiceNumber(), patient.getFullName());
+    log.info("Financial document created");
     return toInvoiceResponse(saved);
   }
 
@@ -228,7 +227,7 @@ public class FinancialService {
     // Submeter à AGT de forma assíncrona
     submitToAgt(saved);
 
-    log.info("Documento emitido: {}", saved.getInvoiceNumber());
+    log.info("Financial document issued");
     return toInvoiceResponse(saved);
   }
 
@@ -278,7 +277,7 @@ public class FinancialService {
       invoice.setStatus(InvoiceStatus.PAGO_PARCIALMENTE);
     }
 
-    log.info("Pagamento de {} AOA registado para {}", amount, invoice.getInvoiceNumber());
+    log.info("Financial payment recorded");
     return toInvoiceResponse(invoiceRepository.save(invoice));
   }
 
@@ -297,7 +296,7 @@ public class FinancialService {
         (invoice.getNotes() != null ? invoice.getNotes() + "\n" : "")
             + "ANULADO: "
             + reason.trim());
-    log.info("Documento anulado: {}", invoice.getInvoiceNumber());
+    log.info("Financial document voided");
     return toInvoiceResponse(invoiceRepository.save(invoice));
   }
 
@@ -318,8 +317,7 @@ public class FinancialService {
       }
       invoiceRepository.save(invoice);
     } catch (Exception e) {
-      log.error(
-          "Erro ao submeter factura {} à AGT: {}", invoice.getInvoiceNumber(), e.getMessage());
+      log.error("AGT invoice submission failed ({})", e.getClass().getSimpleName());
       invoice.setAgtStatus("ERRO_SUBMISSAO");
       invoice.setAgtErrorMessage(e.getMessage());
       invoiceRepository.save(invoice);

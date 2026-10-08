@@ -45,6 +45,13 @@ public class TelemedicineController {
     return ResponseEntity.ok(telemedicineService.getMySessionsToday());
   }
 
+  @GetMapping("/doctors")
+  @PreAuthorize(
+      "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
+  public ResponseEntity<List<DoctorOptionDto>> getTeamsDoctors() {
+    return ResponseEntity.ok(telemedicineService.getTeamsDoctors());
+  }
+
   @PostMapping
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).DOCTOR.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")

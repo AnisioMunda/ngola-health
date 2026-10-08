@@ -59,7 +59,6 @@ class BedTransferServiceTest {
             .ward(newWard)
             .build();
     Patient patient = mock(Patient.class);
-    when(patient.getFullName()).thenReturn("Ana Silva");
     Admission admission =
         Admission.builder()
             .id(admissionId)

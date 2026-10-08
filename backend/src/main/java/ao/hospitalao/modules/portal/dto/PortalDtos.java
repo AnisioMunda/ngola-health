@@ -1,5 +1,8 @@
 package ao.hospitalao.modules.portal.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -16,15 +19,45 @@ public class PortalDtos {
 
   @Data
   public static class PortalRegisterRequest {
+    @NotBlank
+    @Email
+    @Size(max = 200)
     private String email;
+
+    @NotBlank
+    @Size(min = 12, max = 72)
     private String password;
+
+    @NotBlank
+    @Size(max = 30)
     private String patientNumber; // número de processo ou NIF
   }
 
   @Data
   public static class PortalLoginRequest {
+    @NotBlank
+    @Email
+    @Size(max = 200)
     private String email;
-    private String password;
+
+    @NotBlank private String password;
+  }
+
+  @Data
+  @Builder
+  public static class PortalRegistrationResponse {
+    private String status;
+    private String message;
+  }
+
+  @Data
+  @Builder
+  public static class PortalPendingAccountDto {
+    private UUID accountId;
+    private UUID patientId;
+    private String patientName;
+    private String email;
+    private OffsetDateTime requestedAt;
   }
 
   @Data
