@@ -292,6 +292,9 @@ class EquipmentServiceTest {
         .thenReturn(45L);
     when(equipmentRepository.countByHospitalIdAndStatus(hospitalId, EquipmentStatus.MAINTENANCE))
         .thenReturn(3L);
+    when(equipmentRepository.countByHospitalIdAndActiveTrueAndWarrantyExpiryBefore(
+            eq(hospitalId), any()))
+        .thenReturn(7L);
     when(equipmentRepository.findMaintenanceDue(eq(hospitalId), any()))
         .thenReturn(List.of(buildEquipment(EquipmentStatus.ACTIVE)));
     when(equipmentRepository.findCalibrationDue(eq(hospitalId), any())).thenReturn(List.of());
@@ -306,6 +309,7 @@ class EquipmentServiceTest {
       assertThat(stats.getInMaintenance()).isEqualTo(3);
       assertThat(stats.getMaintenanceDue()).isEqualTo(1);
       assertThat(stats.getCalibrationDue()).isEqualTo(0);
+      assertThat(stats.getWarrantyExpired()).isEqualTo(7);
     }
   }
 

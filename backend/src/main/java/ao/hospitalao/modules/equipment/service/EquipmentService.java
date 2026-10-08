@@ -46,6 +46,9 @@ public class EquipmentService {
             equipmentRepository.countByHospitalIdAndStatus(hospitalId, EquipmentStatus.MAINTENANCE))
         .maintenanceDue(equipmentRepository.findMaintenanceDue(hospitalId, today).size())
         .calibrationDue(equipmentRepository.findCalibrationDue(hospitalId, today).size())
+        .warrantyExpired(
+            equipmentRepository.countByHospitalIdAndActiveTrueAndWarrantyExpiryBefore(
+                hospitalId, today))
         .build();
   }
 
