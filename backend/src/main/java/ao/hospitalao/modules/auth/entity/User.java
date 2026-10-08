@@ -2,7 +2,7 @@ package ao.hospitalao.modules.auth.entity;
 
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.*;

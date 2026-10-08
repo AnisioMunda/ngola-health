@@ -2,8 +2,8 @@ package ao.hospitalao.modules.episodes.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
 import ao.hospitalao.modules.patients.entity.Patient;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -26,6 +26,9 @@ public class Episode extends TenantScopedEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "patient_id", nullable = false)
   private Patient patient;
+
+  @Column(name = "patient_id", insertable = false, updatable = false)
+  private UUID patientId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "hospital_id", nullable = false, insertable = false, updatable = false)

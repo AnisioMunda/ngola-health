@@ -2,7 +2,7 @@ package ao.hospitalao.modules.notifications.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;

@@ -1,7 +1,7 @@
 package ao.hospitalao.modules.inpatient.entity;
 
 import ao.hospitalao.modules.hospitals.entity.Hospital;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.util.UUID;
 import lombok.*;

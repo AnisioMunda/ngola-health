@@ -2,7 +2,7 @@ package ao.hospitalao.modules.pharmacy.service;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
+import ao.hospitalao.modules.episodes.application.EpisodeApplicationService;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.pharmacy.dto.PharmacyDtos.*;
@@ -41,7 +41,7 @@ public class PharmacyService {
   private final StockBatchRepository batchRepository;
   private final StockMovementRepository movementRepository;
   private final PatientRepository patientRepository;
-  private final EpisodeRepository episodeRepository;
+  private final EpisodeApplicationService episodeApplicationService;
   private final UserRepository userRepository;
   private final HospitalRepository hospitalRepository;
 
@@ -175,18 +175,19 @@ public class PharmacyService {
                 .findById(req.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"))
             : null;
-    var episode =
-        req.getEpisodeId() != null
-            ? episodeRepository
-                .findById(req.getEpisodeId())
-                .orElseThrow(() -> new EntityNotFoundException("Episode not found"))
-            : null;
-    if (episode != null) {
-      if (patient != null && !episode.getPatient().getId().equals(patient.getId())) {
+    UUID episodeId = req.getEpisodeId();
+    if (episodeId != null) {
+      UUID episodePatientId = episodeApplicationService.getPatientId(episodeId);
+      if (patient != null && !episodePatientId.equals(patient.getId())) {
         throw new ResponseStatusException(
             HttpStatus.BAD_REQUEST, "O episódio não pertence ao paciente indicado.");
       }
-      if (patient == null) patient = episode.getPatient();
+      if (patient == null) {
+        patient =
+            patientRepository
+                .findById(episodePatientId)
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+      }
     }
 
     User currentUser = getCurrentUser();
@@ -205,7 +206,7 @@ public class PharmacyService {
               .movementType(MovementType.DISPENSE)
               .quantity(-takeFromBatch)
               .patient(patient)
-              .episode(episode)
+              .episodeId(episodeId)
               .reason(req.getReason())
               .performedBy(currentUser)
               .build());

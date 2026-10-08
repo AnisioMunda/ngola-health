@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import ao.hospitalao.modules.auth.entity.Role;
 import ao.hospitalao.modules.auth.repository.RoleRepository;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.hospitals.application.HospitalApplicationService;
 import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.mapper.UserMapper;
 import ao.hospitalao.security.RoleName;
@@ -32,7 +32,7 @@ class UserServiceTest {
 
   @Mock private UserRepository userRepository;
   @Mock private RoleRepository roleRepository;
-  @Mock private HospitalRepository hospitalRepository;
+  @Mock private HospitalApplicationService hospitalApplicationService;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private UserMapper userMapper;
 

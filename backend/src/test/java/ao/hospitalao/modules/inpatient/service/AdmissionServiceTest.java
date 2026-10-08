@@ -6,6 +6,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ao.hospitalao.application.inpatient.AdmissionResponseMapper;
+import ao.hospitalao.application.inpatient.AdmissionService;
+import ao.hospitalao.application.inpatient.InpatientUserProvider;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;

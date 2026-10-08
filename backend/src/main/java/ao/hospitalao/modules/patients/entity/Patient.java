@@ -1,7 +1,7 @@
 package ao.hospitalao.modules.patients.entity;
 
 import ao.hospitalao.modules.auth.entity.User;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

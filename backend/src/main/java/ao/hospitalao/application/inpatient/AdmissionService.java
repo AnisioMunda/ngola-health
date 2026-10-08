@@ -1,4 +1,4 @@
-package ao.hospitalao.modules.inpatient.service;
+package ao.hospitalao.application.inpatient;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;

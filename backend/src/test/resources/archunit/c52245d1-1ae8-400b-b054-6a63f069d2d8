@@ -114,11 +114,8 @@ ao.hospitalao.modules.inpatient.entity.Ward$WardBuilder -> ao.hospitalao.modules
 ao.hospitalao.modules.inpatient.entity.Ward$WardBuilder -> ao.hospitalao.modules.hospitals.entity.Hospital
 ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.auth.repository.UserRepository
-ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.episodes.repository.EpisodeRepository
-ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.hospitals.entity.Hospital
 ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.hospitals.repository.HospitalRepository
 ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.patients.entity.Patient
-ao.hospitalao.modules.inpatient.service.InpatientService -> ao.hospitalao.modules.patients.repository.PatientRepository
 ao.hospitalao.modules.laboratory.entity.LabRequest -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.laboratory.entity.LabRequest -> ao.hospitalao.modules.episodes.entity.Episode
 ao.hospitalao.modules.laboratory.entity.LabRequest -> ao.hospitalao.modules.hospitals.entity.Hospital
@@ -166,14 +163,11 @@ ao.hospitalao.modules.pharmacy.entity.Medication$MedicationBuilder -> ao.hospita
 ao.hospitalao.modules.pharmacy.entity.StockBatch -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.pharmacy.entity.StockBatch$StockBatchBuilder -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.pharmacy.entity.StockMovement -> ao.hospitalao.modules.auth.entity.User
-ao.hospitalao.modules.pharmacy.entity.StockMovement -> ao.hospitalao.modules.episodes.entity.Episode
 ao.hospitalao.modules.pharmacy.entity.StockMovement -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.pharmacy.entity.StockMovement$StockMovementBuilder -> ao.hospitalao.modules.auth.entity.User
-ao.hospitalao.modules.pharmacy.entity.StockMovement$StockMovementBuilder -> ao.hospitalao.modules.episodes.entity.Episode
 ao.hospitalao.modules.pharmacy.entity.StockMovement$StockMovementBuilder -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.auth.entity.User
 ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.auth.repository.UserRepository
-ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.episodes.repository.EpisodeRepository
 ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.hospitals.repository.HospitalRepository
 ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.patients.entity.Patient
 ao.hospitalao.modules.pharmacy.service.PharmacyService -> ao.hospitalao.modules.patients.repository.PatientRepository

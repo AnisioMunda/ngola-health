@@ -156,7 +156,7 @@ public class PdfReportService {
         rows.add(
             new String[] {
               medication.getName(),
-              dosageFormLabel(medication.getDosageForm()),
+              dosageFormLabel(medication.getDosageForm().name()),
               medication.getUnit(),
               String.valueOf(total),
               minimum != null ? String.valueOf(minimum) : "-",
@@ -193,17 +193,18 @@ public class PdfReportService {
         4);
   }
 
-  private String dosageFormLabel(Medication.DosageForm dosageForm) {
+  private String dosageFormLabel(String dosageForm) {
     return switch (dosageForm) {
-      case TABLET -> "Comprimido";
-      case CAPSULE -> "Cápsula";
-      case SYRUP -> "Xarope";
-      case INJECTION -> "Injectável";
-      case CREAM -> "Creme";
-      case OINTMENT -> "Pomada";
-      case DROPS -> "Gotas";
-      case INHALER -> "Inalador";
-      case OTHER -> "Outro";
+      case "TABLET" -> "Comprimido";
+      case "CAPSULE" -> "Cápsula";
+      case "SYRUP" -> "Xarope";
+      case "INJECTION" -> "Injectável";
+      case "CREAM" -> "Creme";
+      case "OINTMENT" -> "Pomada";
+      case "DROPS" -> "Gotas";
+      case "INHALER" -> "Inalador";
+      case "OTHER" -> "Outro";
+      default -> dosageForm;
     };
   }
 

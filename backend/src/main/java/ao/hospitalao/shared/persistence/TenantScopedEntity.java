@@ -1,4 +1,4 @@
-package ao.hospitalao.modules.hospitals.entity;
+package ao.hospitalao.shared.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;

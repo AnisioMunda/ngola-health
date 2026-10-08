@@ -3,6 +3,7 @@ package ao.hospitalao.modules.inpatient.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import ao.hospitalao.application.inpatient.AdmissionService;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.CreateAdmissionRequest;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.entity.Patient.Gender;

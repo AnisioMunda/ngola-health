@@ -2,8 +2,8 @@ package ao.hospitalao.modules.notifications.service;
 
 import static org.mockito.Mockito.verify;
 
-import ao.hospitalao.modules.notifications.event.AppointmentCancelledEvent;
-import ao.hospitalao.modules.notifications.event.LabResultsAvailableEvent;
+import ao.hospitalao.modules.notifications.application.event.AppointmentCancelledEvent;
+import ao.hospitalao.modules.notifications.application.event.LabResultsAvailableEvent;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;

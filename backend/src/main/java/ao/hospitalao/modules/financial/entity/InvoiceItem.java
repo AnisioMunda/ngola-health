@@ -1,7 +1,7 @@
 package ao.hospitalao.modules.financial.entity;
 
 import ao.hospitalao.modules.financial.util.FinancialAmounts;
-import ao.hospitalao.modules.hospitals.entity.TenantScopedEntity;
+import ao.hospitalao.shared.persistence.TenantScopedEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;

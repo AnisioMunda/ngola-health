@@ -15,7 +15,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.mapper.AuthMapper;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.hospitals.application.HospitalApplicationService;
 import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.jwt.JwtService;
 import ao.hospitalao.security.tenant.TenantContext;
@@ -45,7 +45,7 @@ class AuthServiceTest {
 
   @Mock private TokenBlackListService tokenBlackListService;
   @Mock private AuthMapper authMapper;
-  @Mock private HospitalRepository hospitalRepository;
+  @Mock private HospitalApplicationService hospitalApplicationService;
 
   @InjectMocks private AuthService authService;
 

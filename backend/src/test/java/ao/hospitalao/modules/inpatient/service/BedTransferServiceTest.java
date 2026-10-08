@@ -8,6 +8,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ao.hospitalao.application.inpatient.AdmissionResponseMapper;
+import ao.hospitalao.application.inpatient.BedTransferService;
+import ao.hospitalao.application.inpatient.InpatientUserProvider;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.AdmissionResponse;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.TransferRequest;

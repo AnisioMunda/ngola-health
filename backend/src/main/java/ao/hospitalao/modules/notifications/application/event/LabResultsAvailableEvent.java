@@ -1,4 +1,4 @@
-package ao.hospitalao.modules.notifications.event;
+package ao.hospitalao.modules.notifications.application.event;
 
 import java.util.UUID;
 

@@ -23,7 +23,7 @@ import ao.hospitalao.modules.laboratory.entity.LabTest;
 import ao.hospitalao.modules.laboratory.entity.LabTest.TestCategory;
 import ao.hospitalao.modules.laboratory.repository.LabRequestRepository;
 import ao.hospitalao.modules.laboratory.repository.LabTestRepository;
-import ao.hospitalao.modules.notifications.event.LabResultsAvailableEvent;
+import ao.hospitalao.modules.notifications.application.event.LabResultsAvailableEvent;
 import ao.hospitalao.modules.patients.entity.Patient;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.security.tenant.TenantContext;

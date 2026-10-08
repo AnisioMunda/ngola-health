@@ -10,7 +10,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.mapper.AuthMapper;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.hospitals.application.HospitalApplicationService;
 import ao.hospitalao.security.RoleName;
 import ao.hospitalao.security.jwt.JwtService;
 import ao.hospitalao.security.tenant.TenantContext;
@@ -45,7 +45,7 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final TokenBlackListService tokenBlackListService;
   private final AuthMapper authMapper;
-  private final HospitalRepository hospitalRepository;
+  private final HospitalApplicationService hospitalApplicationService;
 
   @Transactional
   public AuthResponse register(RegisterRequest request) {
@@ -69,7 +69,7 @@ public class AuthService {
             .fullName(request.getFullName().trim())
             .registerStatus(RegisterStatus.ACTIVE)
             .mustChangePassword(request.isMustChangePassword())
-            .hospital(hospitalRepository.getReferenceById(hospitalId))
+            .hospital(hospitalApplicationService.getReferenceById(hospitalId))
             .build();
     user.setHospitalId(hospitalId);
 

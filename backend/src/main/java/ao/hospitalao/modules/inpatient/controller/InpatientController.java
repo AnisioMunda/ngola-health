@@ -1,10 +1,10 @@
 package ao.hospitalao.modules.inpatient.controller;
 
+import ao.hospitalao.application.inpatient.AdmissionService;
+import ao.hospitalao.application.inpatient.BedTransferService;
+import ao.hospitalao.application.inpatient.DischargeService;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.*;
 import ao.hospitalao.modules.inpatient.entity.Admission.AdmissionStatus;
-import ao.hospitalao.modules.inpatient.service.AdmissionService;
-import ao.hospitalao.modules.inpatient.service.BedTransferService;
-import ao.hospitalao.modules.inpatient.service.DischargeService;
 import ao.hospitalao.modules.inpatient.service.InpatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

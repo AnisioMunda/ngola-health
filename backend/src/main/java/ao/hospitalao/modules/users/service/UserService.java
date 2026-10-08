@@ -6,7 +6,7 @@ import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.entity.enums.RegisterStatus;
 import ao.hospitalao.modules.auth.repository.RoleRepository;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
+import ao.hospitalao.modules.hospitals.application.HospitalApplicationService;
 import ao.hospitalao.modules.users.dto.CreateUserRequest;
 import ao.hospitalao.modules.users.dto.UpdateUserRequest;
 import ao.hospitalao.modules.users.dto.UserResponse;
@@ -35,7 +35,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
-  private final HospitalRepository hospitalRepository;
+  private final HospitalApplicationService hospitalApplicationService;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
 
@@ -91,7 +91,7 @@ public class UserService {
             .registerStatus(RegisterStatus.ACTIVE)
             .mustChangePassword(request.isMustChangePassword())
             .roles(roles)
-            .hospital(hospitalRepository.getReferenceById(hospitalId))
+            .hospital(hospitalApplicationService.getReferenceById(hospitalId))
             .build();
     user.setHospitalId(hospitalId);
 

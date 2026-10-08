@@ -3,7 +3,7 @@ package ao.hospitalao.modules.scheduling.service;
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
-import ao.hospitalao.modules.notifications.event.AppointmentCancelledEvent;
+import ao.hospitalao.modules.notifications.application.event.AppointmentCancelledEvent;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.scheduling.dto.SchedulingDtos.*;
 import ao.hospitalao.modules.scheduling.entity.Appointment;

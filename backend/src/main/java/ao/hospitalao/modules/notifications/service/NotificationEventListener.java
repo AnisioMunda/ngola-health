@@ -1,7 +1,7 @@
 package ao.hospitalao.modules.notifications.service;
 
-import ao.hospitalao.modules.notifications.event.AppointmentCancelledEvent;
-import ao.hospitalao.modules.notifications.event.LabResultsAvailableEvent;
+import ao.hospitalao.modules.notifications.application.event.AppointmentCancelledEvent;
+import ao.hospitalao.modules.notifications.application.event.LabResultsAvailableEvent;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

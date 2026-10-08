@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 
 import ao.hospitalao.modules.auth.entity.User;
 import ao.hospitalao.modules.auth.repository.UserRepository;
-import ao.hospitalao.modules.episodes.repository.EpisodeRepository;
+import ao.hospitalao.modules.episodes.application.EpisodeApplicationService;
 import ao.hospitalao.modules.hospitals.repository.HospitalRepository;
 import ao.hospitalao.modules.patients.repository.PatientRepository;
 import ao.hospitalao.modules.pharmacy.dto.PharmacyDtos.DispenseRequest;
@@ -49,7 +49,7 @@ class PharmacyServiceTest {
   @Mock private StockBatchRepository batchRepository;
   @Mock private StockMovementRepository movementRepository;
   @Mock private PatientRepository patientRepository;
-  @Mock private EpisodeRepository episodeRepository;
+  @Mock private EpisodeApplicationService episodeApplicationService;
   @Mock private UserRepository userRepository;
   @Mock private HospitalRepository hospitalRepository;
 

@@ -1,4 +1,4 @@
-package ao.hospitalao.modules.inpatient.service;
+package ao.hospitalao.application.inpatient;
 
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.AdmissionResponse;
 import ao.hospitalao.modules.inpatient.dto.InpatientDtos.TransferRequest;
