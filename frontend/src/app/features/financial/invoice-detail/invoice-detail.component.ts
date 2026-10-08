@@ -101,7 +101,10 @@ export class InvoiceDetailComponent implements OnInit {
         next: (updated) => {
           this.invoice = updated;
           this.savingIssue = false;
-          this.success = 'Documento emitido e submetido à AGT.';
+          this.success =
+            updated.agtStatus === 'PENDING'
+              ? 'Documento emitido e submetido à AGT.'
+              : 'Documento emitido.';
           setTimeout(() => (this.success = ''), 4000);
         },
         error: (error: HttpErrorResponse) => {

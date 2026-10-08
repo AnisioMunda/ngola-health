@@ -127,6 +127,17 @@ describe('InvoiceDetailComponent', () => {
     expect(component.savingIssue).toBeFalse();
   });
 
+  it('não afirma que submeteu à AGT quando a emissão ficou com erro de submissão', () => {
+    financialService.issue.and.returnValue(
+      of({ ...invoice, status: 'EMITIDO', agtStatus: 'ERRO_SUBMISSAO' }),
+    );
+
+    component.issue();
+
+    expect(component.success).toBe('Documento emitido.');
+    expect(component.invoice?.agtStatus).toBe('ERRO_SUBMISSAO');
+  });
+
   it('não permite motivo de anulação em branco', () => {
     component.voidReason = '   ';
     component.voidInvoice();
