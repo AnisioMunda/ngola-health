@@ -88,6 +88,19 @@
           />
         </div>
 
+        <div class="field" *ngIf="isDoctorRoleSelected()">
+          <label for="teamsUserId">Microsoft Entra object ID do médico</label>
+          <input
+            id="teamsUserId"
+            type="text"
+            formControlName="teamsUserId"
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          />
+          <span class="field-error" *ngIf="f['teamsUserId'].invalid && f['teamsUserId'].touched">
+            Indique um Microsoft Entra object ID válido.
+          </span>
+        </div>
+
         <div class="field-checkbox">
           <label class="checkbox-label">
             <input type="checkbox" formControlName="mustChangePassword" />

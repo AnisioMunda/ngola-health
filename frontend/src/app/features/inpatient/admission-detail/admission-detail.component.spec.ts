@@ -131,8 +131,8 @@ describe('AdmissionDetailComponent', () => {
   it('carrega o internamento e só permite operações enquanto está activo', () => {
     expect(inpatientService.findById).toHaveBeenCalledWith(admission.id);
     expect(component.admission).toEqual(admission);
-    expect(component.canDischarge()).toBeTrue();
-    expect(component.canTransfer()).toBeTrue();
+    expect(component.canDischarge()).toBe(true);
+    expect(component.canTransfer()).toBe(true);
   });
 
   it('regista a alta com notas normalizadas e actualiza o detalhe', () => {
@@ -154,8 +154,8 @@ describe('AdmissionDetailComponent', () => {
       dischargeCondition: 'IMPROVED',
     });
     expect(component.admission).toEqual(discharged);
-    expect(component.showDischargeForm).toBeFalse();
-    expect(component.canDischarge()).toBeFalse();
+    expect(component.showDischargeForm).toBe(false);
+    expect(component.canDischarge()).toBe(false);
     expect(component.success).toBe('Alta registada com sucesso.');
   });
 
@@ -166,7 +166,7 @@ describe('AdmissionDetailComponent', () => {
     component.discharge();
 
     expect(component.error).toBe('O internamento já recebeu alta.');
-    expect(component.savingDischarge).toBeFalse();
+    expect(component.savingDischarge).toBe(false);
     expect(component.admission).toEqual(admission);
   });
 
@@ -196,7 +196,7 @@ describe('AdmissionDetailComponent', () => {
       reason: 'Continuação de cuidados',
     });
     expect(component.admission).toEqual(transferred);
-    expect(component.showTransferForm).toBeFalse();
+    expect(component.showTransferForm).toBe(false);
   });
 
   it('ignora camas recebidas para uma enfermaria já não seleccionada', () => {

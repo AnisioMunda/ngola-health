@@ -54,7 +54,7 @@ describe('NotificationsComponent', () => {
     expect(notificationService.getAll).toHaveBeenCalledWith(0);
     expect(component.notifications).toEqual([notification]);
     expect(component.totalElements).toBe(1);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 
   it('preserves unread state and displays an error when marking a notification fails', () => {
@@ -70,7 +70,7 @@ describe('NotificationsComponent', () => {
 
     component.markAsRead(notification);
 
-    expect(notification.read).toBeFalse();
+    expect(notification.read).toBe(false);
     expect(notificationService.unreadCount()).toBe(1);
     expect(component.error).toBe('Não foi possível actualizar a notificação.');
   });

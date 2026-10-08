@@ -70,12 +70,12 @@ describe('MedicationsListComponent', () => {
   it('carrega medicamentos e apresenta a forma farmacêutica em português', () => {
     expect(component.medications).toEqual([medication]);
     expect(component.formLabels.CAPSULE).toBe('Cápsula');
-    expect(component.isLowStock(medication)).toBeTrue();
+    expect(component.isLowStock(medication)).toBe(true);
   });
 
   it('permite operações de stock apenas a perfis autorizados', () => {
-    expect(component.canManagePharmacy).toBeTrue();
-    expect(component.canViewStockDetails).toBeTrue();
+    expect(component.canManagePharmacy).toBe(true);
+    expect(component.canViewStockDetails).toBe(true);
 
     authService.getCurrentUser.and.returnValue({
       id: 'manager-1',
@@ -85,8 +85,8 @@ describe('MedicationsListComponent', () => {
       roles: ['MANAGER'],
       mustChangePassword: false,
     });
-    expect(component.canManagePharmacy).toBeFalse();
-    expect(component.canViewStockDetails).toBeTrue();
+    expect(component.canManagePharmacy).toBe(false);
+    expect(component.canViewStockDetails).toBe(true);
   });
 
   it('impede o acesso do médico aos detalhes de stock', () => {
@@ -113,7 +113,7 @@ describe('MedicationsListComponent', () => {
       jasmine.any(Blob),
       'inventario-stock.pdf',
     );
-    expect(component.downloadingReport).toBeFalse();
+    expect(component.downloadingReport).toBe(false);
 
     authService.getCurrentUser.and.returnValue({
       id: 'doctor-1',
@@ -143,7 +143,7 @@ describe('MedicationsListComponent', () => {
     component.downloadStockReport();
 
     expect(component.reportError).toBe('Inventário temporariamente indisponível.');
-    expect(component.downloadingReport).toBeFalse();
+    expect(component.downloadingReport).toBe(false);
     expect(reportService.openOrDownload).not.toHaveBeenCalled();
   });
 
@@ -162,6 +162,6 @@ describe('MedicationsListComponent', () => {
 
     expect(component.error).toBe('Catálogo temporariamente indisponível.');
     expect(component.medications).toEqual([]);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 });

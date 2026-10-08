@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -49,6 +49,7 @@ export class InvoicesListComponent implements OnInit {
   ];
 
   constructor(
+    private changeDetectorRef: ChangeDetectorRef,
     private financialService: FinancialService,
     private router: Router,
   ) {}
@@ -70,10 +71,12 @@ export class InvoicesListComponent implements OnInit {
           this.totalElements = page.totalElements;
           this.totalPages = page.totalPages;
           this.loading = false;
+          this.changeDetectorRef.markForCheck();
         },
         error: (error: HttpErrorResponse) => {
           this.error = this.errorMessage(error, 'Erro ao carregar documentos.');
           this.loading = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
@@ -124,10 +127,12 @@ export class InvoicesListComponent implements OnInit {
           const idx = this.invoices.findIndex((i) => i.id === updated.id);
           if (idx !== -1) this.invoices[idx] = updated;
           this.issuingInvoiceIds.delete(id);
+          this.changeDetectorRef.markForCheck();
         },
         error: (error: HttpErrorResponse) => {
           this.error = this.errorMessage(error, 'Erro ao emitir documento.');
           this.issuingInvoiceIds.delete(id);
+          this.changeDetectorRef.markForCheck();
         },
       });
   }

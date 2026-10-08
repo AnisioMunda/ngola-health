@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,6 +44,7 @@ export class PrescriptionDetailComponent implements OnInit, OnDestroy {
   statusColors = STATUS_COLORS;
 
   constructor(
+    private changeDetectorRef: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
     private prescriptionService: PrescriptionService,
@@ -71,10 +72,12 @@ export class PrescriptionDetailComponent implements OnInit, OnDestroy {
         this.prescription = p;
         this.error = '';
         this.loading = false;
+        this.changeDetectorRef.markForCheck();
       },
       error: (error: unknown) => {
         this.error = prescriptionErrorMessage(error, 'Não foi possível carregar a prescrição.');
         this.loading = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -112,10 +115,12 @@ export class PrescriptionDetailComponent implements OnInit, OnDestroy {
           this.showDispenseForm = false;
           this.savingDispense = false;
           this.flash('Medicamento dispensado com sucesso.');
+          this.changeDetectorRef.markForCheck();
         },
         error: (error: unknown) => {
           this.error = prescriptionErrorMessage(error, 'Não foi possível dispensar o medicamento.');
           this.savingDispense = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
@@ -139,10 +144,12 @@ export class PrescriptionDetailComponent implements OnInit, OnDestroy {
         this.showCancelForm = false;
         this.savingCancel = false;
         this.flash('Prescrição cancelada.');
+        this.changeDetectorRef.markForCheck();
       },
       error: (error: unknown) => {
         this.error = prescriptionErrorMessage(error, 'Não foi possível cancelar a prescrição.');
         this.savingCancel = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -153,6 +160,7 @@ export class PrescriptionDetailComponent implements OnInit, OnDestroy {
     this.successTimeout = setTimeout(() => {
       this.success = '';
       this.successTimeout = null;
+      this.changeDetectorRef.markForCheck();
     }, 4000);
   }
 

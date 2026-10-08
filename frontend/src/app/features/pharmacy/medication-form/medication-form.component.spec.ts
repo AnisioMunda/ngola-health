@@ -76,7 +76,7 @@ describe('MedicationFormComponent', () => {
       minStockLevel: 10,
     });
     expect(router.navigate).toHaveBeenCalledWith(['/pharmacy']);
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 
   it('não envia dados inválidos nem apresenta sucesso falso quando a API falha', () => {
@@ -105,7 +105,7 @@ describe('MedicationFormComponent', () => {
     component.onSubmit();
 
     expect(component.error).toBe('O medicamento já existe.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
     expect(router.navigate).not.toHaveBeenCalled();
   });
 

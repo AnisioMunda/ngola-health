@@ -82,10 +82,10 @@ describe('LabRequestDetailComponent', () => {
   it('apresenta operações de análise permitidas à equipa de laboratório', () => {
     component.ngOnInit();
 
-    expect(component.canSubmitResults).toBeTrue();
-    expect(component.canCollect).toBeFalse();
-    expect(component.canStartAnalysis).toBeFalse();
-    expect(component.canCancel).toBeTrue();
+    expect(component.canSubmitResults).toBe(true);
+    expect(component.canCollect).toBe(false);
+    expect(component.canStartAnalysis).toBe(false);
+    expect(component.canCancel).toBe(true);
   });
 
   it('regista resultado uma vez e actualiza o pedido', () => {
@@ -104,7 +104,7 @@ describe('LabRequestDetailComponent', () => {
       abnormal: false,
       resultNotes: undefined,
     });
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
     expect(component.editingItemId).toBeNull();
   });
 
@@ -121,7 +121,7 @@ describe('LabRequestDetailComponent', () => {
 
     component.startEditing(request.items[0]);
 
-    expect(component.canSubmitResults).toBeFalse();
+    expect(component.canSubmitResults).toBe(false);
     expect(component.editingItemId).toBeNull();
     expect(labService.submitResult).not.toHaveBeenCalled();
   });
@@ -141,6 +141,6 @@ describe('LabRequestDetailComponent', () => {
     component.cancelRequest();
 
     expect(component.error).toBe('O pedido já foi concluído.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 });

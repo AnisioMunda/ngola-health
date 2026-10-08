@@ -62,6 +62,6 @@ describe('AuditComponent', () => {
 
     expect(component.stats).toBeNull();
     expect(component.statsError).toContain('Não foi possível');
-    expect(component.loadingStats).toBeFalse();
+    expect(component.loadingStats).toBe(false);
   });
 });

@@ -50,7 +50,7 @@ describe('PrescriptionsListComponent', () => {
 
     expect(prescriptionService.getStats).toHaveBeenCalled();
     expect(prescriptionService.findAll).toHaveBeenCalled();
-    expect(component.canCreate).toBeTrue();
+    expect(component.canCreate).toBe(true);
   });
 
   it('não consulta nem permite criar para um perfil sem acesso à lista', () => {
@@ -67,7 +67,7 @@ describe('PrescriptionsListComponent', () => {
     component.goToNew();
 
     expect(component.error).toContain('não tem permissão');
-    expect(component.canCreate).toBeFalse();
+    expect(component.canCreate).toBe(false);
     expect(prescriptionService.getStats).not.toHaveBeenCalled();
     expect(prescriptionService.findAll).not.toHaveBeenCalled();
     expect(router.url).toBe('/');
@@ -87,7 +87,7 @@ describe('PrescriptionsListComponent', () => {
     component.load();
 
     expect(component.error).toBe('Não autorizado para consultar prescrições.');
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 
   it('rejeita um intervalo de datas invertido sem chamar a API', () => {

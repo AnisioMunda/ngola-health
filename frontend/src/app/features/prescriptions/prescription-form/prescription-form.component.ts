@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -67,6 +67,7 @@ export class PrescriptionFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef,
     private router: Router,
     private route: ActivatedRoute,
     private prescriptionService: PrescriptionService,
@@ -117,6 +118,7 @@ export class PrescriptionFormComponent implements OnInit {
       next: (p) => {
         this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
         this.loadingPatients = false;
+        this.changeDetectorRef.markForCheck();
       },
       error: (error: unknown) => {
         this.patientsError = prescriptionErrorMessage(
@@ -124,6 +126,7 @@ export class PrescriptionFormComponent implements OnInit {
           'Não foi possível carregar os pacientes.',
         );
         this.loadingPatients = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -142,6 +145,7 @@ export class PrescriptionFormComponent implements OnInit {
             stock: medication.totalAvailable,
           }));
         this.loadingMedications = false;
+        this.changeDetectorRef.markForCheck();
       },
       error: (error: unknown) => {
         this.medicationsError = prescriptionErrorMessage(
@@ -149,6 +153,7 @@ export class PrescriptionFormComponent implements OnInit {
           'Não foi possível carregar os medicamentos.',
         );
         this.loadingMedications = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -220,6 +225,7 @@ export class PrescriptionFormComponent implements OnInit {
       error: (error: unknown) => {
         this.error = prescriptionErrorMessage(error, 'Não foi possível criar a prescrição.');
         this.saving = false;
+        this.changeDetectorRef.markForCheck();
       },
     });
   }

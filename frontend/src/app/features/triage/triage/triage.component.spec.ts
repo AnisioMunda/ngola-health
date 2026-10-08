@@ -123,7 +123,7 @@ describe('TriageComponent', () => {
       painScale: 0,
       triageNotes: null,
     });
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 
   it('exibe detalhes de erro da API ao registar triagem', () => {
@@ -144,7 +144,7 @@ describe('TriageComponent', () => {
     component.onSubmit();
 
     expect(component.error).toBe('A prioridade seleccionada é inválida.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 
   it('limpa os dados temporários ao seleccionar um paciente registado', () => {
@@ -181,7 +181,7 @@ describe('TriageComponent', () => {
     component.callNext(triage);
 
     expect(component.error).toBe('A triagem já foi chamada.');
-    expect(component.isUpdating(triage.id)).toBeFalse();
+    expect(component.isUpdating(triage.id)).toBe(false);
   });
 
   it('apresenta falhas ao carregar o histórico sem indicar falsamente que está vazio', () => {
@@ -198,7 +198,7 @@ describe('TriageComponent', () => {
     component.onTabChange('history');
 
     expect(component.historyError).toBe('Histórico indisponível.');
-    expect(component.historyLoading).toBeFalse();
+    expect(component.historyLoading).toBe(false);
   });
 
   it('não permite alterar a prioridade de uma triagem já chamada', () => {

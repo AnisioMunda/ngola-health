@@ -93,7 +93,7 @@ describe('AppointmentFormComponent', () => {
     firstRequest.next(availability);
 
     expect(component.availability).toBe(laterAvailability);
-    expect(component.loadingSlots).toBeFalse();
+    expect(component.loadingSlots).toBe(false);
   });
 
   it('shows a booking conflict and prevents a duplicate submission while saving', () => {
@@ -114,10 +114,10 @@ describe('AppointmentFormComponent', () => {
     component.onSubmit();
 
     expect(schedulingService.create).toHaveBeenCalledTimes(1);
-    expect(component.saving).toBeTrue();
+    expect(component.saving).toBe(true);
     response.error({ error: { detail: 'O horário acabou de ser ocupado.' } });
 
     expect(component.error).toBe('O horário acabou de ser ocupado.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 });

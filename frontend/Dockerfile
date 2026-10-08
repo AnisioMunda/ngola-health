@@ -13,6 +13,7 @@ RUN npm run build
 FROM nginx:alpine AS runtime
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=build /app/dist/hospitalao/browser/ /usr/share/nginx/html/
 
 EXPOSE 80

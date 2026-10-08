@@ -101,7 +101,7 @@ describe('WardMapComponent', () => {
     earlierMap.next({ ...wardMap, wardId: 'ward-old', wardName: 'Antiga' });
 
     expect(component.wardMap).toEqual(wardMap);
-    expect(component.loadingMap).toBeFalse();
+    expect(component.loadingMap).toBe(false);
   });
 
   it('apresenta detalhes de erro ao carregar o mapa', () => {
@@ -112,7 +112,7 @@ describe('WardMapComponent', () => {
     component.loadMap();
 
     expect(component.error).toBe('Enfermaria inactiva.');
-    expect(component.loadingMap).toBeFalse();
+    expect(component.loadingMap).toBe(false);
     expect(component.wardMap).toBeNull();
   });
 
@@ -121,7 +121,7 @@ describe('WardMapComponent', () => {
     component.setBedStatus('AVAILABLE');
 
     expect(inpatientService.updateBedStatus).toHaveBeenCalledWith('bed-1', 'AVAILABLE');
-    expect(component.showStatusModal).toBeFalse();
+    expect(component.showStatusModal).toBe(false);
     expect(component.selectedBed).toBeNull();
     expect(component.success).toBe('Estado da cama actualizado.');
     expect(inpatientService.getWardMap).toHaveBeenCalledTimes(2);

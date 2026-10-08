@@ -103,6 +103,6 @@ describe('EpisodesListComponent', () => {
     component.loadEpisodes();
 
     expect(component.error).toBe('Falha de serviço.');
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 });

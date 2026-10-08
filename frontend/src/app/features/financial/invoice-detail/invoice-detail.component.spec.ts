@@ -92,8 +92,8 @@ describe('InvoiceDetailComponent', () => {
   it('carrega a factura e permite pagamentos enquanto há saldo', () => {
     expect(financialService.findById).toHaveBeenCalledWith(invoice.id);
     expect(component.invoice).toEqual(invoice);
-    expect(component.canRegisterPayment()).toBeTrue();
-    expect(component.isPaymentValid()).toBeFalse();
+    expect(component.canRegisterPayment()).toBe(true);
+    expect(component.isPaymentValid()).toBe(false);
   });
 
   it('regista pagamentos dentro do saldo e actualiza o detalhe', () => {
@@ -107,15 +107,15 @@ describe('InvoiceDetailComponent', () => {
       notes: undefined,
     });
     expect(component.invoice?.status).toBe('PAGO');
-    expect(component.showPaymentForm).toBeFalse();
-    expect(component.savingPayment).toBeFalse();
+    expect(component.showPaymentForm).toBe(false);
+    expect(component.savingPayment).toBe(false);
   });
 
   it('impede pagamentos superiores ao saldo e apresenta conflitos da API', () => {
     component.paymentAmount = 0.005;
-    expect(component.isPaymentValid()).toBeFalse();
+    expect(component.isPaymentValid()).toBe(false);
     component.paymentAmount = 100.01;
-    expect(component.isPaymentValid()).toBeFalse();
+    expect(component.isPaymentValid()).toBe(false);
     component.registerPayment();
     expect(financialService.registerPayment).not.toHaveBeenCalled();
 
@@ -124,7 +124,7 @@ describe('InvoiceDetailComponent', () => {
     );
     component.issue();
     expect(component.error).toBe('O documento já foi emitido.');
-    expect(component.savingIssue).toBeFalse();
+    expect(component.savingIssue).toBe(false);
   });
 
   it('não afirma que submeteu à AGT quando a emissão ficou com erro de submissão', () => {

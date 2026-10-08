@@ -4,7 +4,11 @@
       <h1>Telemedicina</h1>
       <p>Videoconsultas e sessões remotas</p>
     </div>
-    <button class="btn-primary" (click)="showForm = !showForm">
+    <button
+      class="btn-primary"
+      (click)="showForm = !showForm"
+      [disabled]="stats?.teamsConfigured !== true"
+    >
       <svg viewBox="0 0 20 20" fill="none">
         <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -14,6 +18,9 @@
 
   <div class="alert-success" *ngIf="success">✓ {{ success }}</div>
   <div class="alert-error" *ngIf="error">{{ error }}</div>
+  <div class="alert-error" *ngIf="stats && !stats.teamsConfigured">
+    A integração Microsoft Teams não está configurada; não é possível criar teleconsultas.
+  </div>
 
   <!-- Stats -->
   <div class="stats-grid" *ngIf="stats">
@@ -51,10 +58,32 @@
           </span>
         </div>
         <div class="field">
+          <label>Médico *</label>
+          <select formControlName="doctorId">
+            <option value="">Seleccionar médico...</option>
+            <option *ngFor="let doctor of doctors" [value]="doctor.id">
+              {{ doctor.fullName }}
+            </option>
+          </select>
+          <span class="field-error" *ngIf="f['doctorId'].invalid && f['doctorId'].touched">
+            Seleccione um médico com Microsoft Teams configurado.
+          </span>
+        </div>
+        <div class="field">
           <label>Data e Hora *</label>
           <input type="datetime-local" formControlName="scheduledAt" />
           <span class="field-error" *ngIf="f['scheduledAt'].invalid && f['scheduledAt'].touched">
             Obrigatório
+          </span>
+        </div>
+        <div class="field">
+          <label>Duração (minutos) *</label>
+          <input type="number" min="1" max="1440" step="1" formControlName="durationMinutes" />
+          <span
+            class="field-error"
+            *ngIf="f['durationMinutes'].invalid && f['durationMinutes'].touched"
+          >
+            Indique uma duração positiva.
           </span>
         </div>
       </div>
@@ -102,7 +131,13 @@
         <path d="M4 38h22" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
       <p>Sem sessões activas.</p>
-      <button class="btn-primary" (click)="showForm = true">Criar sessão</button>
+      <button
+        class="btn-primary"
+        (click)="showForm = true"
+        [disabled]="stats?.teamsConfigured !== true"
+      >
+        Criar sessão
+      </button>
     </div>
 
     <div class="sessions-grid">
@@ -153,8 +188,11 @@
 
         <!-- Link da sala -->
         <div class="room-link">
-          <span class="link-text">{{ s.roomUrl }}</span>
-          <button class="btn-copy" (click)="copyRoomUrl(s)" title="Copiar link">📋</button>
+          <span class="link-text" *ngIf="s.roomUrl">{{ s.roomUrl }}</span>
+          <span class="link-text" *ngIf="!s.roomUrl"> Ligação externa por configurar </span>
+          <button *ngIf="s.roomUrl" class="btn-copy" (click)="copyRoomUrl(s)" title="Copiar link">
+            📋
+          </button>
         </div>
 
         <!-- Notas (se existirem) -->
@@ -172,7 +210,7 @@
         <div class="session-actions">
           <button
             class="btn-join"
-            *ngIf="s.status === 'SCHEDULED' || s.status === 'WAITING'"
+            *ngIf="s.roomUrl && (s.status === 'SCHEDULED' || s.status === 'WAITING')"
             (click)="joinSession(s)"
           >
             <svg viewBox="0 0 16 16" fill="none">

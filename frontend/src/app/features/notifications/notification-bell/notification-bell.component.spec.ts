@@ -53,7 +53,7 @@ describe('NotificationBellComponent', () => {
   it('starts polling and loads the top unread notifications', () => {
     expect(notificationService.startPolling).toHaveBeenCalled();
     expect(component.notifications).toEqual([notification]);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 
   it('keeps a notification unread and reports an API error when marking fails', () => {
@@ -71,7 +71,7 @@ describe('NotificationBellComponent', () => {
     component.markAsRead(notification, event);
 
     expect(event.stopPropagation).toHaveBeenCalled();
-    expect(notification.read).toBeFalse();
+    expect(notification.read).toBe(false);
     expect(notificationService.unreadCount()).toBe(2);
     expect(component.error).toBe('Notificação não encontrada.');
   });
@@ -88,7 +88,7 @@ describe('NotificationBellComponent', () => {
     response.next();
     response.complete();
 
-    expect(notification.read).toBeTrue();
+    expect(notification.read).toBe(true);
     expect(notificationService.unreadCount()).toBe(1);
   });
 });

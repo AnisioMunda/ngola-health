@@ -102,6 +102,6 @@ describe('EpisodeFormComponent', () => {
     component.onSubmit();
 
     expect(episodeService.create).not.toHaveBeenCalled();
-    expect(component.form.controls['patientId'].touched).toBeTrue();
+    expect(component.form.controls['patientId'].touched).toBe(true);
   });
 });

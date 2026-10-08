@@ -88,8 +88,8 @@ describe('PrescriptionDetailComponent', () => {
   afterEach(() => component.ngOnDestroy());
 
   it('permite dispensar ao farmacêutico, mas não permite cancelar', () => {
-    expect(component.canDispense()).toBeTrue();
-    expect(component.canCancel()).toBeFalse();
+    expect(component.canDispense()).toBe(true);
+    expect(component.canCancel()).toBe(false);
   });
 
   it('restringe acções de acordo com o perfil e a disponibilidade', () => {
@@ -101,8 +101,8 @@ describe('PrescriptionDetailComponent', () => {
       roles: ['DOCTOR'],
       mustChangePassword: false,
     });
-    expect(component.canDispense()).toBeFalse();
-    expect(component.canCancel()).toBeTrue();
+    expect(component.canDispense()).toBe(false);
+    expect(component.canCancel()).toBe(true);
 
     authService.getCurrentUser.and.returnValue({
       id: 'pharmacist-1',

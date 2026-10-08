@@ -21,6 +21,7 @@ describe('CalendarComponent', () => {
     phone: '',
     especiality: '',
     professionalCard: '',
+    teamsUserId: null,
     registerStatus: 'ACTIVE',
     mustChangePassword: false,
     lastLogin: '',

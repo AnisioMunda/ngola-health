@@ -1,7 +1,8 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from './notification.service';
 
@@ -27,31 +28,36 @@ describe('NotificationService', () => {
     request.flush({ content: [], totalElements: 0, totalPages: 0, number: 2 });
   });
 
-  it('continues polling after errors and starts only one polling stream', fakeAsync(() => {
+  it('continues polling after errors and starts only one polling stream', async () => {
+    vi.useFakeTimers();
     let calls = 0;
-    spyOn(service, 'getUnreadCount').and.callFake(() => {
-      calls += 1;
-      return calls === 1
-        ? throwError(() => new HttpErrorResponse({ status: 503 }))
-        : of({ count: calls });
-    });
 
-    service.startPolling();
-    service.startPolling();
+    try {
+      spyOn(service, 'getUnreadCount').and.callFake(() => {
+        calls += 1;
+        return calls === 1
+          ? throwError(() => new HttpErrorResponse({ status: 503 }))
+          : of({ count: calls });
+      });
 
-    expect(calls).toBe(1);
-    expect(service.pollingError()).toBeTrue();
+      service.startPolling();
+      service.startPolling();
 
-    tick(60_000);
+      expect(calls).toBe(1);
+      expect(service.pollingError()).toBe(true);
 
-    expect(calls).toBe(2);
-    expect(service.unreadCount()).toBe(2);
-    expect(service.pollingError()).toBeFalse();
+      await vi.advanceTimersByTimeAsync(60_000);
 
-    tick(60_000);
+      expect(calls).toBe(2);
+      expect(service.unreadCount()).toBe(2);
+      expect(service.pollingError()).toBe(false);
 
-    expect(calls).toBe(3);
-    expect(service.unreadCount()).toBe(3);
-    discardPeriodicTasks();
-  }));
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(calls).toBe(3);
+      expect(service.unreadCount()).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

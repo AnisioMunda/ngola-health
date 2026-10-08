@@ -23,21 +23,21 @@ describe('UsersListComponent', () => {
   it('enables user-management actions for hospital administrators', () => {
     getCurrentUser.and.returnValue(createUser(['ADMIN']));
 
-    expect(component.canManageUsers).toBeTrue();
+    expect(component.canManageUsers).toBe(true);
   });
 
   it('keeps user-management actions hidden for managers and unknown roles', () => {
     getCurrentUser.and.returnValue(createUser(['MANAGER']));
-    expect(component.canManageUsers).toBeFalse();
+    expect(component.canManageUsers).toBe(false);
 
     getCurrentUser.and.returnValue(createUser(['SUPER_ADMIN']));
-    expect(component.canManageUsers).toBeFalse();
+    expect(component.canManageUsers).toBe(false);
   });
 
   it('fails closed when no authenticated user is available', () => {
     getCurrentUser.and.returnValue(null);
 
-    expect(component.canManageUsers).toBeFalse();
+    expect(component.canManageUsers).toBe(false);
   });
 });
 

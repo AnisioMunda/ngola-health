@@ -60,7 +60,7 @@ describe('authInterceptor', () => {
 
     const refreshRequest = httpMock.expectOne(`${environment.apiUrl}/auth/refresh`);
     expect(refreshRequest.request.body).toEqual({ refreshToken: 'refresh-token-valido' });
-    expect(refreshRequest.request.headers.has('Authorization')).toBeFalse();
+    expect(refreshRequest.request.headers.has('Authorization')).toBe(false);
     refreshRequest.flush(refreshedSession);
 
     const retryRequest = httpMock.expectOne('/api/patients');

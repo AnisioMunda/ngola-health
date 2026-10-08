@@ -58,6 +58,14 @@ export class UserFormComponent implements OnInit {
       phone: [''],
       especiality: [''],
       professionalCard: [''],
+      teamsUserId: [
+        '',
+        [
+          Validators.pattern(
+            '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+          ),
+        ],
+      ],
       mustChangePassword: [true],
       roleIds: [[], [Validators.required]],
     });
@@ -76,6 +84,7 @@ export class UserFormComponent implements OnInit {
           phone: user.phone,
           especiality: user.especiality,
           professionalCard: user.professionalCard,
+          teamsUserId: user.teamsUserId ?? '',
           mustChangePassword: user.mustChangePassword,
           roleIds,
         });
@@ -92,12 +101,20 @@ export class UserFormComponent implements OnInit {
     return (this.form.get('roleIds')?.value ?? []).includes(roleId);
   }
 
+  isDoctorRoleSelected(): boolean {
+    const doctorRoleId = ROLES.find((role) => role.name === 'DOCTOR')?.id;
+    return doctorRoleId !== undefined && this.isRoleSelected(doctorRoleId);
+  }
+
   toggleRole(roleId: string): void {
     const current: string[] = this.form.get('roleIds')?.value ?? [];
     const updated = current.includes(roleId)
       ? current.filter((id) => id !== roleId)
       : [...current, roleId];
     this.form.get('roleIds')?.setValue(updated);
+    if (!this.isDoctorRoleSelected()) {
+      this.form.get('teamsUserId')?.setValue('');
+    }
   }
 
   onSubmit(): void {
@@ -117,6 +134,7 @@ export class UserFormComponent implements OnInit {
           phone: value.phone,
           especiality: value.especiality,
           professionalCard: value.professionalCard,
+          teamsUserId: value.teamsUserId,
           roleIds: value.roleIds,
         })
       : this.userService.create(value);

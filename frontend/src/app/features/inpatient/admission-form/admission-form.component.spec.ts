@@ -147,7 +147,7 @@ describe('AdmissionFormComponent', () => {
       expectedDischargeDate: '2026-10-12',
     });
     expect(router.navigate).toHaveBeenCalledWith(['/inpatient/admissions', admission.id]);
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 
   it('apresenta a mensagem da API e liberta o estado de submissão', () => {
@@ -163,7 +163,7 @@ describe('AdmissionFormComponent', () => {
     component.onSubmit();
 
     expect(component.error).toBe('A cama acabou de ser ocupada.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 
   it('ignora camas recebidas para uma enfermaria que já não está seleccionada', () => {

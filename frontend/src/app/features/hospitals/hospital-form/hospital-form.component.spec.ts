@@ -33,10 +33,10 @@ describe('HospitalFormComponent', () => {
     component.normalizeCode();
 
     expect(component.form.controls['code'].value).toBe('HGL-001');
-    expect(component.form.valid).toBeTrue();
+    expect(component.form.valid).toBe(true);
 
     component.form.controls['code'].setValue('invalid code');
-    expect(component.form.controls['code'].invalid).toBeTrue();
+    expect(component.form.controls['code'].invalid).toBe(true);
   });
 
   it('rejects an invalid optional email address', () => {
@@ -48,13 +48,13 @@ describe('HospitalFormComponent', () => {
       email: 'endereco-invalido',
     });
 
-    expect(component.form.controls['email'].invalid).toBeTrue();
+    expect(component.form.controls['email'].invalid).toBe(true);
   });
 
   it('does not accept whitespace-only required fields', () => {
     component.form.patchValue({ name: '   ', code: 'HGL-001', type: 'HOSPITAL', province: '  ' });
 
-    expect(component.form.controls['name'].invalid).toBeTrue();
-    expect(component.form.controls['province'].invalid).toBeTrue();
+    expect(component.form.controls['name'].invalid).toBe(true);
+    expect(component.form.controls['province'].invalid).toBe(true);
   });
 });

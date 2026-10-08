@@ -129,6 +129,6 @@ describe('InvoiceFormComponent', () => {
     component.onSubmit();
 
     expect(component.error).toBe('O preço indicado é inválido.');
-    expect(component.saving).toBeFalse();
+    expect(component.saving).toBe(false);
   });
 });

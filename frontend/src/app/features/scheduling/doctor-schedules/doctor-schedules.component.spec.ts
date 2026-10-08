@@ -23,6 +23,7 @@ describe('DoctorSchedulesComponent', () => {
     phone: '',
     especiality: 'Medicina Geral',
     professionalCard: '',
+    teamsUserId: null,
     registerStatus: 'ACTIVE',
     mustChangePassword: false,
     lastLogin: '',
@@ -79,7 +80,7 @@ describe('DoctorSchedulesComponent', () => {
 
     component.onSubmit();
 
-    expect(component.form.hasError('invalidTimeRange')).toBeTrue();
+    expect(component.form.hasError('invalidTimeRange')).toBe(true);
     expect(schedulingService.createSchedule).not.toHaveBeenCalled();
   });
 
@@ -93,7 +94,7 @@ describe('DoctorSchedulesComponent', () => {
 
     component.onSubmit();
 
-    expect(component.form.hasError('slotExceedsInterval')).toBeTrue();
+    expect(component.form.hasError('slotExceedsInterval')).toBe(true);
     expect(schedulingService.createSchedule).not.toHaveBeenCalled();
   });
 

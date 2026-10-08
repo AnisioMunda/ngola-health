@@ -16,7 +16,7 @@ export interface SessionResponse {
   status: SessionStatus;
   statusLabel: string;
   roomToken: string;
-  roomUrl: string;
+  roomUrl: string | null;
   scheduledAt: string;
   startedAt: string;
   endedAt: string;
@@ -31,6 +31,19 @@ export interface TelemedicineStatsDto {
   inProgress: number;
   completedThisMonth: number;
   avgDurationMinutes: number;
+  teamsConfigured: boolean;
+}
+
+export interface CreateSessionRequest {
+  patientId: string;
+  doctorId: string;
+  scheduledAt: string;
+  durationMinutes: number;
+}
+
+export interface DoctorOption {
+  id: string;
+  fullName: string;
 }
 
 export const SESSION_STATUS_COLORS: Record<SessionStatus, string> = {
@@ -56,7 +69,10 @@ export class TelemedicineService {
   getMySessionsToday(): Observable<SessionResponse[]> {
     return this.http.get<SessionResponse[]>(`${this.apiUrl}/my-sessions`);
   }
-  create(req: any): Observable<SessionResponse> {
+  getTeamsDoctors(): Observable<DoctorOption[]> {
+    return this.http.get<DoctorOption[]>(`${this.apiUrl}/doctors`);
+  }
+  create(req: CreateSessionRequest): Observable<SessionResponse> {
     return this.http.post<SessionResponse>(this.apiUrl, req);
   }
   joinSession(token: string): Observable<SessionResponse> {

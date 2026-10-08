@@ -69,7 +69,7 @@ describe('ExpiringStockComponent', () => {
   it('carrega os alertas de validade no período seleccionado', () => {
     expect(pharmacyService.findExpiringSoon).toHaveBeenCalledWith(30);
     expect(component.batches).toEqual([batch]);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 
   it('marca como crítica a validade entre hoje e os próximos sete dias', () => {
@@ -78,7 +78,7 @@ describe('ExpiringStockComponent', () => {
     date.setUTCDate(date.getUTCDate() + 7);
     const expiryDate = date.toISOString().slice(0, 10);
 
-    expect(component.isCritical({ ...batch, expiryDate })).toBeTrue();
+    expect(component.isCritical({ ...batch, expiryDate })).toBe(true);
     expect(
       component.isCritical({
         ...batch,
@@ -86,7 +86,7 @@ describe('ExpiringStockComponent', () => {
           .toISOString()
           .slice(0, 10),
       }),
-    ).toBeFalse();
+    ).toBe(false);
   });
 
   it('mostra erros de carregamento sem ocultá-los', () => {
@@ -104,6 +104,6 @@ describe('ExpiringStockComponent', () => {
 
     expect(component.error).toBe('Serviço de farmácia indisponível.');
     expect(component.batches).toEqual([]);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 });

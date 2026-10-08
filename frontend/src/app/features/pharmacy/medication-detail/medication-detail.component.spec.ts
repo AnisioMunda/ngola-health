@@ -90,7 +90,7 @@ describe('MedicationDetailComponent', () => {
   it('carrega os dados do medicamento e respectivos lotes', () => {
     expect(component.medication).toEqual(medication);
     expect(component.batches).toEqual([batch]);
-    expect(component.isLowStock()).toBeFalse();
+    expect(component.isLowStock()).toBe(false);
   });
 
   it('regista uma entrada de stock e actualiza os dados', () => {
@@ -112,7 +112,7 @@ describe('MedicationDetailComponent', () => {
       unitCost: 25,
       supplier: 'Fornecedor',
     });
-    expect(component.batchesLoading).toBeFalse();
+    expect(component.batchesLoading).toBe(false);
     expect(component.error).toBe('');
   });
 
@@ -133,8 +133,8 @@ describe('MedicationDetailComponent', () => {
       supplier: '',
     });
 
-    expect(component.canViewStockDetails).toBeTrue();
-    expect(component.canManageStock).toBeFalse();
+    expect(component.canViewStockDetails).toBe(true);
+    expect(component.canManageStock).toBe(false);
     component.receiveStock();
 
     expect(pharmacyService.receiveStock).not.toHaveBeenCalled();
@@ -156,6 +156,6 @@ describe('MedicationDetailComponent', () => {
 
     expect(component.error).toBe('Não autorizado para consultar os lotes.');
     expect(component.batches).toEqual([batch]);
-    expect(component.batchesLoading).toBeFalse();
+    expect(component.batchesLoading).toBe(false);
   });
 });

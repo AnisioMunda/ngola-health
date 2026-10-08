@@ -68,7 +68,7 @@ describe('PatientFormComponent', () => {
     component.onSubmit();
 
     expect(component.possibleDuplicates.length).toBe(1);
-    expect(component.form.disabled).toBeTrue();
+    expect(component.form.disabled).toBe(true);
     expect(patientService.create).not.toHaveBeenCalled();
 
     component.confirmRegistrationDespiteDuplicates();
@@ -109,7 +109,7 @@ describe('PatientFormComponent', () => {
     component.cancelRegistrationDespiteDuplicates();
 
     expect(component.possibleDuplicates.length).toBe(0);
-    expect(component.form.enabled).toBeTrue();
+    expect(component.form.enabled).toBe(true);
     expect(patientService.create).not.toHaveBeenCalled();
   });
 });

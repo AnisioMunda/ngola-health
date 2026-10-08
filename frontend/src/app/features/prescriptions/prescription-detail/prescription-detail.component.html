@@ -247,7 +247,7 @@
     </div>
 
     <!-- Histórico de dispensas -->
-    <div class="section-card" *ngIf="(prescription.dispensations?.length ?? 0) > 0">
+    <div class="section-card" *ngIf="prescription.dispensations.length > 0">
       <h2 class="section-title">Histórico de Dispensas</h2>
       <table class="dispensations-table">
         <thead>

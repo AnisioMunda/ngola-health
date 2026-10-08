@@ -1,0 +1,32 @@
+<header class="content-header">
+  <h1>Facturas</h1>
+</header>
+
+<div class="empty-state" *ngIf="invoices.length === 0">
+  <p>Sem facturas registadas.</p>
+</div>
+
+<div class="table-card" *ngIf="invoices.length > 0">
+  <div
+    class="invoice-row"
+    *ngFor="let invoice of invoices"
+    [class.overdue]="invoice.status === 'OVERDUE'"
+  >
+    <div class="inv-icon">🧾</div>
+    <div class="inv-info">
+      <span class="inv-number">{{ invoice.invoiceNumber }}</span>
+      <span class="inv-date">{{ invoice.issueDate | date: 'dd/MM/yyyy' }}</span>
+      <span class="inv-desc" *ngIf="invoice.description">{{ invoice.description }}</span>
+    </div>
+    <div class="inv-right">
+      <span class="inv-amount">{{ formatCurrency(invoice.totalAmount) }}</span>
+      <span
+        class="inv-status"
+        [style.background]="statusColor(invoice.status) + '22'"
+        [style.color]="statusColor(invoice.status)"
+      >
+        {{ invoiceStatusLabel(invoice.status) }}
+      </span>
+    </div>
+  </div>
+</div>

@@ -64,10 +64,10 @@ describe('LabRequestsListComponent', () => {
     component.ngOnInit();
 
     expect(labService.findAllRequests).toHaveBeenCalled();
-    expect(component.canViewList).toBeTrue();
-    expect(component.canCreate).toBeFalse();
-    expect(component.canAdvance('PENDING')).toBeTrue();
-    expect(component.canAdvance('COLLECTED')).toBeTrue();
+    expect(component.canViewList).toBe(true);
+    expect(component.canCreate).toBe(false);
+    expect(component.canAdvance('PENDING')).toBe(true);
+    expect(component.canAdvance('COLLECTED')).toBe(true);
   });
 
   it('impede perfis sem permissão de avançar o estado', () => {
@@ -86,8 +86,8 @@ describe('LabRequestsListComponent', () => {
 
     expect(event.stopPropagation).toHaveBeenCalled();
     expect(labService.collect).not.toHaveBeenCalled();
-    expect(component.canCreate).toBeTrue();
-    expect(component.canAdvance('PENDING')).toBeFalse();
+    expect(component.canCreate).toBe(true);
+    expect(component.canAdvance('PENDING')).toBe(false);
   });
 
   it('apresenta o erro da API ao falhar o carregamento', () => {
@@ -104,7 +104,7 @@ describe('LabRequestsListComponent', () => {
     component.loadRequests();
 
     expect(component.error).toBe('Não autorizado para consultar pedidos.');
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
     expect(component.requests).toEqual([]);
   });
 

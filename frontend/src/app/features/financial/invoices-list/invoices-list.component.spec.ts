@@ -99,7 +99,7 @@ describe('InvoicesListComponent', () => {
     pendingIssue.next({ ...invoice, status: 'EMITIDO', agtStatus: 'PENDING' });
 
     expect(component.invoices[0].status).toBe('EMITIDO');
-    expect(component.issuingInvoiceIds.has(invoice.id)).toBeFalse();
+    expect(component.issuingInvoiceIds.has(invoice.id)).toBe(false);
   });
 
   it('mostra o detalhe do erro devolvido pela API', () => {
@@ -110,6 +110,6 @@ describe('InvoicesListComponent', () => {
     component.loadInvoices();
 
     expect(component.error).toBe('Sem acesso às facturas.');
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
   });
 });

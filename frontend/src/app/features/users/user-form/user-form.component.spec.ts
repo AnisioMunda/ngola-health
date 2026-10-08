@@ -27,22 +27,34 @@ describe('UserFormComponent', () => {
     const password = component.form.controls['password'];
 
     password.setValue('');
-    expect(password.invalid).toBeTrue();
+    expect(password.invalid).toBe(true);
 
     password.setValue('password');
-    expect(password.invalid).toBeTrue();
+    expect(password.invalid).toBe(true);
 
     password.setValue('Password1');
-    expect(password.valid).toBeTrue();
+    expect(password.valid).toBe(true);
   });
 
   it('requires at least one role before submitting', () => {
     const roleIds = component.form.controls['roleIds'];
 
     roleIds.setValue([]);
-    expect(roleIds.invalid).toBeTrue();
+    expect(roleIds.invalid).toBe(true);
 
     roleIds.setValue(['00000000-0000-0000-0000-000000000001']);
-    expect(roleIds.valid).toBeTrue();
+    expect(roleIds.valid).toBe(true);
+  });
+
+  it('requires a valid Entra object ID when the doctor role is selected', () => {
+    component.form.controls['roleIds'].setValue(['00000000-0000-0000-0000-000000000002']);
+    expect(component.isDoctorRoleSelected()).toBe(true);
+
+    const teamsUserId = component.form.controls['teamsUserId'];
+    teamsUserId.setValue('invalid');
+    expect(teamsUserId.invalid).toBe(true);
+
+    teamsUserId.setValue('c7ad8e3d-a0a6-4d41-b44f-06c31bc662c4');
+    expect(teamsUserId.valid).toBe(true);
   });
 });

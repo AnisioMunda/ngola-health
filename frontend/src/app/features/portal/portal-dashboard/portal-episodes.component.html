@@ -1,0 +1,33 @@
+<header class="content-header">
+  <h1>Histórico de Consultas</h1>
+</header>
+
+<div class="table-card">
+  <div class="empty-state" *ngIf="episodes.length === 0">
+    <p>Sem consultas registadas.</p>
+  </div>
+
+  <div class="episode-list" *ngIf="episodes.length > 0">
+    <div class="episode-row" *ngFor="let episode of episodes">
+      <div class="ep-date">
+        <span class="ep-day">{{ episode.scheduledAt || episode.completedAt | date: 'dd' }}</span>
+        <span class="ep-mon">{{ episode.scheduledAt || episode.completedAt | date: 'MMM' }}</span>
+      </div>
+      <div class="ep-info">
+        <span class="ep-type">{{ episode.episodeType }}</span>
+        <span class="ep-doctor" *ngIf="episode.doctorName">Dr(a). {{ episode.doctorName }}</span>
+        <span class="ep-reason" *ngIf="episode.reason">{{ episode.reason }}</span>
+        <span class="ep-diagnosis" *ngIf="episode.diagnosis">
+          Diagnóstico: {{ episode.diagnosis }}
+        </span>
+      </div>
+      <span
+        class="ep-status"
+        [style.background]="statusColor(episode.status) + '22'"
+        [style.color]="statusColor(episode.status)"
+      >
+        {{ episode.statusLabel || episode.status }}
+      </span>
+    </div>
+  </div>
+</div>

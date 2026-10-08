@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -60,6 +60,7 @@ export class EpisodeFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
+    private changeDetectorRef: ChangeDetectorRef,
     private episodeService: EpisodeService,
     private patientService: PatientService,
     private userService: UserManagementService,
@@ -96,9 +97,11 @@ export class EpisodeFormComponent implements OnInit {
     this.patientService.findAll('', 0, 100).subscribe({
       next: (page) => {
         this.patients = page.content.map((p) => ({ id: p.id, fullName: p.fullName }));
+        this.changeDetectorRef.markForCheck();
       },
       error: () => {
         this.patientLoadError = 'Não foi possível carregar a lista de pacientes.';
+        this.changeDetectorRef.markForCheck();
       },
     });
   }
@@ -109,9 +112,11 @@ export class EpisodeFormComponent implements OnInit {
         this.doctors = page.content
           .filter((u) => u.roles.includes('DOCTOR'))
           .map((u) => ({ id: u.id, fullName: u.fullName }));
+        this.changeDetectorRef.markForCheck();
       },
       error: () => {
         this.doctorLoadError = 'Não foi possível carregar a lista de médicos.';
+        this.changeDetectorRef.markForCheck();
       },
     });
   }

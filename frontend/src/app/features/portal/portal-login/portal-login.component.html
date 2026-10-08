@@ -15,6 +15,9 @@
     </div>
 
     <div class="alert-error" *ngIf="error">{{ error }}</div>
+    <div class="alert-success" role="status" *ngIf="registerMessage">
+      {{ registerMessage }}
+    </div>
 
     <!-- Login -->
     <form *ngIf="tab === 'login'" [formGroup]="form" (ngSubmit)="onLogin()" novalidate>
@@ -78,9 +81,9 @@
       </div>
       <div class="field">
         <label>Password *</label>
-        <input type="password" formControlName="password" placeholder="Mínimo 8 caracteres" />
+        <input type="password" formControlName="password" placeholder="Mínimo 12 caracteres" />
         <span class="field-error" *ngIf="rf['password'].invalid && rf['password'].touched">
-          Mínimo 8 caracteres
+          Mínimo 12 caracteres
         </span>
       </div>
       <div class="field">

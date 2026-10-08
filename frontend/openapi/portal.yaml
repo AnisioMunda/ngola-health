@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: HospitalAO Patient Portal API
+  version: 1.0.0
+paths:
+  /portal/register:
+    post:
+      operationId: registerPortalAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalRegisterRequest'
+      responses:
+        '202':
+          description: Account registration pending hospital approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalRegistrationResponse'
+  /portal/login:
+    post:
+      operationId: loginToPortal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+      responses:
+        '200':
+          description: Authenticated patient portal session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalLoginResponse'
+  /portal/dashboard:
+    get:
+      operationId: getPortalDashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Patient dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalDashboardDto'
+  /portal/episodes:
+    get:
+      operationId: getPortalEpisodes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Patient episode history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortalEpisodeDto'
+  /portal/lab-results:
+    get:
+      operationId: getPortalLabResults
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Completed patient laboratory results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortalLabResultDto'
+  /portal/prescriptions:
+    get:
+      operationId: getPortalPrescriptions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Patient prescriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortalPrescriptionDto'
+  /portal/invoices:
+    get:
+      operationId: getPortalInvoices
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Patient invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortalInvoiceDto'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PortalRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - patientNumber
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        password:
+          type: string
+          minLength: 12
+          maxLength: 72
+        patientNumber:
+          type: string
+          maxLength: 30
+    PortalLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        password:
+          type: string
+    PortalRegistrationResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - PENDING_APPROVAL
+        message:
+          type: string
+    PortalLoginResponse:
+      type: object
+      required:
+        - token
+        - patientName
+        - patientId
+        - email
+      properties:
+        token:
+          type: string
+        patientName:
+          type: string
+        patientId:
+          type: string
+          format: uuid
+        email:
+          type: string
+    PortalDashboardDto:
+      type: object
+      required:
+        - patientName
+        - totalEpisodes
+        - upcomingAppointments
+        - pendingLabResults
+        - pendingInvoices
+        - totalDebt
+        - recentEpisodes
+        - upcomingAppointmentsList
+      properties:
+        patientName:
+          type: string
+        totalEpisodes:
+          type: integer
+        upcomingAppointments:
+          type: integer
+        pendingLabResults:
+          type: integer
+        pendingInvoices:
+          type: integer
+        totalDebt:
+          type: number
+        recentEpisodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalEpisodeDto'
+        upcomingAppointmentsList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalAppointmentDto'
+    PortalEpisodeDto:
+      type: object
+      required:
+        - id
+        - episodeType
+        - status
+        - statusLabel
+        - doctorName
+        - scheduledAt
+        - completedAt
+        - reason
+        - diagnosis
+        - hasLabResults
+        - hasPrescriptions
+      properties:
+        id:
+          type: string
+          format: uuid
+        episodeType:
+          type: string
+        status:
+          type: string
+        statusLabel:
+          type: string
+        doctorName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        diagnosis:
+          type: string
+          nullable: true
+        hasLabResults:
+          type: boolean
+        hasPrescriptions:
+          type: boolean
+    PortalLabResultDto:
+      type: object
+      required:
+        - id
+        - examName
+        - status
+        - result
+        - referenceValues
+        - doctorName
+        - requestedAt
+        - resultAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        examName:
+          type: string
+        status:
+          type: string
+        result:
+          type: string
+        referenceValues:
+          type: string
+          nullable: true
+        doctorName:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
+        resultAt:
+          type: string
+          format: date-time
+          nullable: true
+    PortalPrescriptionDto:
+      type: object
+      required:
+        - id
+        - prescriptionNumber
+        - doctorName
+        - prescriptionDate
+        - expiryDate
+        - status
+        - statusLabel
+        - diagnosis
+        - items
+      properties:
+        id:
+          type: string
+          format: uuid
+        prescriptionNumber:
+          type: string
+        doctorName:
+          type: string
+        prescriptionDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        status:
+          type: string
+        statusLabel:
+          type: string
+        diagnosis:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalPrescriptionItemDto'
+    PortalPrescriptionItemDto:
+      type: object
+      required:
+        - medicationName
+        - dosage
+        - route
+        - quantityPrescribed
+        - quantityDispensed
+        - status
+      properties:
+        medicationName:
+          type: string
+        dosage:
+          type: string
+        route:
+          type: string
+        quantityPrescribed:
+          type: integer
+        quantityDispensed:
+          type: integer
+        status:
+          type: string
+    PortalInvoiceDto:
+      type: object
+      required:
+        - id
+        - invoiceNumber
+        - issueDate
+        - totalAmount
+        - status
+        - statusLabel
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoiceNumber:
+          type: string
+        issueDate:
+          type: string
+          format: date-time
+        totalAmount:
+          type: number
+        status:
+          type: string
+        statusLabel:
+          type: string
+        description:
+          type: string
+          nullable: true
+    PortalAppointmentDto:
+      type: object
+      required:
+        - id
+        - doctorName
+        - specialty
+        - scheduledAt
+        - status
+        - reason
+      properties:
+        id:
+          type: string
+          format: uuid
+        doctorName:
+          type: string
+        specialty:
+          type: string
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        reason:
+          type: string
+          nullable: true

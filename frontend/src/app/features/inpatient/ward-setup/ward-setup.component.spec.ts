@@ -82,7 +82,7 @@ describe('WardSetupComponent', () => {
     expect(component.wards).toEqual([ward]);
     expect(component.beds).toEqual([bed]);
     expect(component.selectedWardId).toBe(ward.id);
-    expect(component.loading).toBeFalse();
+    expect(component.loading).toBe(false);
     const wardButton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
       '.ward-item',
     );
@@ -125,7 +125,7 @@ describe('WardSetupComponent', () => {
     component.createWard();
 
     expect(component.error).toBe('O código já está em uso.');
-    expect(component.savingWard).toBeFalse();
+    expect(component.savingWard).toBe(false);
   });
 
   it('ignora a resposta de camas de uma enfermaria já não seleccionada', () => {

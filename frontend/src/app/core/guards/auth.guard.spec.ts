@@ -46,7 +46,7 @@ describe('authentication guards', () => {
       authGuard({} as ActivatedRouteSnapshot, { url: '/dashboard' } as RouterStateSnapshot),
     );
 
-    expect(result).toBeTrue();
+    expect(result).toBe(true);
   });
 
   it('redirects authenticated users away from the login page', () => {
@@ -68,7 +68,7 @@ describe('authentication guards', () => {
       adminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 
-    expect(result).toBeTrue();
+    expect(result).toBe(true);
   });
 
   it('redirects non-administrators to the user list', () => {
@@ -91,7 +91,7 @@ describe('authentication guards', () => {
       superAdminGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 
-    expect(result).toBeTrue();
+    expect(result).toBe(true);
   });
 
   it('redirects hospital administrators away from platform hospital management', () => {

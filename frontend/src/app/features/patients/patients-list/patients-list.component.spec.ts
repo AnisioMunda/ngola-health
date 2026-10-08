@@ -66,7 +66,7 @@ describe('PatientsListComponent', () => {
   });
 
   it('permite gerar a ficha PDF apenas a perfis autorizados', () => {
-    expect(component.canDownloadPatientReport).toBeTrue();
+    expect(component.canDownloadPatientReport).toBe(true);
 
     authService.getCurrentUser.and.returnValue({
       id: 'user-2',
@@ -76,7 +76,7 @@ describe('PatientsListComponent', () => {
       roles: ['RECEPTIONIST'],
       mustChangePassword: false,
     });
-    expect(component.canDownloadPatientReport).toBeFalse();
+    expect(component.canDownloadPatientReport).toBe(false);
   });
 
   it('descarrega a ficha do paciente sem activar a navegação da linha', () => {
@@ -90,6 +90,6 @@ describe('PatientsListComponent', () => {
       jasmine.any(Blob),
       'ficha-paciente-patient-1.pdf',
     );
-    expect(component.downloadingPatientReport).toBeFalse();
+    expect(component.downloadingPatientReport).toBe(false);
   });
 });

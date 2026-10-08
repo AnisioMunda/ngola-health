@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -70,6 +70,7 @@ export class InvoiceFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private changeDetectorRef: ChangeDetectorRef,
     private router: Router,
     private financialService: FinancialService,
     private patientService: PatientService,
@@ -154,10 +155,12 @@ export class InvoiceFormComponent implements OnInit {
         next: (p) => {
           this.patients = p.content.map((x) => ({ id: x.id, fullName: x.fullName }));
           this.patientsLoading = false;
+          this.changeDetectorRef.markForCheck();
         },
         error: (error: HttpErrorResponse) => {
           this.patientsError = this.errorMessage(error, 'Erro ao carregar pacientes.');
           this.patientsLoading = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
@@ -171,10 +174,12 @@ export class InvoiceFormComponent implements OnInit {
         next: (prices) => {
           this.servicePrices = prices;
           this.pricesLoading = false;
+          this.changeDetectorRef.markForCheck();
         },
         error: (error: HttpErrorResponse) => {
           this.pricesError = this.errorMessage(error, 'Erro ao carregar tabela de preços.');
           this.pricesLoading = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }
@@ -218,6 +223,7 @@ export class InvoiceFormComponent implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.error = this.errorMessage(error, 'Erro ao criar documento.');
           this.saving = false;
+          this.changeDetectorRef.markForCheck();
         },
       });
   }

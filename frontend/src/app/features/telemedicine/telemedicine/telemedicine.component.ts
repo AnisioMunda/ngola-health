@@ -9,6 +9,7 @@ import {
   TelemedicineService,
   SessionResponse,
   TelemedicineStatsDto,
+  DoctorOption,
   SESSION_STATUS_COLORS,
 } from '../../../core/services/telemedicine.service';
 import { PatientService } from '../../../core/services/patient.service';
@@ -34,12 +35,15 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   clinicalNotesText = '';
 
   patients: { id: string; fullName: string }[] = [];
+  doctors: DoctorOption[] = [];
 
   statusColors = SESSION_STATUS_COLORS;
 
   form = this.fb.group({
     patientId: ['', Validators.required],
+    doctorId: ['', Validators.required],
     scheduledAt: ['', Validators.required],
+    durationMinutes: [30, [Validators.required, Validators.min(1), Validators.max(1440)]],
   });
 
   private pollingSub?: Subscription;
@@ -54,6 +58,7 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.load();
     this.loadPatients();
+    this.loadDoctors();
     this.pollingSub = interval(30000)
       .pipe(switchMap(() => this.telemedicineService.getActiveSessions()))
       .subscribe((s) => {
@@ -91,6 +96,15 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadDoctors(): void {
+    this.telemedicineService.getTeamsDoctors().subscribe({
+      next: (doctors) => (this.doctors = doctors),
+      error: () => {
+        this.error = 'Não foi possível carregar os médicos configurados para Microsoft Teams.';
+      },
+    });
+  }
+
   onCreate(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -99,10 +113,17 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
     this.saving = true;
     this.error = '';
     const v = this.form.getRawValue();
+    if (!v.patientId || !v.doctorId || !v.scheduledAt || v.durationMinutes == null) {
+      this.error = 'Indique paciente, médico, data, hora e duração da sessão.';
+      this.saving = false;
+      return;
+    }
     this.telemedicineService
       .create({
         patientId: v.patientId,
-        scheduledAt: v.scheduledAt,
+        doctorId: v.doctorId,
+        scheduledAt: new Date(v.scheduledAt).toISOString(),
+        durationMinutes: v.durationMinutes,
       })
       .subscribe({
         next: () => {
@@ -120,10 +141,18 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   }
 
   joinSession(s: SessionResponse): void {
+    const roomUrl = s.roomUrl;
+    if (!roomUrl) {
+      this.error = 'A ligação do fornecedor de videoconferência ainda não está configurada.';
+      return;
+    }
     this.telemedicineService.joinSession(s.roomToken).subscribe({
       next: (updated) => {
         this.updateInList(updated);
-        window.open(s.roomUrl, '_blank');
+        window.open(updated.roomUrl ?? roomUrl, '_blank', 'noopener,noreferrer');
+      },
+      error: (e) => {
+        this.error = e.error?.message ?? 'Não foi possível iniciar a sessão.';
       },
     });
   }
@@ -162,8 +191,20 @@ export class TelemedicineComponent implements OnInit, OnDestroy {
   }
 
   copyRoomUrl(s: SessionResponse): void {
-    navigator.clipboard.writeText(s.roomUrl);
-    this.flash('Link copiado para a área de transferência.');
+    if (!s.roomUrl) {
+      this.error = 'A ligação do fornecedor de videoconferência ainda não está configurada.';
+      return;
+    }
+    if (!navigator.clipboard?.writeText) {
+      this.error = 'O browser não permite copiar a ligação.';
+      return;
+    }
+    navigator.clipboard
+      .writeText(s.roomUrl)
+      .then(() => this.flash('Link copiado para a área de transferência.'))
+      .catch(() => {
+        this.error = 'Não foi possível copiar a ligação.';
+      });
   }
 
   updateInList(updated: SessionResponse): void {

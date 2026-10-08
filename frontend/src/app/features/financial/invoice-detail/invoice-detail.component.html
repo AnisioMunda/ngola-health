@@ -252,7 +252,7 @@
     </div>
 
     <!-- Histórico de pagamentos -->
-    <div class="section-card" *ngIf="invoice.payments?.length">
+    <div class="section-card" *ngIf="invoice.payments.length > 0">
       <h3 class="section-title">Histórico de Pagamentos</h3>
       <div class="payments-list">
         <div class="payment-item" *ngFor="let p of invoice.payments">

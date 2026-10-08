@@ -67,9 +67,9 @@ describe('AppointmentDetailComponent', () => {
   it('loads the appointment and exposes only valid state actions', () => {
     expect(schedulingService.findById).toHaveBeenCalledWith(appointment.id);
     expect(component.appointment).toEqual(appointment);
-    expect(component.canComplete()).toBeTrue();
-    expect(component.canConfirm()).toBeFalse();
-    expect(component.canCancel()).toBeTrue();
+    expect(component.canComplete()).toBe(true);
+    expect(component.canConfirm()).toBe(false);
+    expect(component.canCancel()).toBe(true);
   });
 
   it('updates the view when a confirmed appointment is completed', () => {
@@ -78,7 +78,7 @@ describe('AppointmentDetailComponent', () => {
     expect(schedulingService.complete).toHaveBeenCalledWith(appointment.id);
     expect(component.appointment?.status).toBe('COMPLETED');
     expect(component.success).toBe('Consulta marcada como realizada.');
-    expect(component.updating).toBeFalse();
+    expect(component.updating).toBe(false);
   });
 
   it('shows server details when a state transition conflicts', () => {
@@ -89,7 +89,7 @@ describe('AppointmentDetailComponent', () => {
     component.complete();
 
     expect(component.error).toBe('A consulta já foi concluída.');
-    expect(component.updating).toBeFalse();
+    expect(component.updating).toBe(false);
     expect(component.appointment?.status).toBe('CONFIRMED');
   });
 });
