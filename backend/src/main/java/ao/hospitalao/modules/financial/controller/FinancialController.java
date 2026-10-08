@@ -117,11 +117,11 @@ public class FinancialController {
   }
 
   // ------------------------------------------------
-  // PDF do documento fiscal — layout oficial AGT
+  // PDF do documento fiscal
   // ------------------------------------------------
 
   @GetMapping("/invoices/{id}/pdf")
-  @Operation(summary = "Gerar PDF conforme modelo oficial AGT Angola")
+  @Operation(summary = "Gerar PDF da factura")
   @PreAuthorize(
       "hasAnyRole(T(ao.hospitalao.security.RoleName).ADMIN.name(),T(ao.hospitalao.security.RoleName).FINANCIAL.name(),T(ao.hospitalao.security.RoleName).MANAGER.name(),T(ao.hospitalao.security.RoleName).RECEPTIONIST.name())")
   @Transactional(readOnly = true)

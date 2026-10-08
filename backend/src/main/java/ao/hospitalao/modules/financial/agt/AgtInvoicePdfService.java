@@ -5,6 +5,7 @@ import ao.hospitalao.modules.financial.entity.InvoiceItem;
 import ao.hospitalao.modules.hospitals.entity.Hospital;
 import ao.hospitalao.shared.pdf.PdfDocumentBuilder;
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 import java.awt.Color;
@@ -14,19 +15,16 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 public class AgtInvoicePdfService {
 
   private static final Color AGT_BLUE = new Color(0, 71, 131);
   private static final DateTimeFormatter DT_FMT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy - HH'h'mm");
-  private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-  public byte[] generate(Invoice invoice) throws IOException {
+  public byte[] generate(Invoice invoice) throws IOException, WriterException {
     Hospital hospital = invoice.getHospital();
     boolean isRecibo = invoice.getDocumentType() == Invoice.DocumentType.RC;
     String documentTitle = getDocumentTitle(invoice, isRecibo);
@@ -155,32 +153,31 @@ public class AgtInvoicePdfService {
         Color.DARK_GRAY);
   }
 
-  private void addQrCode(PdfDocumentBuilder pdf, Invoice invoice) {
-    String qrData = invoice.getAgtQrCode() != null ? invoice.getAgtQrCode() : buildQrData(invoice);
-    try {
-      var matrix = new QRCodeWriter().encode(qrData, BarcodeFormat.QR_CODE, 120, 120);
-      BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
-      pdf.addImage(image, 80, 80);
-    } catch (Exception exception) {
-      log.warn(
-          "Failed to generate QR Code for invoice {}: {}",
-          invoice.getInvoiceNumber(),
-          exception.getMessage());
+  private void addQrCode(PdfDocumentBuilder pdf, Invoice invoice)
+      throws IOException, WriterException {
+    String qrData = invoice.getAgtQrCode();
+    if (!invoice.isAgtAccepted() || qrData == null || qrData.isBlank()) {
+      return;
     }
+
+    var matrix = new QRCodeWriter().encode(qrData, BarcodeFormat.QR_CODE, 120, 120);
+    BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
+    pdf.addImage(image, 80, 80);
   }
 
   private void addValidation(PdfDocumentBuilder pdf, Invoice invoice) throws IOException {
     if (invoice.isAgtAccepted()) {
+      String validationCode = invoice.getAgtValidationCode();
       pdf.addText(
-          "Documento validado pela AGT - Codigo: " + nvl(invoice.getAgtValidationCode()),
+          validationCode == null || validationCode.isBlank()
+              ? "Documento validado pela AGT."
+              : "Documento validado pela AGT - Código: " + validationCode,
           8,
           Color.GRAY,
           false,
           4);
-      pdf.addText("DOCUMENTO EMITIDO PELO PORTAL DO CONTRIBUINTE", 9, Color.BLACK, true, 4);
     } else {
-      pdf.addText(
-          "(valores informativos nao integrados no total do documento)", 7, Color.GRAY, false, 4);
+      pdf.addText("Documento ainda não validado pela AGT.", 8, Color.GRAY, false, 4);
     }
   }
 
@@ -211,15 +208,6 @@ public class AgtInvoicePdfService {
   private String formatPct(BigDecimal percent) {
     if (percent == null || percent.compareTo(BigDecimal.ZERO) == 0) return "-";
     return percent.stripTrailingZeros().toPlainString() + "%";
-  }
-
-  private String buildQrData(Invoice invoice) {
-    return String.format(
-        "NIF:%s|DOC:%s|TOTAL:%s|DATA:%s",
-        invoice.getHospital() != null ? invoice.getHospital().getTaxId() : "",
-        invoice.getInvoiceNumber(),
-        invoice.getTotalAmount(),
-        invoice.getIssuedAt() != null ? invoice.getIssuedAt().format(DATE_FMT) : "");
   }
 
   private String nvl(String value) {

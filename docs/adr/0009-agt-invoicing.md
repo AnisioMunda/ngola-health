@@ -97,6 +97,8 @@ obrigações vigentes.
   homologação deste produto.
 - Nenhum payload fiscal deve ser enviado até se confirmar a versão do esquema,
   o mapeamento SAF-T, a representação das assinaturas e as respostas do serviço.
+- O PDF só deve apresentar um QR quando a factura estiver validada e existir
+  um payload recebido da AGT; não se deve inventar um formato local de QR.
 - A integração deve distinguir erros de validação, rejeições da AGT e falhas
   de rede.
 - Credenciais de produção e chaves de assinatura não podem ser usadas em
