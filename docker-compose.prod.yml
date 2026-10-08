@@ -16,44 +16,6 @@ services:
       retries: 5
       start_period: 20s
 
-  redis:
-    image: redis:8-alpine
-    restart: unless-stopped
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}
-    command:
-      [
-        "redis-server",
-        "--requirepass",
-        "${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}",
-      ]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'redis-cli --no-auth-warning -a "$${REDIS_PASSWORD}" ping | grep -q PONG',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hospitalao}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
-      RABBITMQ_DEFAULT_VHOST: /hospitalao
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -67,14 +29,6 @@ services:
       DB_NAME: ${DB_NAME:?Define DB_NAME no ficheiro .env}
       DB_USER: ${DB_USER:?Define DB_USER no ficheiro .env}
       DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD no ficheiro .env}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: ${RABBITMQ_USER:-hospitalao}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
-      RABBITMQ_VHOST: /hospitalao
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no ficheiro .env}
       APP_BASE_URL: https://${TLS_DOMAIN:?Define TLS_DOMAIN no ficheiro .env}
       AGT_API_URL: ${AGT_API_URL:?Define AGT_API_URL no ficheiro .env}
@@ -98,10 +52,6 @@ services:
         read_only: true
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     healthcheck:
       test:
@@ -224,7 +174,5 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
-  rabbitmq_data:
   certbot_webroot:
   letsencrypt:

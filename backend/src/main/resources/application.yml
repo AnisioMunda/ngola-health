@@ -70,49 +70,6 @@ spring:
     enabled: true
 
   # ------------------------------------------------------------
-  # REDIS
-  # ------------------------------------------------------------
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 10
-          max-idle: 5
-          min-idle: 1
-
-  # ------------------------------------------------------------
-  # RABBITMQ
-  # ------------------------------------------------------------
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:hospitalao}
-    password: ${RABBITMQ_PASSWORD}
-    virtual-host: ${RABBITMQ_VHOST:/hospitalao}
-    listener:
-      simple:
-        # "manual": o código confirma manualmente que processou
-        # a mensagem. Se falhar, a mensagem volta à fila.
-        acknowledge-mode: manual
-        prefetch: 1  # processar 1 mensagem de cada vez por consumer
-
-  # ------------------------------------------------------------
-  # EMAIL
-  # ------------------------------------------------------------
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-
-  # ------------------------------------------------------------
   # UPLOAD DE FICHEIROS
   # ------------------------------------------------------------
   servlet:

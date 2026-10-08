@@ -35,14 +35,6 @@ jobs:
           DB_NAME: hospitalao_test
           DB_USER: hospitalao
           DB_PASSWORD: ci
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          REDIS_PASSWORD: ci
-          RABBITMQ_HOST: localhost
-          RABBITMQ_PORT: 5672
-          RABBITMQ_USER: hospitalao
-          RABBITMQ_PASSWORD: ci
-          RABBITMQ_VHOST: /hospitalao
           # Fixture Base64 de 32 bytes; não é um segredo de produção.
           JWT_SECRET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           APP_BASE_URL: http://localhost:4200
@@ -137,41 +129,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      redis:
-        image: redis:8-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping | grep -q PONG"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      rabbitmq:
-        image: rabbitmq:4-management-alpine
-        env:
-          RABBITMQ_DEFAULT_USER: hospitalao
-          RABBITMQ_DEFAULT_PASS: hospitalao-e2e
-          RABBITMQ_DEFAULT_VHOST: /hospitalao
-        ports:
-          - 5672:5672
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
     env:
       E2E_DB_HOST: 127.0.0.1
       E2E_DB_PORT: 5432
       E2E_DB_NAME: hospitalao_e2e
       E2E_DB_USER: hospitalao
       E2E_DB_PASSWORD: hospitalao-e2e
-      E2E_REDIS_HOST: 127.0.0.1
-      E2E_REDIS_PORT: 6379
-      E2E_REDIS_PASSWORD: ""
-      E2E_RABBITMQ_HOST: 127.0.0.1
-      E2E_RABBITMQ_PORT: 5672
-      E2E_RABBITMQ_USER: hospitalao
-      E2E_RABBITMQ_PASSWORD: hospitalao-e2e
       JWT_SECRET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - name: Checkout código

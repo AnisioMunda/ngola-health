@@ -1,6 +1,6 @@
 # ADR-0006: Infraestrutura por caso de uso
 
-- **Estado:** Proposta
+- **Estado:** Confirmada
 - **Data:** 2026-10-07
 
 ## Contexto
@@ -12,8 +12,11 @@ concreta cria complexidade e segredos adicionais sem benefício comprovado.
 ## Proposta
 
 - O Compose inicial deve incluir apenas PostgreSQL, backend e frontend.
-- Adicionar Redis, RabbitMQ, MinIO, SMTP ou WebSocket apenas quando existir um
-  caso de uso concreto e uma decisão de arquitectura aprovada.
+- O Compose da aplicação mantém PostgreSQL, backend e frontend. A cópia local
+  usa PostgreSQL, backend e frontend; o Compose E2E acrescenta apenas os
+  componentes necessários ao teste e ao scan.
+- Redis, RabbitMQ, MinIO, SMTP e WebSocket não são usados pelo fluxo actual e
+  ficam fora dos manifests e dependências até existir um caso de uso aprovado.
 - Registar a necessidade, alternativas, impacto operacional e configuração
   segura na ADR correspondente antes de adicionar cada serviço.
 
@@ -29,8 +32,3 @@ por aumentar a complexidade sem requisitos actuais.
 - Serviços não usados devem ser removidos da configuração e dos manifestos.
 - A aplicação deve falhar de forma explícita quando um serviço obrigatório
   estiver indisponível, sem recorrer a resultados de sucesso fictícios.
-
-## Decisão pendente
-
-Confirmar esta proposta durante a revisão das ADRs e antes de consolidar o
-Compose inicial.

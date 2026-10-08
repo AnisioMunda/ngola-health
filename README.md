@@ -52,6 +52,7 @@ projecto.
 ## Documentação
 
 - [Guia de desenvolvimento: instalar, executar, testar e depurar](docs/development.md)
+- [Guia de testes manuais ponta a ponta, por ordem de dependência](docs/manual-testing-guide.md)
 - [Segurança, autenticação, perfis e isolamento multi-hospital](docs/security.md)
 - [Fluxo clínico e regras de negócio implementadas](docs/clinical-workflow.md)
 - [Agendamento, notificações e internamento](docs/scheduling-notifications-inpatient.md)
