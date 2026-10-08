@@ -56,13 +56,17 @@ public class AgtPollingService {
                 "Invoice {} REJEITADO by AGT: {}", invoice.getInvoiceNumber(), result.message());
           }
           case "PENDING", "PROCESSANDO" -> {
-            log.debug("Invoice {} still pending at AGT", invoice.getInvoiceNumber());
+            log.debug(
+                "Invoice {} still pending at AGT: {}",
+                invoice.getInvoiceNumber(),
+                result.message());
           }
           default -> {
             log.warn(
-                "Unknown AGT status '{}' for invoice {}",
+                "Unknown AGT status '{}' for invoice {}: {}",
                 result.status(),
-                invoice.getInvoiceNumber());
+                invoice.getInvoiceNumber(),
+                result.message());
           }
         }
 

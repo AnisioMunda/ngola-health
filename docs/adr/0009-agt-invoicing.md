@@ -69,6 +69,13 @@ parceiro:
 - A página de registo não mostra `jwsSignature` no exemplo do pedido, enquanto
   a documentação geral descreve a assinatura de requisições com payload
   variável.
+- A consulta de estado documenta `resultCode` 0/1/2 como processamento
+  concluído, 7/8 como consulta ainda pendente e 9 como processamento cancelado;
+  para 0/1/2 exige `documentStatusList`, com `documentStatus` `V`/`I` e
+  `errorList` contendo `errorCode`/`errorDescription` nas facturas inválidas.
+  O tipo da tabela é inteiro, mas o exemplo representa `resultCode` como texto.
+  A mesma página associa HTTP 429 ao erro E98 (solicitações repetidas), por
+  isso o cliente não repete automaticamente essa resposta.
 - Não estão disponíveis credenciais autorizadas de homologação nem confirmação
   de qual versão do manual se aplica ao produtor.
 

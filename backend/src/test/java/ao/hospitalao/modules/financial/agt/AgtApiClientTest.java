@@ -28,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -161,6 +163,85 @@ class AgtApiClientTest {
     var result = fixture.client().checkStatus("202600000010689");
 
     assertThat(result.status()).isEqualTo("PENDING");
+    fixture.server().verify();
+  }
+
+  @ParameterizedTest
+  @CsvSource({"0,V,ACCEPTED", "1,I,REJECTED", "2,I,REJECTED"})
+  void interpretsCompletedResultCodes(
+      String resultCode, String documentStatus, String expectedStatus) throws Exception {
+    var fixture = fixture(true);
+    String errors =
+        "I".equals(documentStatus)
+            ? """
+              ,"errorList":[{"errorCode":"E01","errorDescription":"A validação falhou"}]
+              """
+            : """
+              ,"errorList":[]
+              """;
+    fixture
+        .server()
+        .expect(requestTo("https://sifphml.minfin.gov.ao/sigt/fe/v1/obterEstado"))
+        .andRespond(
+            withSuccess(
+                """
+                {
+                  "requestID":"202600000010689",
+                  "resultCode":"%s",
+                  "documentStatusList":[{
+                    "documentNo":"FT 2026/0000001",
+                    "documentStatus":"%s"%s
+                  }]
+                }
+                """
+                    .formatted(resultCode, documentStatus, errors),
+                MediaType.APPLICATION_JSON));
+
+    var result = fixture.client().checkStatus("202600000010689");
+
+    assertThat(result.status()).isEqualTo(expectedStatus);
+    if ("I".equals(documentStatus)) {
+      assertThat(result.message()).contains("E01: A validação falhou");
+    }
+    fixture.server().verify();
+  }
+
+  @ParameterizedTest
+  @CsvSource({"7,PENDING", "9,REJECTED"})
+  void interpretsNonDocumentResultCodes(String resultCode, String expectedStatus) throws Exception {
+    var fixture = fixture(true);
+    fixture
+        .server()
+        .expect(requestTo("https://sifphml.minfin.gov.ao/sigt/fe/v1/obterEstado"))
+        .andRespond(
+            withSuccess(
+                """
+                {"requestID":"202600000010689","resultCode":%s,"documentStatusList":[]}
+                """
+                    .formatted(resultCode),
+                MediaType.APPLICATION_JSON));
+
+    var result = fixture.client().checkStatus("202600000010689");
+
+    assertThat(result.status()).isEqualTo(expectedStatus);
+    if ("9".equals(resultCode)) {
+      assertThat(result.message()).contains("cancelou");
+    }
+    fixture.server().verify();
+  }
+
+  @Test
+  void doesNotRetryRateLimitResponses() throws Exception {
+    var fixture = fixture(true);
+    fixture
+        .server()
+        .expect(requestTo("https://sifphml.minfin.gov.ao/sigt/fe/v1/registarFactura"))
+        .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+
+    var result = fixture.client().register(invoice());
+
+    assertThat(result.status()).isEqualTo("ERROR");
+    assertThat(result.errorMessage()).contains("HTTP 429");
     fixture.server().verify();
   }
 

@@ -12,6 +12,7 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -110,11 +111,24 @@ public class AgtApiClient {
     }
 
     int resultCode = response.path("resultCode").asInt(-1);
-    if (resultCode == 7 || resultCode == 8) {
-      return new AgtStatusResult("PENDING", null, null, null);
+    if (resultCode == 7) {
+      return new AgtStatusResult(
+          "PENDING", null, null, "A consulta foi prematura ou repetida; aguarde antes de repetir.");
+    }
+    if (resultCode == 8) {
+      return new AgtStatusResult(
+          "PENDING", null, null, "O processamento da AGT continua em curso.");
     }
     if (resultCode == 9) {
-      return new AgtStatusResult("REJECTED", null, null, "O processamento foi cancelado.");
+      return new AgtStatusResult(
+          "REJECTED", null, null, "A AGT cancelou o processamento da solicitação.");
+    }
+    if (resultCode != 0 && resultCode != 1 && resultCode != 2) {
+      return new AgtStatusResult(
+          "UNKNOWN",
+          null,
+          null,
+          "Código resultCode da AGT desconhecido: %d.".formatted(resultCode));
     }
 
     JsonNode statuses = response.path("documentStatusList");
@@ -130,9 +144,34 @@ public class AgtApiClient {
     }
     if ("I".equals(status)) {
       return new AgtStatusResult(
-          "REJECTED", null, null, "A AGT rejeitou a factura; consulte a lista de erros.");
+          "REJECTED", null, null, documentErrorMessage(documentStatus.path("errorList")));
     }
-    return new AgtStatusResult("UNKNOWN", null, null, "Estado AGT desconhecido.");
+    return new AgtStatusResult(
+        "UNKNOWN", null, null, "Estado documentStatus da AGT desconhecido: %s.".formatted(status));
+  }
+
+  private String documentErrorMessage(JsonNode errors) {
+    if (!errors.isArray() || errors.isEmpty()) {
+      return "A AGT marcou a factura como inválida sem fornecer detalhes do erro.";
+    }
+
+    ArrayList<String> details = new ArrayList<>();
+    for (JsonNode error : errors) {
+      String code = error.path("errorCode").asText("");
+      String description = error.path("errorDescription").asText("");
+      if (code.isBlank() && description.isBlank()) {
+        details.add("Erro AGT sem código ou descrição.");
+      } else if (code.isBlank()) {
+        details.add(description);
+      } else if (description.isBlank()) {
+        details.add(code);
+      } else {
+        details.add("%s: %s".formatted(code, description));
+      }
+    }
+
+    String message = "A AGT marcou a factura como inválida: " + String.join("; ", details);
+    return message.length() <= 500 ? message : message.substring(0, 497) + "...";
   }
 
   private ObjectNode buildInvoicePayload(Invoice invoice) throws Exception {
@@ -329,7 +368,7 @@ public class AgtApiClient {
   }
 
   private boolean isRetryable(int statusCode) {
-    return statusCode == 429 || statusCode >= 500;
+    return statusCode >= 500;
   }
 
   private void waitBeforeRetry(int attempt) {
