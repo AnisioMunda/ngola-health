@@ -1,0 +1,104 @@
+{
+  "vhosts": [
+    {
+      "name": "/hospitalao"
+    }
+  ],
+
+  "exchanges": [
+    {
+      "name": "hospitalao.eventos",
+      "vhost": "/hospitalao",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+
+  "queues": [
+    {
+      "name": "fila.faturacao",
+      "vhost": "/hospitalao",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "hospitalao.mortas"
+      }
+    },
+    {
+      "name": "fila.notificacoes",
+      "vhost": "/hospitalao",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "hospitalao.mortas"
+      }
+    },
+    {
+      "name": "fila.farmacia",
+      "vhost": "/hospitalao",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "hospitalao.mortas"
+      }
+    },
+    {
+      "name": "fila.laboratorio",
+      "vhost": "/hospitalao",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "hospitalao.mortas"
+      }
+    },
+    {
+      "name": "fila.mortas",
+      "vhost": "/hospitalao",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+
+  "bindings": [
+    {
+      "source": "hospitalao.eventos",
+      "vhost": "/hospitalao",
+      "destination": "fila.faturacao",
+      "destination_type": "queue",
+      "routing_key": "faturacao.#",
+      "arguments": {}
+    },
+    {
+      "source": "hospitalao.eventos",
+      "vhost": "/hospitalao",
+      "destination": "fila.notificacoes",
+      "destination_type": "queue",
+      "routing_key": "notificacao.#",
+      "arguments": {}
+    },
+    {
+      "source": "hospitalao.eventos",
+      "vhost": "/hospitalao",
+      "destination": "fila.farmacia",
+      "destination_type": "queue",
+      "routing_key": "farmacia.#",
+      "arguments": {}
+    },
+    {
+      "source": "hospitalao.eventos",
+      "vhost": "/hospitalao",
+      "destination": "fila.laboratorio",
+      "destination_type": "queue",
+      "routing_key": "laboratorio.#",
+      "arguments": {}
+    }
+  ]
+}

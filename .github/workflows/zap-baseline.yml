@@ -1,0 +1,47 @@
+name: OWASP ZAP Baseline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: OWASP ZAP Baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DB_NAME: hospitalao_e2e
+      DB_USER: hospitalao
+      DB_PASSWORD: hospitalao-e2e
+      REDIS_PASSWORD: ""
+      RABBITMQ_USER: hospitalao
+      RABBITMQ_PASSWORD: hospitalao-e2e
+      JWT_SECRET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DEV_ADMIN_INITIAL_PASSWORD_BASE64: ZGFwLXN5bnRoZXRpYy1wYXNzd29yZA==
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v7
+
+      - name: Iniciar ambiente E2E isolado
+        run: docker compose -f docker-compose.e2e.yml --profile zap up --build --detach --wait --wait-timeout 300
+
+      - name: Executar baseline OWASP ZAP
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://host.docker.internal:4201
+          artifact_name: zap-baseline-report
+          allow_issue_writing: false
+          rules_file_name: .zap/rules.tsv
+          cmd_options: "-I"
+
+      - name: Remover ambiente E2E
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml --profile zap down --volumes --remove-orphans

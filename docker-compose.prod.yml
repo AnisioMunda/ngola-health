@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: ${DB_NAME:?Define DB_NAME no ficheiro .env}
       POSTGRES_USER: ${DB_USER:?Define DB_USER no ficheiro .env}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD no ficheiro .env}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
@@ -21,8 +19,6 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Define REDIS_PASSWORD no ficheiro .env}
     command:
@@ -46,9 +42,6 @@ services:
   rabbitmq:
     image: rabbitmq:4-management-alpine
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:5672:5672"
-      - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hospitalao}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
@@ -67,8 +60,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:?Define DB_NAME no ficheiro .env}
@@ -83,21 +76,21 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD no ficheiro .env}
       RABBITMQ_VHOST: /hospitalao
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET no ficheiro .env}
-      DEV_ADMIN_INITIAL_PASSWORD_BASE64: ${DEV_ADMIN_INITIAL_PASSWORD_BASE64:?Define DEV_ADMIN_INITIAL_PASSWORD_BASE64 no ficheiro .env}
-      APP_BASE_URL: http://localhost:4200
-      AGT_API_URL: https://sifphml.minfin.gov.ao
+      APP_BASE_URL: https://${TLS_DOMAIN:?Define TLS_DOMAIN no ficheiro .env}
+      AGT_API_URL: ${AGT_API_URL:?Define AGT_API_URL no ficheiro .env}
       AGT_ENABLED: ${AGT_ENABLED:-false}
       AGT_USERNAME: ${AGT_USERNAME:-}
       AGT_PASSWORD: ${AGT_PASSWORD:-}
-      AGT_NIF: ${AGT_NIF:-5000413178}
-      AGT_SOFTWARE_ID: ${AGT_SOFTWARE_ID:-HospitalAO}
-      AGT_SOFTWARE_VERSION: ${AGT_SOFTWARE_VERSION:-0.0.1-SNAPSHOT}
-      AGT_SOFTWARE_VALIDATION: ${AGT_SOFTWARE_VALIDATION:-}
-      AGT_TAX_EXEMPTION_CODE: ${AGT_TAX_EXEMPTION_CODE:-}
+      AGT_NIF: ${AGT_NIF:?Define AGT_NIF no ficheiro .env}
+      AGT_SOFTWARE_ID: ${AGT_SOFTWARE_ID:?Define AGT_SOFTWARE_ID no ficheiro .env}
+      AGT_SOFTWARE_VERSION: ${AGT_SOFTWARE_VERSION:?Define AGT_SOFTWARE_VERSION no ficheiro .env}
       AGT_PRIVATE_KEY_PATH: /run/secrets/agt-private-key.pem
-      AGT_SANDBOX: "true"
-    ports:
-      - "127.0.0.1:8080:8080"
+      AGT_SANDBOX: ${AGT_SANDBOX:-false}
+      AGT_SOFTWARE_VALIDATION: ${AGT_SOFTWARE_VALIDATION:-}
+      TEAMS_ENABLED: ${TEAMS_ENABLED:-false}
+      TEAMS_TENANT_ID: ${TEAMS_TENANT_ID:-}
+      TEAMS_CLIENT_ID: ${TEAMS_CLIENT_ID:-}
+      TEAMS_CLIENT_SECRET: ${TEAMS_CLIENT_SECRET:-}
     volumes:
       - type: bind
         source: ${AGT_PRIVATE_KEY_PATH:-/dev/null}
@@ -111,7 +104,6 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      # Actuator stays role-protected; HTTP 401 still confirms backend readiness.
       test:
         [
           "CMD-SHELL",
@@ -122,13 +114,17 @@ services:
       retries: 5
       start_period: 90s
 
-  frontend:
+  frontend-bootstrap:
+    profiles: ["bootstrap"]
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "127.0.0.1:4200:80"
+      - "80:80"
+    volumes:
+      - certbot_webroot:/var/www/certbot:ro
+      - ./frontend/nginx.bootstrap.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -138,6 +134,72 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  certbot-init:
+    profiles: ["bootstrap"]
+    image: certbot/certbot:latest
+    restart: "no"
+    volumes:
+      - certbot_webroot:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    command:
+      - certonly
+      - --webroot
+      - --webroot-path
+      - /var/www/certbot
+      - --cert-name
+      - hospitalao
+      - -d
+      - ${TLS_DOMAIN:?Define TLS_DOMAIN no ficheiro .env}
+      - --email
+      - ${CERTBOT_EMAIL:?Define CERTBOT_EMAIL no ficheiro .env}
+      - --agree-tos
+      - --no-eff-email
+      - --non-interactive
+    depends_on:
+      frontend-bootstrap:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot_webroot:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - ./frontend/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    pid: service:frontend
+    volumes:
+      - certbot_webroot:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while :; do
+          certbot renew --webroot --webroot-path /var/www/certbot --deploy-hook "kill -HUP 1" || exit 1
+          sleep 12h
+        done
+    depends_on:
+      frontend:
+        condition: service_healthy
 
   backup:
     profiles: ["backup"]
@@ -164,3 +226,5 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  certbot_webroot:
+  letsencrypt:
