@@ -114,7 +114,7 @@ jobs:
 
     steps:
       - name: Rever dependências introduzidas no PR
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: never
