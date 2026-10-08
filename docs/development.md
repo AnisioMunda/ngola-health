@@ -173,6 +173,27 @@ repositório; a aplicação valida a sua leitura e formato no arranque. Não use
 `AGT_PRIVATE_KEY_CONTENT`, não inclua chaves em `.env` e não reutilize
 credenciais de produção em desenvolvimento ou testes.
 
+### Fluxo e homologação AGT
+
+As páginas públicas consultadas descrevem `POST /sigt/fe/v1/registarFactura`
+para submissão assíncrona e `POST /sigt/fe/v1/obterEstado` para consulta do
+`requestID`. O cliente submete um documento por pedido; o serviço agendado
+consulta facturas pendentes a cada dois minutos. Falhas de rede e respostas
+HTTP 5xx têm até três tentativas; respostas 4xx, incluindo o HTTP 429 da AGT,
+não são repetidas automaticamente.
+
+O endereço de homologação publicado é `https://sifphml.minfin.gov.ao` e pode
+ser configurado por `AGT_API_URL`. Não active `AGT_ENABLED` nem use credenciais
+reais antes de confirmar com a AGT a versão aplicável do esquema, os campos
+fiscais SAF-T, as assinaturas e o processo de certificação/homologação; veja
+a [ADR-0009](./adr/0009-agt-invoicing.md). A integração permanece desactivada
+por omissão para impedir transmissões de dados de pacientes.
+
+O PDF só incorpora QR quando a factura está aceite e existe um payload
+fornecido pela AGT. O esquema público de consulta ainda não confirma esse
+payload nem o código de validação; até essa confirmação, o sistema não inventa
+um QR local e assinala documentos não validados.
+
 ## Desenvolver o frontend
 
 Com o backend local a responder na porta `8080`:
