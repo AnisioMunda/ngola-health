@@ -4,6 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 --changeset hospitalao:users-005-dev-bootstrap-password context:@dev splitStatements:false
+--validCheckSum: 1:any
 DO $$
 DECLARE
     initial_password TEXT;
@@ -16,6 +17,7 @@ END
 $$;
 
 --changeset hospitalao:users-006-dev-bootstrap-data context:@dev
+--validCheckSum: 1:any
 INSERT INTO users (
     id, full_name, username, password_hash, email, register_status,
     must_change_password, hospital_id

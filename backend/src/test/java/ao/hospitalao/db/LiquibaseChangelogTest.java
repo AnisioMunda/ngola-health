@@ -3,6 +3,7 @@ package ao.hospitalao.db;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Set;
+import liquibase.change.CheckSum;
 import liquibase.changelog.ChangeLogParameters;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.parser.ChangeLogParserFactory;
@@ -28,6 +29,22 @@ class LiquibaseChangelogTest {
               assertThat(changeSet.getRollback()).isNotNull();
               assertThat(changeSet.getRollback().getChanges()).isNotEmpty();
             });
+  }
+
+  @Test
+  void devBootstrapChangesetsAcceptChecksumsWithEnvironmentSpecificPasswords() throws Exception {
+    var changelog = parseMasterChangelog();
+    var variablePasswordChecksum = CheckSum.parse("1:any");
+
+    assertThat(changelog.getChangeSets())
+        .filteredOn(
+            changeSet ->
+                Set.of("users-005-dev-bootstrap-password", "users-006-dev-bootstrap-data")
+                    .contains(changeSet.getId()))
+        .hasSize(2)
+        .allSatisfy(
+            changeSet ->
+                assertThat(changeSet.getValidCheckSums()).contains(variablePasswordChecksum));
   }
 
   @Test
@@ -190,6 +207,16 @@ class LiquibaseChangelogTest {
         changelog,
         "024-01-active-admission-integrity",
         "changes/inpatient/002-active-admission-integrity.sql");
+  }
+
+  @Test
+  void teamsOrganizerAndMeetingMigrationsAreIncludedAndReversible() throws Exception {
+    var changelog = parseMasterChangelog();
+
+    assertChangesetIsIncludedAndReversible(
+        changelog, "025-01-user-teams-id", "changes/users/005-teams-organizer-id.sql");
+    assertChangesetIsIncludedAndReversible(
+        changelog, "026-01-teams-meeting-details", "changes/telemedicine/002-teams-meetings.sql");
   }
 
   private void assertChangesetIsIncludedAndReversible(
