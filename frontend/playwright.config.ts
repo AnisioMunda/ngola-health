@@ -10,7 +10,6 @@ const databaseUser = process.env.E2E_DB_USER ?? 'hospitalao';
 const databasePassword = process.env.E2E_DB_PASSWORD ?? 'hospitalao-e2e';
 const databaseHost = process.env.E2E_DB_HOST ?? '127.0.0.1';
 const databasePort = process.env.E2E_DB_PORT ?? '5433';
-const rabbitPassword = process.env.E2E_RABBITMQ_PASSWORD ?? 'hospitalao-e2e';
 const bootstrapPassword = randomBytes(24).toString('base64url');
 process.env.PLAYWRIGHT_ADMIN_EMAIL = 'playwright-admin@hospitalao.local';
 process.env.PLAYWRIGHT_ADMIN_PASSWORD = randomBytes(24).toString('base64url');
@@ -46,14 +45,6 @@ export default defineConfig({
         DB_NAME: databaseName,
         DB_USER: databaseUser,
         DB_PASSWORD: databasePassword,
-        REDIS_HOST: process.env.E2E_REDIS_HOST ?? '127.0.0.1',
-        REDIS_PORT: process.env.E2E_REDIS_PORT ?? '6380',
-        REDIS_PASSWORD: process.env.E2E_REDIS_PASSWORD ?? '',
-        RABBITMQ_HOST: process.env.E2E_RABBITMQ_HOST ?? '127.0.0.1',
-        RABBITMQ_PORT: process.env.E2E_RABBITMQ_PORT ?? '5673',
-        RABBITMQ_USER: process.env.E2E_RABBITMQ_USER ?? 'hospitalao',
-        RABBITMQ_PASSWORD: rabbitPassword,
-        RABBITMQ_VHOST: '/hospitalao',
         JWT_SECRET: process.env.JWT_SECRET ?? 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
         DEV_ADMIN_INITIAL_PASSWORD_BASE64: Buffer.from(bootstrapPassword).toString('base64'),
         APP_BASE_URL: baseURL,

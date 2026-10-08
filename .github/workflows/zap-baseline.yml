@@ -20,9 +20,6 @@ jobs:
       DB_NAME: hospitalao_e2e
       DB_USER: hospitalao
       DB_PASSWORD: hospitalao-e2e
-      REDIS_PASSWORD: ""
-      RABBITMQ_USER: hospitalao
-      RABBITMQ_PASSWORD: hospitalao-e2e
       JWT_SECRET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DEV_ADMIN_INITIAL_PASSWORD_BASE64: ZGFwLXN5bnRoZXRpYy1wYXNzd29yZA==
 

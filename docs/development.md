@@ -33,9 +33,6 @@ Preencha o ficheiro `.env`, que é ignorado pelo Git:
 | `DB_USER`                           | Utilizador local da base de dados                          |
 | `DB_PASSWORD`                       | Palavra-passe local do PostgreSQL                          |
 | `JWT_SECRET`                        | Chave JWT em Base64, gerada com 32 bytes aleatórios        |
-| `REDIS_PASSWORD`                    | Palavra-passe local do Redis                               |
-| `RABBITMQ_USER`                     | Utilizador RabbitMQ; pode usar `hospitalao`                |
-| `RABBITMQ_PASSWORD`                 | Palavra-passe local do RabbitMQ                            |
 | `DEV_ADMIN_INITIAL_PASSWORD_BASE64` | Senha temporária do `platform-admin`, codificada em Base64 |
 | `AGT_ENABLED`                       | `true` para testar a integração no sandbox da AGT; por omissão, `false` |
 | `AGT_USERNAME` / `AGT_PASSWORD`     | Credenciais fornecidas para homologação; nunca use credenciais de produção |
@@ -70,8 +67,8 @@ openssl rand -hex 32
 openssl rand -base64 32
 ```
 
-Use um valor hexadecimal para cada palavra-passe de serviço e um valor Base64
-para `JWT_SECRET`. Guarde os resultados apenas em `.env` e nunca os inclua em
+Use um valor hexadecimal para `DB_PASSWORD` e um valor Base64 para
+`JWT_SECRET`. Guarde os resultados apenas em `.env` e nunca os inclua em
 commits, registos ou pedidos de suporte.
 
 Valide a configuração sem imprimir os valores:
@@ -98,12 +95,9 @@ ficam disponíveis apenas no computador local:
 | API e health check        | <http://localhost:8080/api/actuator/health> |
 | Swagger UI (perfil `dev`) | <http://localhost:8080/api/swagger-ui.html> |
 | PostgreSQL                | `localhost:5432`                            |
-| Redis                     | `localhost:6379`                            |
-| RabbitMQ                  | `localhost:5672`                            |
-| Gestão do RabbitMQ        | <http://localhost:15672>                    |
-
-Use `RABBITMQ_USER` e `RABBITMQ_PASSWORD` do `.env` para entrar na consola de
-gestão. O frontend encaminha `/api` e `/ws` para o backend.
+O frontend encaminha `/api` para o backend. O stack local necessita apenas de
+PostgreSQL, backend e frontend; não inicia serviços de cache, fila ou storage
+externo.
 
 Para acompanhar os registos:
 
@@ -183,8 +177,8 @@ O uso local normal não precisa deste Compose. A aplicação de desenvolvimento
 acima serve HTTP apenas em `localhost`; só use o procedimento seguinte ao
 preparar uma implantação com domínio público.
 
-O Compose de produção não publica as portas da base de dados, Redis, RabbitMQ
-ou backend. O Nginx é o único serviço exposto (portas 80 e 443), redirecciona
+O Compose de produção não publica as portas da base de dados ou backend. O
+Nginx é o único serviço exposto (portas 80 e 443), redirecciona
 HTTP para HTTPS e serve o desafio ACME. Antes de começar, configure no `.env`
 um domínio público (`TLS_DOMAIN`), o e-mail (`CERTBOT_EMAIL`) e os segredos e
 parâmetros reais exigidos pelo backend. O DNS do domínio deve apontar para o
@@ -234,12 +228,11 @@ bloquear escritas durante a construção.
 
 ## Desenvolver o backend
 
-Para executar o backend no computador e manter PostgreSQL, Redis e RabbitMQ em
-containers:
+Para executar o backend no computador e manter PostgreSQL em container:
 
 ```sh
 # Na raiz do repositório
-docker compose up --detach postgres redis rabbitmq
+docker compose up --detach postgres
 set -a
 . ./.env
 set +a
@@ -326,7 +319,7 @@ npm start
 ```
 
 Abra <http://localhost:4200>. O servidor de desenvolvimento usa o proxy
-configurado em `src/proxy.conf.json` para encaminhar `/api` e `/ws` ao backend.
+configurado em `src/proxy.conf.json` para encaminhar `/api` ao backend.
 
 Comandos de validação disponíveis:
 
@@ -343,7 +336,7 @@ o comando falhar.
 
 ### Teste integrado com Playwright
 
-O fluxo E2E usa PostgreSQL, Redis e RabbitMQ descartáveis, inicia o backend e o
+O fluxo E2E usa PostgreSQL descartável, inicia o backend e o
 frontend e percorre, pela interface, o login, o cadastro de paciente, o
 episódio, a prescrição e a factura. O setup cria um administrador, um
 medicamento com stock e um preço de serviço sintéticos; o paciente e os
@@ -359,9 +352,9 @@ npx playwright install chromium
 npm run e2e
 ```
 
-O Playwright usa as portas locais `5433` (PostgreSQL), `6380` (Redis) e `5673`
-(RabbitMQ), e inicia a aplicação em `4200`/`8080`. Os valores são ajustáveis
-pelas variáveis `E2E_DB_*`, `E2E_REDIS_*` e `E2E_RABBITMQ_*`. O CI executa o
+O Playwright usa a porta local `5433` (PostgreSQL) e inicia a aplicação em
+`4200`/`8080`. A porta e as credenciais da base de dados são ajustáveis pelas
+variáveis `E2E_DB_*`. O CI executa o
 mesmo fluxo com serviços efémeros. Para remover os serviços locais e os dados
 sintéticos, execute:
 
@@ -402,8 +395,8 @@ docker compose -f docker-compose.e2e.yml --profile zap down --volumes --remove-o
 
 - **Um serviço não fica saudável:** consulte `docker compose ps` e os registos
   com `docker compose logs --follow <serviço>`.
-- **Porta ocupada:** confirme se as portas `4200`, `8080`, `5432`, `6379`,
-  `5672` ou `15672` já estão a ser usadas.
+- **Porta ocupada:** confirme se as portas `4200`, `8080` ou `5432` já estão a
+  ser usadas.
 - **Compose pede uma variável:** confirme que `.env` existe e que todas as
   variáveis obrigatórias estão preenchidas.
 - **Erro de formato do JWT:** gere `JWT_SECRET` com

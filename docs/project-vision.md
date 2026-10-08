@@ -60,8 +60,8 @@ descritos no [guia de fluxo clínico](clinical-workflow.md).
 - Substituir o julgamento dos profissionais de saúde ou tomar decisões
   clínicas autónomas.
 - Integrar serviços de infraestrutura sem um caso de uso concreto e uma
-  decisão de arquitectura registada. Em particular, Redis, RabbitMQ, MinIO,
-  SMTP e WebSocket não são requisitos automáticos da fundação.
+  decisão de arquitectura registada. Redis, RabbitMQ, MinIO, SMTP e WebSocket
+  não fazem parte da infraestrutura activa actual.
 - Assumir conformidade regulamentar ou integração com serviços externos antes
   de os requisitos aplicáveis serem confirmados.
 - Tratar funcionalidades ainda não concluídas no roadmap como disponíveis
